@@ -30,4 +30,7 @@
     <!-- Power menu -->
     <string name="quick_settings_powermenu_label">Power Menu</string> 
 
+    <!--ScreenShot Trash-->
+    <string name="delete">Delete</string>
+
 </resources>
