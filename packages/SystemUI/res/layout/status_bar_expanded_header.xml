@@ -39,6 +39,7 @@
             android:paddingStart="8dp"
             android:paddingEnd="4dp"
             android:singleLine="true"
+            android:tag="expanded"
             android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Clock"
             android:background="@drawable/ic_notify_button_bg"
             android:gravity="center_vertical"
