@@ -3436,11 +3436,6 @@ public final class Settings {
          */
         public static final String HALO_MSGBOX_ANIMATION = "halo_msgbox_animation";
 
-        /** Allows to show the background activity back the lockscreen
-         * @hide
-         */
-        public static final String LOCKSCREEN_SEE_THROUGH = "lockscreen_see_through";
-
         /**
          * HALO unlock ping?, should default to 0 (no, do not ping on unlock)
          * @hide
