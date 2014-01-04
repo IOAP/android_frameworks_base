@@ -1307,50 +1307,6 @@ public final class Settings {
         }
 
         /**
-         * @hide
-         * Convenience function for retrieving a single system settings value
-         * as a boolean.  Note that internally setting values are always
-         * stored as strings; this function converts the string to a boolean
-         * for you. It will only return true if the stored value is "1"
-         *
-         * @param cr The ContentResolver to access.
-         * @param name The name of the setting to retrieve.
-         * @param def Value to return if the setting is not defined.
-         *
-         * @return The setting's current value, or 'def' if it is not defined
-         * or not a valid integer.
-         */
-        public static boolean getBoolean(ContentResolver cr, String name, boolean def) {
-            String v = getString(cr, name);
-            try {
-                if(v != null)
-                    return "1".equals(v);
-                else
-                    return def;
-            } catch (NumberFormatException e) {
-                return def;
-           }
-        }
-
-        /**
-        * @hide
-        * Convenience function for updating a single settings value as a
-        * boolean. This will either create a new entry in the table if the
-        * given name does not exist, or modify the value of the existing row
-        * with that name. Note that internally setting values are always
-        * stored as strings, so this function converts the given value to a
-        * string (1 or 0) before storing it.
-        *
-        * @param cr The ContentResolver to access.
-        * @param name The name of the setting to modify.
-        * @param value The new value for the setting.
-        * @return true if the value was set, false on database errors
-        */
-        public static boolean putBoolean(ContentResolver cr, String name, boolean value) {
-            return putString(cr, name, value ? "1" : "0");
-        }
-
-        /**
          * Convenience function for retrieving a single system settings value
          * as a {@code long}.  Note that internally setting values are always
          * stored as strings; this function converts the string to a {@code long}
@@ -2667,6 +2623,89 @@ public final class Settings {
          */
         public static final String LOCKSCREEN_DISABLED = "lockscreen.disabled";
 
+	/**
+         * Whether to display notifications on screen when screen is off
+         * @hide
+         */
+        public static final String ENABLE_ACTIVE_DISPLAY = "enable_active_display";
+
+        /**
+         * Whether to display notification messages around ring
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_TEXT = "active_display_text";
+
+        /**
+         * Time to redisplay notifications on screen from when screen turns off, 0 = never redisplay
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_REDISPLAY = "active_display_redisplay";
+
+        /**
+         * Brightness of the display when displaying the active display view
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_BRIGHTNESS = "active_display_brightness";
+
+        /**
+         * Display active display view when device comes out of the user's pocket, etc...
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_POCKET_MODE = "active_display_pocket_mode";
+
+        /**
+         * Whether to include ongoing/non-clearable notifications
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_ALL_NOTIFICATIONS = "active_display_all_notifications";
+
+        /**
+         * Whether to hide low priority notifications like those from google now
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_HIDE_LOW_PRIORITY_NOTIFICATIONS =
+                "active_display_hide_low_priority_notifications";
+
+        /**
+         * Whether to display AM/PM after time when in 12h format
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_SHOW_AMPM = "active_display_show_ampm";
+
+        /**
+         * Whether to display the date above the time
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_SHOW_DATE = "active_display_show_date";
+
+        /**
+         * Whether to invert the colors when in bright light
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_SUNLIGHT_MODE = "active_display_sunlight_mode";
+
+        /**
+         * A list of packages to exclude from being displayed in active display.
+         * This should be a string of packages separated by |
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_EXCLUDED_APPS = "active_display_excluded_apps";
+
+
+ 	public static final String ACTIVE_DISPLAY_TIMEOUT = "active_display_timeout";
+
+	/**
+	* Whether to turn off the device when gets pocketed again and was waked up by active display
+	* @hide
+	*/
+	public static final String ACTIVE_DISPLAY_TURNOFF_MODE = "active_display_turnoff_mode";
+
+	/**
+	* Threshold of the proximity sensor to turn on the device.
+	* @hide
+	*/
+	public static final String ACTIVE_DISPLAY_THRESHOLD = "active_display_threshold";
+
         /**
          * Stores values for custom lockscreen targets
          * @hide
@@ -2911,22 +2950,39 @@ public final class Settings {
         public static final String NAV_BUTTONS = "nav_buttons";
 
 	/**
-         * Wether navigation bar is enabled or not
+         * whether which Ram Usage Bar mode is used on recent switcher
+         * 0 = none, 1 = only app use, 2 = app and cache use, 3 = app, cache and system use
          * @hide
          */
-        public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show";
-
-	/**
-         * Navigation bar height when it is on protrait
-         * @hide
-         */
-        public static final String NAVIGATION_BAR_HEIGHT = "navigation_bar_height";
+        public static final String RECENTS_RAM_BAR_MODE = "recents_ram_bar_mode";
 
         /**
-         * Navigation bar height when it is on landscape at the right
+         * Ram Usage Bar system mem color
+         *
          * @hide
          */
-        public static final String NAVIGATION_BAR_WIDTH = "navigation_bar_width";
+        public static final String RECENTS_RAM_BAR_MEM_COLOR = "recents_ram_bar_mem_color";
+
+        /**
+         * Ram Usage Bar cached mem color
+         *
+         * @hide
+         */
+        public static final String RECENTS_RAM_BAR_CACHE_COLOR = "recents_ram_bar_cache_color";
+
+        /**
+         * Ram Usage Bar app mem color
+         *
+         * @hide
+         */
+        public static final String RECENTS_RAM_BAR_ACTIVE_APPS_COLOR = "recents_ram_bar_active_apps_color";
+
+         /**
+         * Allows to show the background activity back the lockscreen
+         * @hide
+         */
+        public static final String LOCKSCREEN_SEE_THROUGH = "lockscreen_see_through";
+
 
         /**
         * Notification Power Widget - Custom Brightness Mode
@@ -2951,12 +3007,6 @@ public final class Settings {
         * @hide
         */
         public static final String EXPANDED_RING_MODE = "expanded_ring_mode";
-
-       /**
-         * HALO enabled, should default to 0 (HALO is disabled)
-         * @hide
-         */
-        public static final String HALO_ENABLED = "halo_enabled";
 
         /**
         * Notification Power Widget - Custom Torch Mode
@@ -3003,12 +3053,11 @@ public final class Settings {
          * Whether to show the clock in status bar
          * of the stock battery icon
          * 0: don't show the clock
-         * 1: right side clock
-         * 2: center clock
+         * 1: show the clock
          * default: 1
-            @hide
+         * @hide
          */
-        public static final String STATUS_BAR_CLOCK = "status_bar_show_clock";
+        public static final String STATUS_BAR_CLOCK = "status_bar_clock";
 
         /**
          * Whether to show the signal text or signal bars.
@@ -3026,6 +3075,15 @@ public final class Settings {
          * @hide
          */
         public static final String STATUS_BAR_BRIGHTNESS_CONTROL = "status_bar_brightness_control";
+
+         /**
+         * MediaScanner behavior on boot.
+         * 0 = enabled
+         * 1 = ask (notification)
+         * 2 = disabled
+         * @hide
+         */
+         public static final String MEDIA_SCANNER_ON_BOOT = "media_scanner_on_boot";
 
         /**
          * Battery warning preferences
@@ -3058,6 +3116,18 @@ public final class Settings {
         public static final int STATUS_BAR_COLLAPSE_IF_EMPTIED = 1;
         /** @hide */
         public static final int STATUS_BAR_COLLAPSE_IF_NO_CLEARABLE = 2;
+
+        /**
+         * Whether to show the network status in the status bar
+         * @hide
+         */
+        public static final String STATUS_BAR_NETWORK_STATS = "status_bar_network_stats";
+
+        /**
+         * Frequency at which stats are updated, in milliseconds
+         * @hide
+         */
+        public static final String STATUS_BAR_NETWORK_STATS_UPDATE_INTERVAL = "status_bar_network_stats_update_frequency";
 
         /**
          * Whether to use a separate delay for "slide to unlock" and security
@@ -3185,10 +3255,89 @@ public final class Settings {
         public static final String QUIET_HOURS_DIM = "quiet_hours_dim";
 
         /**
+         * direct call by the dialer. The value is
+         * boolean (1 or 0).
+         */
+        public static final String DIALER_DIRECT_CALL = "dialer_direct_call";
+
+        /**
          * Sets the lockscreen background style
          * @hide
          */
         public static final String LOCKSCREEN_BACKGROUND = "lockscreen_background";
+
+        /**
+         * Enables/disables lockscreen notifications
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS = "lockscreen_notifications";
+
+        /**
+         * Turn screen on when device is pulled out of pocket
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_POCKET_MODE = "lockscreen_notifications_pocket_mode";
+
+       /**
+        * Turn screen on when pulled out of pocket even if no notifications are pending
+        * @hide
+        */
+       public static final String LOCKSCREEN_NOTIFICATIONS_SHOW_ALWAYS = "lockscreen_notifications_show_always";
+
+       /**
+        * Hide low priority notifications such as google now weather notifications from lockscreen notifications
+        * @hide
+        */
+       public static final String LOCKSCREEN_NOTIFICATIONS_HIDE_LOW_PRIORITY = "lockscreen_notifications_hide_low_priority";
+
+       /**
+        * Hide non clearable notifications from lockscreen notifications
+        * @hide
+        */
+       public static final String LOCKSCREEN_NOTIFICATIONS_HIDE_NON_CLEARABLE = "lockscreen_notifications_hide_non_clearable";
+
+       /**
+        * Allows dismissing even non-clearable notifications from lockscreen notifications.
+        * Of course, this doesn't really dismiss them, they're just not shown on lockscreen anymore.
+        * @hide
+        */
+       public static final String LOCKSCREEN_NOTIFICATIONS_DISMISS_ALL = "lockscreen_notifications_dismiss_all";
+
+       /**
+        * Toggle between extended and normal view by longpressing the notification
+        * @hide
+        */
+       public static final String LOCKSCREEN_NOTIFICATIONS_EXPANDED_VIEW = "lockscreen_notifications_expanded_view";
+
+       /**
+        * Show lockscreen notifications extended when possible
+        * @hide
+        */
+       public static final String LOCKSCREEN_NOTIFICATIONS_FORCE_EXPANDED_VIEW = "lockscreen_notifications_force_expanded_view";
+
+       /**
+        * Wakes the device when a new notifications is received
+        * @hide
+        */
+       public static final String LOCKSCREEN_NOTIFICATIONS_WAKE_ON_NOTIFICATION = "lockscreen_notifications_wake_on_notification";
+
+       /**
+        * Sets the count of notifications shown at once
+        * @hide
+        */
+        public static final String LOCKSCREEN_NOTIFICATIONS_HEIGHT = "lockscreen_notifications_height";
+
+       /**
+        * Changes the offset of the notifications to the top of the screen
+        * @hide
+        */
+        public static final String LOCKSCREEN_NOTIFICATIONS_OFFSET_TOP = "lockscreen_notifications_offset_top";
+
+       /**
+        * Enables a privacy mode which disables showing notifications.
+        * @hide
+        */
+        public static final String LOCKSCREEN_NOTIFICATIONS_PRIVACY_MODE = "lockscreen_notifications_privacy_mode";
 
         /**
          * Expanded desktop on/off state
@@ -3350,6 +3499,24 @@ public final class Settings {
             "navigation_ring_targets_2",
         };
 
+       /**
+        * Sets the portrait background of notification drawer
+        * @hide
+        */
+        public static final String NOTIFICATION_BACKGROUND = "notification_background";
+
+       /**
+        * Sets the landscape background of notification drawer
+        * @hide
+        */
+        public static final String NOTIFICATION_BACKGROUND_LANDSCAPE = "notification_background_landscape";
+
+       /**
+        * Sets the alpha (transparency) of notification wallpaper
+        * @hide
+        */
+        public static final String NOTIFICATION_BACKGROUND_ALPHA = "notification_background_alpha";
+
         /**
          * Volume key controls ringtone or media sound stream
          *
@@ -3433,6 +3600,22 @@ public final class Settings {
          public static final String KEY_APP_SWITCH_LONG_PRESS_ACTION = "key_app_switch_long_press_action";
 
         /**
+         * Control the display of the action overflow button within app UI.
+         * 0 = use system default
+         * 1 = force on
+         * @hide
+         */
+        public static final String UI_FORCE_OVERFLOW_BUTTON = "ui_force_overflow_button";
+
+
+       /**
+         * HALO enabled, should default to 0 (HALO is disabled)
+         * @hide
+         */
+
+        public static final String HALO_ENABLED = "halo_enabled";
+
+        /**
          * HALO, should default to 0 (no, do not show)
          * @hide
          */
@@ -3501,6 +3684,69 @@ public final class Settings {
         public static final String PERFORMANCE_PROFILE = "performance_profile";
 
         /**
+         * Wether to allow full screen swipe detection on notification drawer
+         * for swipe to switch or not
+         * @hide
+         */
+        public static final String SWIPE_TO_SWITCH_SCREEN_DETECTION = "full_swipe_to_switch_detection";
+
+	/**
+	* Navigation bar button color
+	* @hide
+	*/
+	public static final String NAVIGATION_BAR_BUTTON_TINT = "navigation_bar_button_tint";
+
+	/**
+	* Option To Colorize Navigation bar buttons in different modes
+	* 0 = all, 1 = system icons, 2 = system icons + custom user icons
+	* @hide
+	*/
+	public static final String NAVIGATION_BAR_BUTTON_TINT_MODE = "navigation_bar_button_tint_mode";
+
+	/**
+	* Navigation bar glow color
+	* @hide
+	*/
+	public static final String NAVIGATION_BAR_GLOW_TINT = "navigation_bar_glow_tint";
+
+	/**
+	* Wether navigation bar is enabled or not
+	* @hide
+	*/
+	public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show";
+
+	/**
+	* Wether navigation bar is on landscape on the bottom or on the right
+	* @hide
+	*/
+	public static final String NAVIGATION_BAR_CAN_MOVE = "navigation_bar_can_move";
+
+	/**
+	* Navigation bar height when it is on protrait
+	* @hide
+	*/
+	public static final String NAVIGATION_BAR_HEIGHT = "navigation_bar_height";
+
+	/**
+	* Navigation bar height when it is on landscape at the bottom
+	* @hide
+	*/
+	public static final String NAVIGATION_BAR_HEIGHT_LANDSCAPE = "navigation_bar_height_landscape";
+
+	/**
+	* Navigation bar height when it is on landscape at the right
+	* @hide
+	*/
+	public static final String NAVIGATION_BAR_WIDTH = "navigation_bar_width";
+
+	/**
+	* Custom navigation bar intent and action configuration
+	* @hide
+	*/
+	public static final String NAVIGATION_BAR_CONFIG = "navigation_bar_config";
+
+
+        /**
          * Whether to unlock the screen with the home key.  The value is boolean (1 or 0).
          * @hide
          */
@@ -3513,64 +3759,66 @@ public final class Settings {
         public static final String LOCKSCREEN_VIBRATE_ENABLED = "lockscreen.vibrate_enabled";
 
         /**
+         * Whether or not to use the app sidebar
+         *
+         * @hide
+         */
+        public static final String APP_SIDEBAR_ENABLED = "app_sidebar_enabled";
+
+        /**
+         * User defined transparency level for sidebar
+         *
+         * @hide
+         */
+        public static final String APP_SIDEBAR_TRANSPARENCY = "app_sidebar_transparency";
+
+        /**
+         * Disable text labels for app sidebar items
+         *
+         * @hide
+         */
+        public static final String APP_SIDEBAR_DISABLE_LABELS = "app_sidebar_disable_labels";
+
+        /**
+         * Position of app sidebar
+         *
+         * @hide
+         */
+        public static final String APP_SIDEBAR_POSITION = "app_sidebar_position";
+
+        /**
+         * Width of the appbar trigger
+         *
+         * @hide
+         */
+        public static final String APP_SIDEBAR_TRIGGER_WIDTH = "app_sidebar_trigger_width";
+
+        /**
+         * Position of appbar trigger
+         *
+         * @hide
+         */
+        public static final String APP_SIDEBAR_TRIGGER_TOP = "app_sidebar_trigger_top";
+
+        /**
+         * Height of the appbar trigger
+         *
+         * @hide
+         */
+        public static final String APP_SIDEBAR_TRIGGER_HEIGHT = "app_sidebar_trigger_height";
+
+        /**
+         * Whether to display the trigger region or not
+         *
+         * @hide
+         */
+        public static final String APP_SIDEBAR_SHOW_TRIGGER = "app_sidebar_show_trigger";
+
+        /**
          *  Enable statusbar double tap gesture on to put device to sleep
          * @hide
          */
         public static final String DOUBLE_TAP_SLEEP_GESTURE = "double_tap_sleep_gesture";
-
-        /**
-         * ListView Animations
-         * 0 == None
-         * 1 == Wave (Left)
-         * 2 == Wave (Right)
-         * 3 == Scale
-         * 4 == Alpha
-         * 5 == Stack (Top)
-         * 6 == Stack (Bottom)
-         * 7 == Translate (Left)
-         * 8 == Translate (Right)
-         */
-        public static final String LISTVIEW_ANIMATIONS = "listview_animations";
-
-        /**
-         * Listview animation duration
-         */
-        public static final String LISTVIEW_SCROLL_DURATION = "listview_scroll_duration";
-
-        /**
-         * ListView Interpolators
-         * 0 == None
-         * 1 == accelerate_interpolator
-         * 2 == decelerate_interpolator
-         * 3 == accelerate_decelerate_interpolator
-         * 4 == anticipate_interpolator
-         * 5 == overshoot_interpolator
-         * 6 == anticipate_overshoot_interpolator
-         * 7 == bounce_interpolator
-         */
-         public static final String LISTVIEW_INTERPOLATOR = "listview_interpolator"; 
-
-        /**
-         * Setting for animation controls
-         *
-         * @hide
-         */
-        public static final String[] ACTIVITY_ANIMATION_CONTROLS = new String[] {
-                "activity_open",
-                "activity_close",
-                "task_open",
-                "task_close",
-                "task_to_front",
-                "task_to_back",
-                "wallpaper_open",
-                "wallpaper_close",
-                "wallpaper_intra_open",
-                "wallpaper_intra_close",
-        };
-
-        public static final String ANIMATION_CONTROLS_DURATION = "animation_controls_duration";
-
-        public static final String ANIMATION_CONTROLS_NO_OVERRIDE = "animation_controls_no_override";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
@@ -4617,51 +4865,6 @@ public final class Settings {
         public static final String LOCK_PATTERN_VISIBLE = "lock_pattern_visible_pattern";
 
         /**
-         * Whether the NumKeyPad will change the orders of numbers
-         * in a PIN locked lockscreen
-         * 0 = off | 1 = always | 2 = only on request
-         * @hide
-          */
-
-        public static final String LOCK_NUMPAD_RANDOM = "lock_numpad_random";
-
-        /**
-         * Colorize custom lock icon true/false
-         * @hide
-         */
-        public static final String LOCKSCREEN_COLORIZE_LOCK = "lockscreen_colorize_lock";
-
-        /**
-         * Lockscreen custom lock icon
-         * @hide
-         */
-        public static final String LOCKSCREEN_LOCK_ICON = "lockscreen_lock_icon";
-
-        /**
-         * Lockscreen lock color (handle and expanded locks)
-         * @hide
-         */
-        public static final String LOCKSCREEN_LOCK_COLOR = "lockscreen_lock_color";
-
-        /**
-         * Lockscreen dots color (glowpad dots)
-         * @hide
-         */
-        public static final String LOCKSCREEN_DOTS_COLOR = "lockscreen_dots_color";
-
-        /**
-         * Lockscreen frame color (widgets/security frame color)
-         * @hide
-         */
-        public static final String LOCKSCREEN_FRAME_COLOR = "lockscreen_frame_color";
-
-        /**
-         * Determines the width and height of the LockPatternView widget
-         * @hide
-         */
-        public static final String LOCK_PATTERN_SIZE = "lock_pattern_size";
-
-        /**
          * Whether lock pattern will vibrate as user enters (0 = false, 1 =
          * true)
          *
@@ -5643,6 +5846,21 @@ public final class Settings {
         public static final String UI_NIGHT_MODE = "ui_night_mode";
 
         /**
+         * The current theme mode that has been selected by the user.  Owned
+         * and controlled by UiModeManagerService.
+         * @hide
+         */
+        public static final String UI_THEME_MODE = "ui_theme_mode";
+
+        /**
+         * Auto theme mode which switches either based on daytime or lightsensor
+         * values: 0 = manual (default), 1 = auto twilight (based on daytime)
+         * 2 = auto lightsensor (based on light conditions)
+         * @hide
+         */
+        public static final String UI_THEME_AUTO_MODE = "ui_theme_auto_mode";
+
+        /**
          * Whether screensavers are enabled.
          * @hide
          */
@@ -5793,6 +6011,8 @@ public final class Settings {
             MOUNT_UMS_NOTIFY_ENABLED,
             UI_NIGHT_MODE,
             ADVANCED_REBOOT,
+            UI_THEME_MODE,
+            UI_THEME_AUTO_MODE,
             PRIVACY_GUARD_DEFAULT,
             DEVELOPMENT_SHORTCUT
         };

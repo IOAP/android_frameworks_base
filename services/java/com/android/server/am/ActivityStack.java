@@ -82,9 +82,9 @@ import android.util.Log;
 import android.util.Slog;
 import android.view.ContextThemeWrapper;
 import android.view.Display;
-import com.android.internal.app.ActivityTrigger;
 import android.view.IWindowManager;
 import android.view.WindowManagerGlobal;
+import com.android.internal.app.ActivityTrigger;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
@@ -225,11 +225,6 @@ final class ActivityStack {
 
     long mLaunchStartTime = 0;
     long mFullyDrawnStartTime = 0;
-
-    /**
-     * Is the privacy guard currently enabled?
-     */
-    String mPrivacyGuardPackageName = null;
 
     /**
      * Save the most recent screenshot for reuse. This keeps Recents from taking two identical
@@ -770,8 +765,8 @@ final class ActivityStack {
         prev.task.touchActiveTime();
         clearLaunchTime(prev);
         final ActivityRecord next = mStackSupervisor.topRunningActivityLocked();
-        if (next == null || next.task != prev.task) {
-            prev.updateThumbnail(screenshotActivities(prev), null);
+        if (!prev.isHomeActivity()) {
+        prev.updateThumbnail(screenshotActivities(prev), null);
         }
         stopFullyDrawnTraceIfNeeded();
 
@@ -1127,11 +1122,13 @@ final class ActivityStack {
                                 mStackSupervisor.startSpecificActivityLocked(r, false, false);
                             }
                         }
+
                     } else if (r.visible) {
                         // If this activity is already visible, then there is nothing
                         // else to do here.
                         if (DEBUG_VISBILITY) Slog.v(TAG, "Skipping: already visible at " + r);
                         r.stopFreezingScreenLocked(false);
+
                     } else if (onlyThisProcess == null) {
                         // This activity is not currently visible, but is running.
                         // Tell it to become visible.
@@ -1162,14 +1159,17 @@ final class ActivityStack {
                     // Aggregate current change flags.
                     configChanges |= r.configChangeFlags;
 
+		    int mHaloEnabled = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.HALO_ENABLED, 0));
                     boolean isSplitView = false;
 
-                    try {
-                        IWindowManager wm = (IWindowManager) WindowManagerGlobal.getWindowManagerService();
-                        isSplitView = wm.isTaskSplitView(r.task.taskId);
-                    } catch (RemoteException e) {
-                        Slog.e(TAG, "Cannot get split view status", e);
-                    }
+		    if(mHaloEnabled != 1){
+		            try {
+		                IWindowManager wm = (IWindowManager) WindowManagerGlobal.getWindowManagerService();
+		                isSplitView = wm.isTaskSplitView(r.task.taskId);
+		            } catch (RemoteException e) {
+		                Slog.e(TAG, "Cannot get split view status", e);
+		            }
+		    }
 
                     if (r.fullscreen && !isSplitView) {
                         // At this point, nothing else needs to be shown
@@ -1735,23 +1735,24 @@ final class ActivityStack {
 
     private final void updatePrivacyGuardNotificationLocked(ActivityRecord next) {
 
-        if (mPrivacyGuardPackageName != null && mPrivacyGuardPackageName.equals(next.packageName)) {
+        String privacyGuardPackageName = mStackSupervisor.mPrivacyGuardPackageName;
+        if (privacyGuardPackageName != null && privacyGuardPackageName.equals(next.packageName)) {
             return;
         }
 
         boolean privacy = mService.mAppOpsService.getPrivacyGuardSettingForPackage(
                 next.app.uid, next.packageName);
 
-        if (mPrivacyGuardPackageName != null && !privacy) {
+        if (privacyGuardPackageName != null && !privacy) {
             Message msg = mService.mHandler.obtainMessage(
                     ActivityManagerService.CANCEL_PRIVACY_NOTIFICATION_MSG, next.userId);
             msg.sendToTarget();
-            mPrivacyGuardPackageName = null;
+            mStackSupervisor.mPrivacyGuardPackageName = null;
         } else if (privacy) {
             Message msg = mService.mHandler.obtainMessage(
                     ActivityManagerService.POST_PRIVACY_NOTIFICATION_MSG, next);
             msg.sendToTarget();
-            mPrivacyGuardPackageName = next.packageName;
+            mStackSupervisor.mPrivacyGuardPackageName = next.packageName;
         }
     }
 
@@ -3231,9 +3232,7 @@ final class ActivityStack {
 
         final TaskRecord task = mResumedActivity != null ? mResumedActivity.task : null;
         if (task == tr && task.mOnTopOfHome || numTasks <= 1) {
-            if (task != null) {
-                task.mOnTopOfHome = false;
-            }
+            tr.mOnTopOfHome = false;
             return mStackSupervisor.resumeHomeActivity(null);
         }
 

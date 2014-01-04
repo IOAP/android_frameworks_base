@@ -5245,12 +5245,6 @@ public class WindowManagerService extends IWindowManager.Stub
         ShutdownThread.reboot(getUiContext(), null, true);
     }
 
-    // Called by window manager policy.  Not exposed externally.
-    @Override
-    public void rebootTile() {
-        ShutdownThread.reboot(mContext, null, true);
-    } 
-
     public void setCurrentUser(final int newUserId) {
         synchronized (mWindowMap) {
             int oldUserId = mCurrentUserId;
@@ -5351,7 +5345,8 @@ public class WindowManagerService extends IWindowManager.Stub
                 boolean haveWallpaper = false;
                 boolean wallpaperEnabled = mContext.getResources().getBoolean(
                         com.android.internal.R.bool.config_enableWallpaperService)
-                        && !mOnlyCore;
+                        && !mOnlyCore &&
+                        !"0".equals(SystemProperties.get("persist.sys.show_wallpaper", "1"));
                 boolean haveKeyguard = true;
                 // TODO(multidisplay): Expand to all displays?
                 final WindowList windows = getDefaultWindowListLocked();
@@ -9933,30 +9928,36 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
             }
 
-            if (DEBUG_FOCUS_LIGHT) Slog.v(TAG, "findFocusedWindow: Found new focus @ " + i +
-                        " = " + win);
+            if (DEBUG_FOCUS_LIGHT) Slog.v(TAG, "findFocusedWindow: Found new focus @ " + i + " = " + win);
 
-            // Dispatch to this window if it is wants key events.
-            if (win.canReceiveKeys()) {
-                if (mFocusedApp != null) {
-                    if (mIsTokenSplitted.containsKey(mFocusedApp.token) && mIsTokenSplitted.get(mFocusedApp.token)) {
-                        if ((mTaskTouched != null && mTaskTouched.equals(mFocusedApp.token)) || mTaskTouched == null) {
-                            if (DEBUG_FOCUS) Slog.v(
-                                TAG, "Found focus @ " + i + " = " + win);
-                            return win;
-                        } else {
-                            if (DEBUG_FOCUS || localLOGV) Slog.v(
-                                TAG, "Task " + win + " is split, but not last touched");
-                        }
-                    } else {
-                        if (DEBUG_FOCUS) Slog.v(TAG, "Task " + win + " has no split token");
-                        return win;
-                    }
-                } else {
-                    if (DEBUG_FOCUS) Slog.v(TAG, "Null thisApp");
-                    return win;
-                }
-            }
+	    int mHaloEnabled = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.HALO_ENABLED, 0));
+
+            if(mHaloEnabled != 1){
+		    // Dispatch to this window if it is wants key events.
+		    if (win.canReceiveKeys()) {
+		        if (mFocusedApp != null) {
+		            if (mIsTokenSplitted.containsKey(mFocusedApp.token) && mIsTokenSplitted.get(mFocusedApp.token)) {
+		                if ((mTaskTouched != null && mTaskTouched.equals(mFocusedApp.token)) || mTaskTouched == null) {
+		                    if (DEBUG_FOCUS) Slog.v(
+		                        TAG, "Found focus @ " + i + " = " + win);
+		                    return win;
+		                } else {
+		                    if (DEBUG_FOCUS || localLOGV) Slog.v(
+		                        TAG, "Task " + win + " is split, but not last touched");
+		                }
+		            } else {
+		                if (DEBUG_FOCUS) Slog.v(TAG, "Task " + win + " has no split token");
+		                return win;
+		            }
+		        } else {
+		            if (DEBUG_FOCUS) Slog.v(TAG, "Null thisApp");
+		            return win;
+		        }
+		    }	
+	    }else{
+		return win;
+	    }
+	    
         }
 
         if (DEBUG_FOCUS_LIGHT) Slog.v(TAG, "findFocusedWindow: No focusable windows.");
@@ -10954,13 +10955,14 @@ public class WindowManagerService extends IWindowManager.Stub
         return mWindowMap;
     }
 
+
+
     @Override
     public void addSystemUIVisibilityFlag(int flag) {
         mLastStatusBarVisibility |= flag;
     }
 
     /** SPLIT VIEW **/
-
     private int mSplitViewTasks[];
     private int mNextSplitViewLocation;
     private Map<Integer, Boolean> mIsTaskSplitted;
@@ -11059,7 +11061,6 @@ public class WindowManagerService extends IWindowManager.Stub
             final long origId = Binder.clearCallingIdentity();
             try {
                 mActivityManager.moveTaskToFront(mActivityManager.getTaskForActivity(token, false), 0, null);
-                Log.e("XPLOD", "Moved activity to front because TOUCH!");
             } catch (RemoteException e) {
                 Log.e(TAG, "Cannot move the activity to front", e);
             }
@@ -11137,6 +11138,5 @@ public class WindowManagerService extends IWindowManager.Stub
         }
 
     }
-
     /** END SPLIT VIEW **/
 }

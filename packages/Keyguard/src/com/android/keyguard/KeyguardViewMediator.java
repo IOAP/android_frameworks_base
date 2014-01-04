@@ -548,6 +548,10 @@ public class KeyguardViewMediator {
         mLockSoundVolume = (float)Math.pow(10, (float)lockSoundDefaultAttenuation/20);
     }
 
+    public void setBackgroundBitmap(Bitmap bmp) {
+        mKeyguardViewManager.setBackgroundBitmap(bmp);
+    }
+
     /**
      * Let us know that the system is ready after startup.
      */
@@ -625,7 +629,8 @@ public class KeyguardViewMediator {
                 }
             } else if (mShowing) {
                 notifyScreenOffLocked();
-                resetStateLocked(null);
+                // It doesn't make sense to me to reset the lockscreen when screen is turned off on lockscreen
+                // resetStateLocked(null);
             } else if (why == WindowManagerPolicy.OFF_BECAUSE_OF_TIMEOUT
                    || (why == WindowManagerPolicy.OFF_BECAUSE_OF_USER && !lockImmediately)) {
                 doKeyguardLaterLocked();

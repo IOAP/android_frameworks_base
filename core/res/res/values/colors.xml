@@ -92,7 +92,7 @@
     <color name="perms_dangerous_perm_color">#33b5e5</color>
     <color name="shadow">#cc222222</color>
     <color name="perms_costs_money">#ffffbb33</color>
-
+    
     <!-- For search-related UIs -->
     <color name="search_url_text_normal">#7fa87f</color>
     <color name="search_url_text_selected">@android:color/black</color>
@@ -194,6 +194,15 @@
 
     <drawable name="notification_template_icon_bg">#3333B5E5</drawable>
     <drawable name="notification_template_icon_low_bg">#0cffffff</drawable>
+
+    <!-- iokp rom colors -->
+    
+    <color name="iokp_yellow">#ffebee00</color>
+    <color name="iokp_red">#ffe61010</color>
+    <color name="iokp_orange">#ffff890b</color>
+    <color name="iokp_blue">#ff07eded</color>
+    <color name="iokp_pink">#ffdb7fb0</color>
+    <color name="iokp_white">#ffffffff</color>
 
     <!-- Keyguard colors -->
     <color name="keyguard_avatar_frame_color">#ffffffff</color>

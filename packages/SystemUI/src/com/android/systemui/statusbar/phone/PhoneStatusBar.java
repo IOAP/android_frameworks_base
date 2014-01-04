@@ -34,7 +34,6 @@ import android.app.ActivityManagerNative;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.StatusBarManager;
-import android.content.ContentResolver;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -90,6 +89,8 @@ import android.widget.ImageView;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.TabHost;
+import android.widget.TabHost.TabSpec;
 import android.widget.TextView;
 
 import com.android.internal.statusbar.StatusBarIcon;
@@ -99,6 +100,7 @@ import com.android.systemui.DockBatteryMeterView;
 import com.android.systemui.EventLogTags;
 import com.android.systemui.R;
 import com.android.systemui.BatteryMeterView;
+import com.android.systemui.statusbar.AppSidebar;
 import com.android.systemui.statusbar.BaseStatusBar;
 import com.android.systemui.statusbar.CommandQueue;
 import com.android.systemui.statusbar.GestureRecorder;
@@ -109,7 +111,6 @@ import com.android.systemui.statusbar.SignalClusterView;
 import com.android.systemui.statusbar.StatusBarIconView;
 import com.android.systemui.statusbar.policy.BatteryController;
 import com.android.systemui.statusbar.policy.BluetoothController;
-import com.android.systemui.statusbar.policy.Clock;
 import com.android.systemui.statusbar.policy.DateView;
 import com.android.systemui.statusbar.policy.DockBatteryController;
 import com.android.systemui.statusbar.policy.HeadsUpNotificationView;
@@ -191,6 +192,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
     int mIconHPadding = -1;
     Display mDisplay;
     Point mCurrentDisplaySize = new Point();
+    int mCurrUiThemeMode;
     private float mHeadsUpVerticalOffset;
     private int[] mPilePosition = new int[2];
 
@@ -213,11 +215,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
     IconMerger mNotificationIcons;
     // [+>
     View mMoreIcon;
-    Clock mCenterClock;
-    LinearLayout mCenterClockLayout;
-    Clock mClock;
-    int mClockMode = 1;
-    boolean mShowClock = true;
 
     // expanded notifications
     NotificationPanelView mNotificationPanel; // the sliding/resizing panel within the notification window
@@ -301,8 +298,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
     // last theme that was applied in order to detect theme change (as opposed
     // to some other configuration change).
     CustomTheme mCurrentTheme;
-    private boolean mRecreating = false;
 
+    // status bar brightness control
     private boolean mBrightnessControl;
     private float mScreenWidth;
     private int mMinBrightness;
@@ -311,6 +308,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
     int mLinger;
     int mInitialTouchX;
     int mInitialTouchY;
+
+    private boolean mRecreating = false;
 
     // for disabling the status bar
     int mDisabled = 0;
@@ -449,12 +448,18 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
             doAutoHide();
         }};
 
-    private ContentObserver mClockModeObserver = new ContentObserver(new Handler()) {
+    private final Runnable mUserAutohide = new Runnable() {
         @Override
-        public void onChange(boolean selfChange) {
-             mClockMode = Settings.System.getInt(mContext.getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1);
+        public void run() {
+            doAutoHide();
+        }};
+
+    private void doAutoHide() {
+        int requested = mSystemUiVisibility & ~STATUS_OR_NAV_TRANSIENT;
+        if (mSystemUiVisibility != requested) {
+            notifyUiVisibilityChanged(requested);
         }
-    };
+    }
 
     @Override
     public void start() {
@@ -466,6 +471,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
         if (currentTheme != null) {
             mCurrentTheme = (CustomTheme)currentTheme.clone();
         }
+
+        mCurrUiThemeMode = mContext.getResources().getConfiguration().uiThemeMode;
 
         super.start(); // calls createAndAddWindows()
 
@@ -483,6 +490,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
                     Settings.Global.getUriFor(SETTING_HEADS_UP), true,
                     mHeadsUpObserver);
         }
+
     }
 
     private void cleanupRibbon() {
@@ -603,6 +611,14 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
             }
         });
 
+        if (mRecreating) {
+	    removeSidebarView();
+        } else {
+            addActiveDisplayView();
+        }
+
+	addSidebarView();
+
         // figure out which pixel-format to use for the status bar.
         mPixelFormat = PixelFormat.OPAQUE;
 
@@ -612,16 +628,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
         mMoreIcon = mStatusBarView.findViewById(R.id.moreIcon);
         mNotificationIcons.setOverflowIndicator(mMoreIcon);
         mStatusBarContents = (LinearLayout)mStatusBarView.findViewById(R.id.status_bar_contents);
-        mClock = (Clock)mStatusBarView.findViewById(R.id.clock);
-        mCenterClock = (Clock)mStatusBarView.findViewById(R.id.center_clock);
-        mCenterClockLayout = (LinearLayout)mStatusBarView.findViewById(R.id.center_clock_layout);
         mTickerView = mStatusBarView.findViewById(R.id.ticker);
-
-        mClockMode = Settings.System.getInt(mContext.getContentResolver(), Settings.System.STATUS_BAR_CLOCK, 1);
-        mContext.getContentResolver().registerContentObserver(
-                Settings.Secure.getUriFor(Settings.System.STATUS_BAR_CLOCK), true,
-                mClockModeObserver,
-                1);
 
         mPile = (NotificationRowLayout)mStatusBarWindow.findViewById(R.id.latestItems);
         mPile.setLayoutTransitionsEnabled(false);
@@ -641,9 +648,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
         mHasFlipSettings = res.getBoolean(R.bool.config_hasFlipSettingsPanel);
 
         mDateTimeView = mNotificationPanelHeader.findViewById(R.id.datetime);
-        if (mDateTimeView != null) {
-            mDateTimeView.setEnabled(true);
-        }
 
         mSettingsButton = (ImageView) mStatusBarWindow.findViewById(R.id.settings_button);
         if (mSettingsButton != null) {
@@ -840,6 +844,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
 
         // receive broadcasts
         IntentFilter filter = new IntentFilter();
+	filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
         filter.addAction(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         filter.addAction(Intent.ACTION_SCREEN_ON);
@@ -1414,12 +1419,16 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
         updateCarrierLabelVisibility(false);
     }
 
-    public void showClock() {
-        if (mClock != null) {
-            mClock.setVisibility(mClockMode == 1 && mShowClock ? View.VISIBLE : View.GONE);
-        }
-        if (mCenterClock != null) {
-            mCenterClock.setVisibility(mClockMode == 2 && mShowClock ? View.VISIBLE : View.GONE);
+    public void showClock(boolean show) {
+        mShowClock = show;
+        updateClockVisibility();
+    }
+
+    private void updateClockVisibility() {
+        if (mStatusBarView == null) return;
+        View clock = mStatusBarView.findViewById(R.id.clock);
+        if (clock != null) {
+            clock.setVisibility(mClockEnabled && mShowClock ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -1484,8 +1493,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
         }
 
         if ((diff & StatusBarManager.DISABLE_CLOCK) != 0) {
-            mShowClock = (state & StatusBarManager.DISABLE_CLOCK) == 0;
-            showClock();
+            boolean show = (state & StatusBarManager.DISABLE_CLOCK) == 0;
+            showClock(show);
         }
         if ((diff & StatusBarManager.DISABLE_EXPAND) != 0) {
             if ((state & StatusBarManager.DISABLE_EXPAND) != 0) {
@@ -2425,7 +2434,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
         mHandler.postDelayed(mUserAutohide, 350); // longer than app gesture -> flag clear
     }
 
-    private boolean areLightsOn() {
+    public boolean areLightsOn() {
         return 0 == (mSystemUiVisibility & View.SYSTEM_UI_FLAG_LOW_PROFILE);
     }
 
@@ -2445,6 +2454,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
         }
     }
 
+    @Override
     public void topAppWindowChanged(boolean showMenu) {
         if (DEBUG) {
             Log.d(TAG, (showMenu?"showing":"hiding") + " the MENU button");
@@ -2501,33 +2511,36 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
 
         @Override
         public void tickerStarting() {
-            mTicking = true;
-            mCenterClockLayout.setVisibility(View.GONE);
-            mCenterClockLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
-            mStatusBarContents.setVisibility(View.GONE);
-            mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
-            mTickerView.setVisibility(View.VISIBLE);
-            mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_up_in, null));
+	    if (!mHaloActive) {
+                mTicking = true;
+                mStatusBarContents.setVisibility(View.GONE);
+                mTickerView.setVisibility(View.VISIBLE);
+                mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_up_in, null));
+                mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            }
         }
 
         @Override
         public void tickerDone() {
-            mCenterClockLayout.setVisibility(View.VISIBLE);
-            mCenterClockLayout.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
-            mStatusBarContents.setVisibility(View.VISIBLE);
-            mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
-            mTickerView.setVisibility(View.GONE);
-            mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_down_out,
+	    if (!mHaloActive) {
+                mStatusBarContents.setVisibility(View.VISIBLE);
+                mTickerView.setVisibility(View.GONE);
+                mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
+                mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_down_out,
                             mTickingDoneListener));
+	    }
         }
 
         public void tickerHalting() {
-            mCenterClockLayout.setVisibility(View.VISIBLE);
-            mCenterClockLayout.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
-            mTickerView.setVisibility(View.GONE);
-            mStatusBarContents.setVisibility(View.VISIBLE);
-            mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
-            // we do not animate the ticker away at this point, just get rid of it (b/6992707)
+	    if (!mHaloActive) {
+                if (mStatusBarContents.getVisibility() != View.VISIBLE) {
+                    mStatusBarContents.setVisibility(View.VISIBLE);
+                    mStatusBarContents
+                            .startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
+                }
+                mTickerView.setVisibility(View.GONE);
+                // we do not animate the ticker away at this point, just get rid of it (b/6992707)
+	    }
         }
     }
 
@@ -2837,10 +2850,15 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
 
     private View.OnClickListener mHaloButtonListener = new View.OnClickListener() {
         public void onClick(View v) {
-            startActivityDismissingKeyguard(new Intent(Intent.ACTION_QUICK_CLOCK), true); // have fun, everyone
+            // Activate HALO
+            Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.HALO_ACTIVE, 1);
+            // Switch off regular ticker
+            mTickerView.setVisibility(View.GONE);
+            // Collapse
+            animateCollapsePanels();
         }
     };
-
 
     private View.OnClickListener mNotificationButtonListener = new View.OnClickListener() {
         public void onClick(View v) {
@@ -2869,6 +2887,24 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
                 notifyNavigationBarScreenOn(false);
                 notifyHeadsUpScreenOn(false);
                 finishBarAnimations();
+            }
+            else if (Intent.ACTION_CONFIGURATION_CHANGED.equals(action)) {
+                Configuration config = mContext.getResources().getConfiguration();
+                try {
+                    // position app sidebar on left if in landscape orientation and device has a navbar
+                    if (mWindowManagerService.hasNavigationBar() &&
+                            config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                        mWindowManager.updateViewLayout(mAppSidebar,
+                                getAppSidebarLayoutParams(AppSidebar.SIDEBAR_POSITION_LEFT));
+                        mHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                mAppSidebar.setPosition(AppSidebar.SIDEBAR_POSITION_LEFT);
+                            }
+                        }, 500);
+                    }
+                } catch (RemoteException e) {
+                }
             }
             else if (Intent.ACTION_SCREEN_ON.equals(action)) {
                 mScreenOn = true;
@@ -3095,6 +3131,13 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
                 ((TextView)mClearButton).setText(context.getText(R.string.status_bar_clear_all_button));
             }
             loadDimens();
+        }
+
+        // detect theme ui mode change
+        int uiThemeMode = res.getConfiguration().uiThemeMode;
+        if (uiThemeMode != mCurrUiThemeMode) {
+            mCurrUiThemeMode = uiThemeMode;
+            recreateStatusBar();
         }
 
         // Update the QuickSettings container
@@ -3364,12 +3407,34 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
                     cleanupRibbon();
                     inflateRibbon();
                     mRibbonView.setVisibility(View.VISIBLE);
+            }else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.NOTIFICATION_BACKGROUND))
+                || uri.equals(Settings.System.getUriFor(
+                    Settings.System.NOTIFICATION_BACKGROUND_LANDSCAPE))
+                || uri.equals(Settings.System.getUriFor(
+                    Settings.System.NOTIFICATION_BACKGROUND_ALPHA))) {
+                if (mNotificationPanel != null) {
+                    mNotificationPanel.setBackgroundDrawables();
+                }
+                if (mSettingsPanel != null) {
+                    mSettingsPanel.setBackgroundDrawables();
+                }
             } else if (mSettingsContainer != null) {
                 mQS.setupQuickSettings();
                 if (mQuickAccessLayoutLinked && mRibbonQS != null) {
                     mRibbonQS.setupQuickSettings();
                 }
+	    }
+
+	    final ContentResolver cr = mContext.getContentResolver();
+
+            int sidebarPosition = Settings.System.getInt(
+                    cr, Settings.System.APP_SIDEBAR_POSITION, AppSidebar.SIDEBAR_POSITION_LEFT);
+            if (sidebarPosition != mSidebarPosition) {
+                mSidebarPosition = sidebarPosition;
+                mWindowManager.updateViewLayout(mAppSidebar, getAppSidebarLayoutParams(sidebarPosition));
             }
+
         }
 
         public void startObserving() {
@@ -3413,6 +3478,23 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_RIBBON_TILES),
                     false, this, UserHandle.USER_ALL);
+
+            cr.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.APP_SIDEBAR_POSITION),
+                    false, this, UserHandle.USER_ALL);
+
+            cr.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.NOTIFICATION_BACKGROUND),
+                    false, this, UserHandle.USER_ALL);
+
+            cr.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.NOTIFICATION_BACKGROUND_LANDSCAPE),
+                    false, this, UserHandle.USER_ALL);
+
+            cr.registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.NOTIFICATION_BACKGROUND_ALPHA),
+                    false, this, UserHandle.USER_ALL);
+
         }
     }
 }

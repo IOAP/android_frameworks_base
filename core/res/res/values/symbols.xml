@@ -1258,7 +1258,7 @@
   <java-symbol type="style" name="Theme.DeviceDefault.Dialog.NoFrame" />
   <java-symbol type="style" name="Theme.IconMenu" />
   <java-symbol type="style" name="Theme.Panel.Volume" />
-  
+
   <java-symbol type="attr" name="mediaRouteButtonStyle" />
   <java-symbol type="attr" name="externalRouteEnabledDrawable" />
   <java-symbol type="layout" name="media_route_chooser_dialog" />
@@ -1768,10 +1768,8 @@
   <java-symbol type="dimen" name="subtitle_shadow_offset" />
   <java-symbol type="dimen" name="subtitle_outline_width" />
 
-<!-- ===============================================================
-   Resources added in version 10 of CyanogenMod
-   =============================================================== -->
-  <eat-comment />
+  <!-- ################################# AOKP Symbols ############################### 
+-->
 
   <!-- Reboot confirmation string -->
   <java-symbol type="string" name="reboot_confirm" />
@@ -1945,5 +1943,22 @@
   <java-symbol type="string" name="symbol_picker_Y" />
   <java-symbol type="string" name="symbol_picker_z" />
   <java-symbol type="string" name="symbol_picker_Z" />
+
+  <!-- Boot message dialog -->
+  <java-symbol type="drawable" name="busy_dlg_animation" />
+  <java-symbol type="drawable" name="busy_dlg_animation_0" />
+  <java-symbol type="drawable" name="busy_dlg_animation_1" />
+  <java-symbol type="drawable" name="busy_dlg_animation_2" />
+  <java-symbol type="drawable" name="busy_dlg_animation_3" />
+  <java-symbol type="drawable" name="busy_dlg_animation_4" />
+  <java-symbol type="drawable" name="busy_dlg_animation_5" />
+  <java-symbol type="drawable" name="busy_dlg_animation_6" />
+  <java-symbol type="drawable" name="busy_dlg_animation_7" />
+  <java-symbol type="drawable" name="busy_dlg_animation_8" />
+  <java-symbol type="drawable" name="busy_dlg_animation_9" />
+  <java-symbol type="drawable" name="busy_dlg_icon" />
+  <java-symbol type="id" name="busy_dlg_animation" />
+  <java-symbol type="id" name="busy_dlg_title" />
+  <java-symbol type="layout" name="busy_dlg" />
 
 </resources>

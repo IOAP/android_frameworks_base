@@ -27,24 +27,21 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.IPackageDataObserver;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.graphics.Rect;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.Shader.TileMode;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -55,7 +52,6 @@ import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Display;
 import android.view.IWindowManager;
 import android.view.LayoutInflater;
@@ -63,10 +59,10 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewPropertyAnimator;
-import android.view.ViewRootImpl;
 import android.view.WindowManager;
 import android.view.WindowManagerGlobal;
+import android.view.ViewPropertyAnimator;
+import android.view.ViewRootImpl;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
@@ -79,13 +75,19 @@ import android.widget.ImageView.ScaleType;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 
+
 import com.android.systemui.R;
 import com.android.systemui.statusbar.BaseStatusBar;
 import com.android.systemui.statusbar.StatusBarPanel;
 import com.android.systemui.statusbar.phone.PhoneStatusBar;
 
+import com.android.internal.util.MemInfoReader;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class RecentsPanelView extends FrameLayout implements OnItemClickListener, RecentsCallback,
         StatusBarPanel, Animator.AnimatorListener {
@@ -111,10 +113,22 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     private boolean mFitThumbnailToXY;
     private int mRecentItemLayoutId;
     private boolean mHighEndGfx;
-    private ImageView mClearRecents;
-
     private int mDragPositionX;
     private int mDragPositionY;
+    private ImageView mClearRecents;
+    private LinearColorBar mRamUsageBar;
+
+    private long mFreeMemory;
+    private long mTotalMemory;
+    private long mCachedMemory;
+    private long mActiveMemory;
+
+    TextView mUsedMemText;
+    TextView mFreeMemText;
+    TextView mRamText;
+
+    MemInfoReader mMemInfoReader = new MemInfoReader();
+   
 
     public static interface RecentsScrollView {
         public int numItemsInOneScreenful();
@@ -245,14 +259,19 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                 }
             }
 
+	    int mHaloEnabled = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.HALO_ENABLED, 0));
+
             holder.thumbnailView.setTag(td);
             holder.thumbnailView.setOnLongClickListener(new OnLongClickDelegate(convertView));
-            holder.thumbnailView.setOnTouchListener(new OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent m) {
-                    return handleThumbnailTouch(m, holder.thumbnailView);
-                }
-            });
+
+	    if(mHaloEnabled != 1){
+		    holder.thumbnailView.setOnTouchListener(new OnTouchListener() {
+		        @Override
+		        public boolean onTouch(View v, MotionEvent m) {
+		            return handleThumbnailTouch(m, holder.thumbnailView);
+		        }
+		    });
+	    }
             holder.taskDescription = td;
             return convertView;
         }
@@ -392,7 +411,7 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             int action = m.getActionMasked();
             int currX = (int) m.getX(1);
             int currY = (int) m.getY(1);
-            
+
             switch (action) {
                 case MotionEvent.ACTION_DOWN:
                 case MotionEvent.ACTION_POINTER_DOWN:
@@ -413,7 +432,6 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                     mDragPositionY = currY;
                     break;
             }
-            
             return true;
         } else {
             mDragPositionX = 0;
@@ -538,7 +556,7 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             mClearRecents.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    ((ViewGroup) mRecentsContainer).removeAllViewsInLayout();
+                    mRecentsContainer.removeAllViewsInLayout();
                 }
             });
         }
@@ -556,6 +574,7 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
 
     public void setMinSwipeAlpha(float minAlpha) {
         mRecentsContainer.setMinSwipeAlpha(minAlpha);
+		updateRamBar();
     }
 
     private void createCustomAnimations(LayoutTransition transitioner) {
@@ -686,16 +705,19 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             mRecentTaskDescriptions = null;
             mListAdapter.notifyDataSetInvalidated();
         }
+		updateRamBar();
     }
 
     public void refreshViews() {
         mListAdapter.notifyDataSetInvalidated();
         updateUiElements();
         showIfReady();
+		updateRamBar();
     }
 
     public void refreshRecentTasksList() {
         refreshRecentTasksList(null, false);
+		updateRamBar();
     }
 
     private void refreshRecentTasksList(
@@ -773,21 +795,25 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                         holder.thumbnailViewImage, bm, 0, 0, null).toBundle();
 
         show(false);
-
         if (ad.taskId >= 0) {
             // This is an active task; it should just go to the foreground.
+
+	    int mHaloEnabled = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.HALO_ENABLED, 0));
+
             // If that task was split viewed, a normal press wil resume it to
             // normal fullscreen view
-            IWindowManager wm = (IWindowManager) WindowManagerGlobal.getWindowManagerService();
-            try {
-                if (DEBUG) Log.v(TAG, "Restoring window full screen after split, because of normal tap");
-                wm.setTaskSplitView(ad.taskId, false);
-            } catch (RemoteException e) {
-                Log.e(TAG, "Could not setTaskSplitView to fullscreen", e);
-            }
-
+	    if(mHaloEnabled != 1){
+		    IWindowManager wm = (IWindowManager) WindowManagerGlobal.getWindowManagerService();
+		    try {
+		        if (DEBUG) Log.v(TAG, "Restoring window full screen after split, because of normal tap");
+		        wm.setTaskSplitView(ad.taskId, false);
+		    } catch (RemoteException e) {
+		        Log.e(TAG, "Could not setTaskSplitView to fullscreen", e);
+		    }
+	    }
             am.moveTaskToFront(ad.taskId, ActivityManager.MOVE_TASK_WITH_HOME,
                     opts);
+	    
         } else {
             Intent intent = ad.intent;
             intent.addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
@@ -862,11 +888,11 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     }
 
     /**
-     * Opens the task linked in the ViewHolder in split view mode.
-     * @param holder ViewHolder of a task thumbnail
-     * @param location Where to put the split app (-1 for auto, 0 for top, 1 for bottom (the
-     * reference is a phone in portrait))
-     */
+	* Opens the task linked in the ViewHolder in split view mode.
+	* @param holder ViewHolder of a task thumbnail
+	* @param location Where to put the split app (-1 for auto, 0 for top, 1 for bottom (the
+	* reference is a phone in portrait))
+    */
     public void openInSplitView(ViewHolder holder, int location) {
         if (holder != null) {
             final Context context = holder.thumbnailView.getContext();
@@ -940,11 +966,13 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                 }
             }
 
+	    /** notify split view layout changes **/
             try {
                 ActivityManagerNative.getDefault().notifySplitViewLayoutChanged();
             } catch (RemoteException e) {
                 Log.e(TAG, "Could not notify split view layout", e);
             }
+
         } else {
             throw new IllegalStateException("Oops, no tag on view to split!");
         }
@@ -956,7 +984,14 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
         final PopupMenu popup =
             new PopupMenu(mContext, anchorView == null ? selectedView : anchorView);
         mPopup = popup;
-        popup.getMenuInflater().inflate(R.menu.recent_popup_menu, popup.getMenu());
+
+	int mHaloEnabled = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.HALO_ENABLED, 0));
+
+	if(mHaloEnabled != 1){
+        	popup.getMenuInflater().inflate(R.menu.recent_popup_menu_split, popup.getMenu());
+	}else{
+		popup.getMenuInflater().inflate(R.menu.recent_popup_menu, popup.getMenu());
+	}
 
         final ContentResolver cr = mContext.getContentResolver();
         if (Settings.Secure.getInt(cr,
@@ -988,6 +1023,9 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
         }
         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
+
+		int mHaloEnabled = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.HALO_ENABLED, 0));
+
                 if (item.getItemId() == R.id.recent_remove_item) {
                     ((ViewGroup) mRecentsContainer).removeViewInLayout(selectedView);
                 } else if (item.getItemId() == R.id.recent_inspect_item) {
@@ -1022,7 +1060,7 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                     } else {
                         throw new IllegalStateException("Oops, no tag on view " + selectedView);
                     }
-                } else if (item.getItemId() == R.id.recent_add_split_view) {
+                } else if (item.getItemId() == R.id.recent_add_split_view && mHaloEnabled != 1) {
                     // Either start a new activity in split view, or move the current task
                     // to front, but resized
                     ViewHolder holder = (ViewHolder)selectedView.getTag();
@@ -1078,6 +1116,158 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
 
     class FakeClearUserDataObserver extends IPackageDataObserver.Stub {
         public void onRemoveCompleted(final String packageName, final boolean succeeded) {
+        }
+    }
+
+    private void updateRamBar() {
+        mRamUsageBar = (LinearColorBar) findViewById(R.id.ram_usage_bar);
+
+        int mRamBarMode = (Settings.System.getInt(mContext.getContentResolver(),
+                             Settings.System.RECENTS_RAM_BAR_MODE, 0));
+
+        if (mRamBarMode != 0 && mRamUsageBar != null) {
+
+            long usedMem = 0;
+            long freeMem = 0;
+
+                mRamUsageBar.setVisibility(View.VISIBLE);
+                updateMemoryInfo();
+   
+                switch (mRamBarMode) {
+                    case 1:
+                        usedMem = mActiveMemory;
+                        freeMem = mTotalMemory - mActiveMemory;
+                        break;
+                    case 2:
+                        usedMem = mActiveMemory + mCachedMemory;
+                        freeMem = mTotalMemory - mActiveMemory - mCachedMemory;
+                        break;
+                    case 3:
+                        usedMem = mTotalMemory - mFreeMemory;
+                        freeMem = mFreeMemory;
+                        break;
+                }
+
+            mUsedMemText = (TextView)findViewById(R.id.usedMemText);
+            mFreeMemText = (TextView)findViewById(R.id.freeMemText);
+            mRamText = (TextView)findViewById(R.id.ramText);
+            mUsedMemText.setText(getResources().getString(
+                    R.string.service_used_mem, usedMem + " MB"));
+            mFreeMemText.setText(getResources().getString(
+                    R.string.service_free_mem, freeMem + " MB"));
+            mRamText.setText(getResources().getString(
+                    R.string.memory));
+            float totalMem = mTotalMemory;
+            float totalShownMem = (mTotalMemory - mFreeMemory - mCachedMemory - mActiveMemory)/ totalMem;
+            float totalActiveMem = mActiveMemory / totalMem;
+            float totalCachedMem = mCachedMemory / totalMem;
+            mRamUsageBar.setRatios(totalShownMem, totalCachedMem, totalActiveMem);
+
+            mRamUsageBar.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent();
+                    intent.setComponent(new ComponentName(
+                            "com.android.settings",
+                            "com.android.settings.RunningServices"));
+
+                    try {
+                        // Dismiss the lock screen when Settings starts.
+                        ActivityManagerNative.getDefault().dismissKeyguardOnNextActivity();
+                    } catch (RemoteException e) {
+                    }
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                            | Intent.FLAG_ACTIVITY_MULTIPLE_TASK
+                            | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                            | Intent.FLAG_ACTIVITY_NO_HISTORY);
+                    mContext.startActivityAsUser(intent, new UserHandle(UserHandle.USER_CURRENT));
+                }
+            });
+
+            mRamUsageBar.setOnLongClickListener(new OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    Intent intent = new Intent();
+                    intent.setComponent(new ComponentName(
+                            "com.android.settings",
+                            "com.android.settings.Settings$ASSRamBarActivity"));
+
+                    try {
+                        // Dismiss the lock screen when Settings starts.
+                        ActivityManagerNative.getDefault().dismissKeyguardOnNextActivity();
+                    } catch (RemoteException e) {
+                    }
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                            | Intent.FLAG_ACTIVITY_MULTIPLE_TASK
+                            | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                            | Intent.FLAG_ACTIVITY_NO_HISTORY);
+                    mContext.startActivityAsUser(intent, new UserHandle(UserHandle.USER_CURRENT));
+                    return true;
+                }
+            });
+
+        } else if (mRamUsageBar != null) {
+            mRamUsageBar.setVisibility(View.GONE);
+        }
+    }
+
+    private void updateMemoryInfo() {
+        long result = 0;
+        try {
+            String firstLine = readLine("/proc/meminfo", 1);
+            if (firstLine != null) {
+                String parts[] = firstLine.split("\\s+");
+                if (parts.length == 3) {
+                    result = Long.parseLong(parts[1])/1024;
+                }
+            }
+        } catch (IOException e) {}
+        mTotalMemory = result;
+
+        try {
+            String firstLine = readLine("/proc/meminfo", 2);
+            if (firstLine != null) {
+                String parts[] = firstLine.split("\\s+");
+                if (parts.length == 3) {
+                    result = Long.parseLong(parts[1])/1024;
+                }
+            }
+        } catch (IOException e) {}
+        mFreeMemory = result;
+
+        try {
+            String firstLine = readLine("/proc/meminfo", 6);
+            if (firstLine != null) {
+                String parts[] = firstLine.split("\\s+");
+                if (parts.length == 3) {
+                    result = Long.parseLong(parts[1])/1024;
+                }
+            }
+        } catch (IOException e) {}
+        mActiveMemory = result;
+
+        try {
+            String firstLine = readLine("/proc/meminfo", 4);
+            if (firstLine != null) {
+                String parts[] = firstLine.split("\\s+");
+                if (parts.length == 3) {
+                    result = Long.parseLong(parts[1])/1024;
+                }
+            }
+        } catch (IOException e) {}
+        mCachedMemory = result;
+
+    }
+
+    private static String readLine(String filename, int line) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(filename), 256);
+        try {
+            for(int i = 1; i < line; i++) {
+                reader.readLine();
+            }
+            return reader.readLine();
+        } finally {
+            reader.close();
         }
     }
 }

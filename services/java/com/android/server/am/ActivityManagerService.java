@@ -1230,11 +1230,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     mHandler.sendMessageDelayed(nmsg, ActiveServices.SERVICE_TIMEOUT);
                     return;
                 }
-                //synchronising to avoid proc.executingServices set
-                //getting updated while being iterated in serviceTimeout()
-                synchronized(ActivityManagerService.this){
-                    mServices.serviceTimeout((ProcessRecord)msg.obj);
-                }
+                mServices.serviceTimeout((ProcessRecord)msg.obj);
             } break;
             case UPDATE_TIME_ZONE: {
                 synchronized (ActivityManagerService.this) {
@@ -7383,7 +7379,6 @@ public final class ActivityManagerService extends ActivityManagerNative
             ArrayList<ActivityStack> stacks = mStackSupervisor.getStacks();
             for (ActivityStack stack : stacks) {
                 TaskRecord r = stack.taskForIdLocked(task);
-
                 if (r != null && r.getTopActivity() != null) {
                     return r.getTopActivity().appToken;
                 } else {
@@ -7393,7 +7388,6 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
         return null;
     }
-
 
     // =========================================================
     // THUMBNAILS
@@ -14285,32 +14279,37 @@ public final class ActivityManagerService extends ActivityManagerNative
             starting = mainStack.topRunningActivityLocked(null);
         }
 
-        if (starting != null) {
-            kept = mainStack.ensureActivityConfigurationLocked(starting, changes);
-            // And we need to make sure at this point that all other activities
-            // are made visible with the correct configuration.
-            mStackSupervisor.ensureActivitiesVisibleLocked(starting, changes);
-/*
-            if (mWindowManager.isTaskSplitView(starting.task.taskId)) {
-                Log.e("XPLOD", "Split view restoring task " + starting.task.taskId + " -- " + mIgnoreSplitViewUpdate.size());
-                ActivityRecord second = mainStack.topRunningActivityLocked(starting);
-                if (mWindowManager.isTaskSplitView(second.task.taskId)) {
-                    Log.e("XPLOD", "Split view restoring also task " + second.task.taskId);
-                    kept = kept && mainStack.ensureActivityConfigurationLocked(second, changes);
-                    mStackSupervisor.ensureActivitiesVisibleLocked(second, changes);
-                    if (mIgnoreSplitViewUpdate.contains(starting.task.taskId)) {
-                        Log.e("XPLOD", "Task "+ starting.task.taskId + " resuming ignored");
-                        mIgnoreSplitViewUpdate.removeAll(Collections.singleton((Integer) starting.task.taskId));
-                    } else {
-                        moveTaskToFront(second.task.taskId, 0, null);
-                        mIgnoreSplitViewUpdate.add(starting.task.taskId);
-                        mIgnoreSplitViewUpdate.add(second.task.taskId);
-                        mStackSupervisor.resumeTopActivitiesLocked();
-                        moveTaskToFront(starting.task.taskId, 0, null);
-                    }
-                }
-            }*/
-        }
+	if (starting != null) {
+	    kept = mainStack.ensureActivityConfigurationLocked(starting, changes);
+	    // And we need to make sure at this point that all other activities
+	    // are made visible with the correct configuration.
+	    mStackSupervisor.ensureActivitiesVisibleLocked(starting, changes);
+	    
+	    /*
+	    int mHaloEnabled = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.HALO_ENABLED, 0));
+
+	    if(mHaloEnabled != 1){
+		    if (mWindowManager.isTaskSplitView(starting.task.taskId)) {
+			Log.e("XPLOD", "Split view restoring task " + starting.task.taskId + " -- " + mIgnoreSplitViewUpdate.size());
+			ActivityRecord second = mainStack.topRunningActivityLocked(starting);
+			if (mWindowManager.isTaskSplitView(second.task.taskId)) {
+			    Log.e("XPLOD", "Split view restoring also task " + second.task.taskId);
+			    kept = kept && mainStack.ensureActivityConfigurationLocked(second, changes);
+			    mStackSupervisor.ensureActivitiesVisibleLocked(second, changes);
+			    if (mIgnoreSplitViewUpdate.contains(starting.task.taskId)) {
+				Log.e("XPLOD", "Task "+ starting.task.taskId + " resuming ignored");
+				mIgnoreSplitViewUpdate.removeAll(Collections.singleton((Integer) starting.task.taskId));
+			    } else {
+				moveTaskToFront(second.task.taskId, 0, null);
+				mIgnoreSplitViewUpdate.add(starting.task.taskId);
+				mIgnoreSplitViewUpdate.add(second.task.taskId);
+				mStackSupervisor.resumeTopActivitiesLocked();
+				moveTaskToFront(starting.task.taskId, 0, null);
+			    }
+			}
+		    }
+	    }*/
+	}
 
         if (values != null && mWindowManager != null) {
             mWindowManager.setNewConfiguration(mConfiguration);
@@ -14319,7 +14318,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         return kept;
     }
 
-private ArrayList<Integer> mIgnoreSplitViewUpdate = new ArrayList<Integer>();
+    private ArrayList<Integer> mIgnoreSplitViewUpdate = new ArrayList<Integer>();
 
     /**
      * Decide based on the configuration whether we should shouw the ANR,
@@ -15551,10 +15550,6 @@ private ArrayList<Integer> mIgnoreSplitViewUpdate = new ArrayList<Integer>();
         final long origId = Binder.clearCallingIdentity();
 
         if (mSecondTaskToResume >= 0) {
-            /*moveTaskToFront(mSecondTaskToResume, 0, null);
-            mStackSupervisor.resumeTopActivitiesLocked();
-            moveTaskToFront(starting.task.taskId, 0, null);
-            mStackSupervisor.resumeTopActivitiesLocked();*/
             moveTaskToFront(mSecondTaskToResume, 0, null);
             mStackSupervisor.resumeTopActivitiesLocked();
             mStackSupervisor.ensureActivitiesVisibleLocked(null, 0);
@@ -15567,38 +15562,11 @@ private ArrayList<Integer> mIgnoreSplitViewUpdate = new ArrayList<Integer>();
             }
         }
 
-/*
-        if (mWindowManager != null && starting != null && 
-                mWindowManager.isTaskSplitView(starting.task.taskId)) {
-            Log.e("XPLOD", "[rAL] The current resumed task " + starting.task.taskId + " is split. Checking second");
-
-            // This task was split, we resume the second task if this task wasn't already a resumed task
-            if (mIgnoreSplitViewUpdateResume.contains(starting.task.taskId)) {
-                Log.e("XPLOD", "[rAL] This task (" + starting.task.taskId + ") was called from a split-initiated resume. Ignoring.");
-                mIgnoreSplitViewUpdateResume.remove((Integer) starting.task.taskId);
-            } else {
-                ActivityRecord second = getFocusedStack().topRunningActivityLocked(starting);
-
-                // Is that second task split as well?
-                if (mWindowManager.isTaskSplitView(second.task.taskId)) {
-                    // Don't restore me again
-                    mIgnoreSplitViewUpdateResume.add((Integer) second.task.taskId);
-                    mIgnoreSplitViewUpdateResume.add((Integer) starting.task.taskId);
-                    Log.e("XPLOD", "[rAL] There is a second task that I should be ignoring next: " + second.task.taskId);
-                    moveTaskToFront(second.task.taskId, 0, null);
-                    mStackSupervisor.resumeTopActivitiesLocked();
-                    mIgnoreSplitViewUpdateResume.add((Integer) second.task.taskId);
-                    mIgnoreSplitViewUpdateResume.add((Integer) starting.task.taskId);
-                    moveTaskToFront(starting.task.taskId, 0, null);
-                }
-            }
-        }
-*/
-
         Binder.restoreCallingIdentity(origId);
 
         return starting;
     }
+
 
     final boolean updateOomAdjLocked(ProcessRecord app) {
         return updateOomAdjLocked(app, false);
@@ -16855,8 +16823,7 @@ private ArrayList<Integer> mIgnoreSplitViewUpdate = new ArrayList<Integer>();
 
         ActivityRecord starting = getFocusedStack().topRunningActivityLocked(null);
 
-        if (mWindowManager != null && starting != null && 
-                mWindowManager.isTaskSplitView(starting.task.taskId)) {
+        if (mWindowManager != null && starting != null && mWindowManager.isTaskSplitView(starting.task.taskId)) {
             Log.e("XPLOD", "[rAL] The current resumed task " + starting.task.taskId + " is split. Checking second");
 
             // This task was split, we resume the second task if this task wasn't already a resumed task
@@ -16869,11 +16836,7 @@ private ArrayList<Integer> mIgnoreSplitViewUpdate = new ArrayList<Integer>();
                 // Is that second task split as well?
                 if (mWindowManager.isTaskSplitView(second.task.taskId)) {
                     // Don't restore me again
-                    //mIgnoreSplitViewUpdateResume.add((Integer) second.task.taskId);
                     Log.e("XPLOD", "[rAL] There is a second task that I should be ignoring next: " + second.task.taskId);
-                    /*moveTaskToFront(second.task.taskId, 0, null);
-                    mStackSupervisor.resumeTopActivitiesLocked();
-                    mStackSupervisor.ensureActivitiesVisibleLocked(null, 0);*/
                     mSecondTaskToResume = second.task.taskId;
                 }
             }

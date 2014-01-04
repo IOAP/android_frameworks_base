@@ -673,22 +673,6 @@ public class Intent implements Parcelable, Cloneable {
     public static final String ACTION_PICK = "android.intent.action.PICK";
 
     /**
-     * Global Action: Shows power menu dialog
-     * <p>Input: nothing
-     * <p>Output: nothing
-     * @hide
-     */
-    public static final String ACTION_POWERMENU = "android.intent.action.POWERMENU";
-
-    /**
-     * Global Action: Shows power menu reboot dialog
-     * <p>Input: nothing
-     * <p>Output: nothing
-     * @hide
-     */
-    public static final String ACTION_POWERMENU_REBOOT = "android.intent.action.POWERMENU_REBOOT";
-
-    /**
      * Activity Action: Creates a shortcut.
      * <p>Input: Nothing.</p>
      * <p>Output: An Intent representing the shortcut. The intent must contain three
@@ -3669,7 +3653,13 @@ public class Intent implements Parcelable, Cloneable {
      */
     public static final int FLAG_ACTIVITY_TASK_ON_HOME = 0X00004000;
     /**
-     * If set in an Intent passed to {@link Context#startActivity Context.startActivity()},
+     * If set, this intent will always match start up as a floating window
+     * in mutil window scenarios.
+     */
+    public static final int FLAG_FLOATING_WINDOW = 0x00002000;
+
+     /**
+     * set in an Intent passed to {@link Context#startActivity Context.startActivity()},
      * this flag will cause a newly launching task to be resized according to the split
      * view metrics, making it running alongside another app.
      * @hide

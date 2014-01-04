@@ -27,6 +27,9 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <uses-permission android:name="android.permission.GET_APP_OPS_STATS" />
 
+    <!-- Screen recording -->
+    <uses-permission android:name="android.permission.ACCESS_SURFACE_FLINGER" />
+
     <!-- Networking and telephony -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -88,6 +91,9 @@
     <!-- Wifi Display -->
     <uses-permission android:name="android.permission.CONFIGURE_WIFI_DISPLAY" />
 
+    <!-- Active display -->
+    <uses-permission android:name="android.permission.SYSTEM_NOTIFICATION_LISTENER" />
+
     <application
         android:persistent="true"
         android:allowClearUserData="false"
@@ -110,6 +116,12 @@
              TODO: Should have an android:permission attribute -->
         <service android:name=".screenshot.TakeScreenshotService"
             android:process=":screenshot"
+            android:exported="false" />
+
+        <!-- started from PhoneWindowManager
+             TODO: Should have an android:permission attribute -->
+        <service android:name=".omni.screenrecord.TakeScreenrecordService"
+            android:process=":screenrecord"
             android:exported="false" />
 
         <receiver android:name=".screenshot.DeleteScreenshot"
@@ -264,8 +276,34 @@
             </intent-filter>
         </activity>
 
+  	<!-- Halo -->
         <activity android:name="com.android.systemui.Transparent"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+	<!-- Active display -->
+        <activity android:name=".statusbar.policy.activedisplay.DummyActivity"
+                  android:label=""
+                  android:taskAffinity=""
+                  android:excludeFromRecents="true"
+                  android:exported="true"
+                  android:theme="@style/Theme.DummyActivity">
+        </activity>
+
+	<!-- App sidebar -->
+        <activity android:name=".statusbar.sidebar.SidebarConfigurationActivity"
+                  android:label="@string/title_activity_sidebar_configuration"
+                  android:taskAffinity=""
+                  android:excludeFromRecents="true"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name=".statusbar.sidebar.SidebarContentProvider"
+            android:authorities="org.chameleonos.sidebar.contentprovider" >
+        </provider>
 
     </application>
 </manifest>

@@ -110,10 +110,8 @@
     <dimen name="fling_expand_min_velocity">100dp</dimen>
     <!-- Minimum final velocity of gestures interpreted as collapse requests -->
     <dimen name="fling_collapse_min_velocity">100dp</dimen>
-
     <!-- Cap on contribution of x dimension of gesture to overall velocity -->
-    <dimen name="fling_gesture_max_x_velocity">400dp</dimen>
-
+    <dimen name="fling_gesture_max_x_velocity">200dp</dimen>
     <!-- Cap on overall resulting fling speed (s^-1) -->
     <dimen name="fling_gesture_max_output_velocity">3000dp</dimen>
 
