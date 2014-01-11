@@ -951,6 +951,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
         public void onClick(View v) {
             awakenDreams();
             toggleRecentApps();
+            Log.e(TAG, "recents click listener done");
         }
     };
 
@@ -971,7 +972,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
                     mHandler.postDelayed(mShowSearchPanel, mShowSearchHoldoff);
                 }
             break;
-
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 mHandler.removeCallbacks(mShowSearchPanel);
@@ -994,8 +994,17 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
 
     private void prepareNavigationBarView() {
         mNavigationBarView.reorient();
-        mNavigationBarView.setListeners(mRecentsClickListener,
-                mRecentsPreloadOnTouchListener, mHomeSearchActionListener);
+
+        if (mNavigationBarView.getRecentsButton() != null) {
+            mNavigationBarView.getRecentsButton().setOnClickListener(mRecentsClickListener);
+            mNavigationBarView.getRecentsButton().setOnTouchListener(mRecentsPreloadOnTouchListener);
+        }
+        if (mNavigationBarView.getHomeButton() != null) {
+            mNavigationBarView.getHomeButton().setOnTouchListener(mHomeSearchActionListener);
+        }
+        if (mNavigationBarView.getSearchLight() != null) {
+            mNavigationBarView.getSearchLight().setOnTouchListener(mHomeSearchActionListener);
+        }
         updateSearchPanel();
     }
 
@@ -2951,22 +2960,23 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
         updateNotificationIcons();
         resetUserSetupObserver();
         updateSettings();
-        if (mNavigationBarView != null) {
-            mNavigationBarView.updateSettings();
-        }
         super.userSwitched(newUserId);
     }
 
     private void updateSettings() {
         ContentResolver resolver = mContext.getContentResolver();
-        //XXX: multi-user correct?
-        boolean autoBrightness = Settings.System.getInt(
-                resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
-                Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
-        mBrightnessControl = !autoBrightness && Settings.System.getInt(
-                resolver, Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL, 0) == 1;
+        int autoBrightnessSetting = Settings.System.getIntForUser(
+                resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0, mCurrentUserId);
 
-        int batteryStyle = Settings.System.getInt(resolver, Settings.System.STATUS_BAR_BATTERY, 0);
+        if (autoBrightnessSetting == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC) {
+            mBrightnessControl = false;
+        } else {
+            mBrightnessControl = Settings.System.getIntForUser(resolver,
+                    Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL, 0, mCurrentUserId) == 1;
+        }
+
+        int batteryStyle = Settings.System.getIntForUser(resolver,
+                Settings.System.STATUS_BAR_BATTERY, 0, mCurrentUserId);
         BatteryMeterMode mode = BatteryMeterMode.BATTERY_METER_ICON_PORTRAIT;
         switch (batteryStyle) {
             case 2:
@@ -2981,12 +2991,16 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
                 mode = BatteryMeterMode.BATTERY_METER_ICON_LANDSCAPE;
                 break;
 
+            case 6:
+                mode = BatteryMeterMode.BATTERY_METER_TEXT;
+                break;
+
             default:
                 break;
         }
 
-        boolean showPercent = Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_BATTERY_SHOW_PERCENT, 0) == 1;
+        boolean showPercent = Settings.System.getIntForUser(resolver,
+                Settings.System.STATUS_BAR_BATTERY_SHOW_PERCENT, 0, mCurrentUserId) == 1;
 
         mBatteryView.setMode(mode);
         mBatteryController.onBatteryMeterModeChanged(mode);
@@ -2998,12 +3012,13 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
         mDockBatteryView.setShowPercent(showPercent);
         mDockBatteryController.onBatteryMeterShowPercent(showPercent);
 
-        mClockEnabled = Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CLOCK, 1) != 0;
+        mClockEnabled = Settings.System.getIntForUser(resolver,
+                Settings.System.STATUS_BAR_CLOCK, 1, mCurrentUserId) != 0;
         updateClockVisibility();
 
-        int signalStyle = Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_SIGNAL_TEXT, SignalClusterView.STYLE_NORMAL);
+        int signalStyle = Settings.System.getIntForUser(resolver,
+                Settings.System.STATUS_BAR_SIGNAL_TEXT,
+                SignalClusterView.STYLE_NORMAL, mCurrentUserId);
         mSignalClusterView.setStyle(signalStyle);
         mSignalTextView.setStyle(signalStyle);
     }
@@ -3085,7 +3100,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
 
         makeStatusBarView();
         repositionNavigationBar();
-        mNavigationBarView.updateResources();
 
         // recreate StatusBarIconViews.
         for (int i = 0; i < nIcons; i++) {
@@ -3249,7 +3263,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode {
     protected boolean shouldDisableNavbarGestures() {
         return !isDeviceProvisioned()
                 || mExpandedVisible
-                || (mNavigationBarView != null && mNavigationBarView.isInEditMode())
                 || (mDisabled & StatusBarManager.DISABLE_SEARCH) != 0;
     }
 

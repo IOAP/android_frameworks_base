@@ -55,6 +55,7 @@ import android.util.Log;
 import com.android.internal.widget.ILockSettings;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -1025,6 +1026,7 @@ public final class Settings {
             MOVED_TO_SECURE.add(Secure.LOCK_PATTERN_ENABLED);
             MOVED_TO_SECURE.add(Secure.LOCK_PATTERN_VISIBLE);
             MOVED_TO_SECURE.add(Secure.LOCK_PATTERN_TACTILE_FEEDBACK_ENABLED);
+	        MOVED_TO_SECURE.add(Secure.LOCK_NUMPAD_RANDOM);
             MOVED_TO_SECURE.add(Secure.LOCK_PATTERN_SIZE);
             MOVED_TO_SECURE.add(Secure.LOCK_DOTS_VISIBLE);
             MOVED_TO_SECURE.add(Secure.LOCK_SHOW_ERROR_PATH);
@@ -1497,6 +1499,46 @@ public final class Settings {
         public static boolean putConfigurationForUser(ContentResolver cr, Configuration config,
                 int userHandle) {
             return Settings.System.putFloatForUser(cr, FONT_SCALE, config.fontScale, userHandle);
+        }
+
+        /**
+* @hide
+* Methods to handle storing and retrieving arraylists
+*
+* @param cr The ContentResolver to access.
+* @param name The name of the setting to modify.
+* @param value The new value for the setting.
+* @return true if the value was set, false on database errors
+*/
+        public static boolean putArrayList(ContentResolver cr, String name, ArrayList<String> list) {
+            return putArrayListForUser(cr, name, list, UserHandle.myUserId());
+        }
+
+        public static boolean putArrayListForUser(ContentResolver cr, String name, ArrayList<String> list, int userHandle) {
+            if (list != null && list.size() > 0) {
+                String joined = TextUtils.join("|",list);
+                return putStringForUser(cr, name, joined, userHandle);
+            } else {
+                return putStringForUser(cr, name, "", userHandle);
+            }
+        }
+
+        public static ArrayList<String> getArrayList(ContentResolver cr, String name) {
+            return getArrayListForUser(cr, name, UserHandle.myUserId());
+        }
+
+        public static ArrayList<String> getArrayListForUser(ContentResolver cr, String name, int userHandle) {
+            String v = getStringForUser(cr, name, userHandle);
+            ArrayList<String> list = new ArrayList<String>();
+            if (v != null) {
+                if (!v.isEmpty()){
+                    String[] split = v.split("\\|");
+                    for (String i : split) {
+                        list.add(i);
+                    }
+                }
+            }
+            return list;
         }
 
         /** @hide */
@@ -3043,7 +3085,8 @@ public final class Settings {
          * 0: Display the battery an icon in portrait mode
          * 2: Display the battery as a circle
          * 4: Hide the battery status information
-         * 5: Display the battery an icon  in landscape mode
+         * 5: Display the battery an icon in landscape mode
+         * 6: Display the battery as plain text
          * default: 0
          * @hide
          */
@@ -3232,6 +3275,12 @@ public final class Settings {
          */
         public static final String QUIET_HOURS_END = "quiet_hours_end";
 
+	/**
+         * Configurable LTE or 4G icon - up to per user defined
+         * @hide
+         */
+        public static final String SHOW_LTE_OR_FOURGEE = "show_lte_or_fourgee";
+
         /**
          * Whether to remove the sound from outgoing notifications during quiet hours.
          * @hide
@@ -3401,6 +3450,12 @@ public final class Settings {
          */
         public static final String POWER_MENU_SCREENSHOT_ENABLED = "power_menu_screenshot_enabled";
 
+	/**
+         * Show ScreenRecord in Power Menu
+         * @hide
+         */
+        public static final String SCREENRECORD_IN_POWER_MENU = "screenrecord_in_power_menu";
+
         /**
          * Whether power menu expanded desktop is enabled
          * @hide
@@ -3514,16 +3569,6 @@ public final class Settings {
          */
         public static final String NOTIFICATION_VIBRATE_DURING_ALERTS_DISABLED = "vibrate_while_no_alerts";
 
-        /**
-         * Custom navring actions
-         *
-         * @hide
-         */
-        public static final String[] NAVIGATION_RING_TARGETS = new String[] {
-            "navigation_ring_targets_0",
-            "navigation_ring_targets_1",
-            "navigation_ring_targets_2",
-        };
 
        /**
         * Sets the portrait background of notification drawer
@@ -3716,61 +3761,6 @@ public final class Settings {
          */
         public static final String SWIPE_TO_SWITCH_SCREEN_DETECTION = "full_swipe_to_switch_detection";
 
-	/**
-	* Navigation bar button color
-	* @hide
-	*/
-	public static final String NAVIGATION_BAR_BUTTON_TINT = "navigation_bar_button_tint";
-
-	/**
-	* Option To Colorize Navigation bar buttons in different modes
-	* 0 = all, 1 = system icons, 2 = system icons + custom user icons
-	* @hide
-	*/
-	public static final String NAVIGATION_BAR_BUTTON_TINT_MODE = "navigation_bar_button_tint_mode";
-
-	/**
-	* Navigation bar glow color
-	* @hide
-	*/
-	public static final String NAVIGATION_BAR_GLOW_TINT = "navigation_bar_glow_tint";
-
-	/**
-	* Wether navigation bar is enabled or not
-	* @hide
-	*/
-	public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show";
-
-	/**
-	* Wether navigation bar is on landscape on the bottom or on the right
-	* @hide
-	*/
-	public static final String NAVIGATION_BAR_CAN_MOVE = "navigation_bar_can_move";
-
-	/**
-	* Navigation bar height when it is on protrait
-	* @hide
-	*/
-	public static final String NAVIGATION_BAR_HEIGHT = "navigation_bar_height";
-
-	/**
-	* Navigation bar height when it is on landscape at the bottom
-	* @hide
-	*/
-	public static final String NAVIGATION_BAR_HEIGHT_LANDSCAPE = "navigation_bar_height_landscape";
-
-	/**
-	* Navigation bar height when it is on landscape at the right
-	* @hide
-	*/
-	public static final String NAVIGATION_BAR_WIDTH = "navigation_bar_width";
-
-	/**
-	* Custom navigation bar intent and action configuration
-	* @hide
-	*/
-	public static final String NAVIGATION_BAR_CONFIG = "navigation_bar_config";
-
 
         /**
          * Whether to unlock the screen with the home key.  The value is boolean (1 or 0).
@@ -3845,6 +3835,107 @@ public final class Settings {
          * @hide
          */
         public static final String DOUBLE_TAP_SLEEP_GESTURE = "double_tap_sleep_gesture";
+
+       /**
+	*
+	* @hide
+	*/
+        public static final String SYSTEMUI_NAVRING_AMOUNT = "systemui_navring_amount";
+
+       /**
+	*
+	* @hide
+	*/
+        public static final String SYSTEMUI_NAVRING_LONG_ENABLE = "systemui_navring_long_enable";
+
+        /**
+	* Custom navring actions
+	*
+	* @hide
+	*/
+        public static final String[] SYSTEMUI_NAVRING = new String[] {
+                "navring_0",
+                "navring_1",
+                "navring_2",
+                "navring_3",
+                "navring_4",
+        };
+
+        /**
+	* Custom navring long press actions
+	*
+	* @hide
+	*/
+        public static final String[] SYSTEMUI_NAVRING_LONG = new String[] {
+                "navring_long_0",
+                "navring_long_1",
+                "navring_long_2",
+                "navring_long_3",
+                "navring_long_4",
+        };
+
+        /**
+	* Custom navring icons
+	*
+	* @hide
+	*/
+        public static final String[] SYSTEMUI_NAVRING_ICON = new String[] {
+                "navring_icon_0",
+                "navring_icon_1",
+                "navring_icon_2",
+                "navring_icon_3",
+                "navring_icon_4",
+        };
+
+        /**
+	* Wether navigation bar is enabled or not
+	* @hide
+	*/
+        public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show";
+
+        /**
+	* Navigation bar height when it is on protrait
+	* @hide
+	*/
+        public static final String NAVIGATION_BAR_HEIGHT = "navigation_bar_height";
+
+        /**
+	* Navigation bar height when it is on landscape at the right
+	* @hide
+	*/
+        public static final String NAVIGATION_BAR_WIDTH = "navigation_bar_width";
+
+
+        /**
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_BUTTONS = "navigation_bar_buttons";
+
+        /**
+         * Whether to show the battery bar
+         * @hide
+         */
+        public static final String STATUSBAR_BATTERY_BAR = "statusbar_battery_bar";
+
+        /**
+         * @hide
+         */
+        public static final String STATUSBAR_BATTERY_BAR_COLOR = "statusbar_battery_bar_color";
+
+        /**
+         * @hide
+         */
+        public static final String STATUSBAR_BATTERY_BAR_THICKNESS = "statusbar_battery_bar_thickness";
+
+        /**
+         * @hide
+         */
+        public static final String STATUSBAR_BATTERY_BAR_STYLE = "statusbar_battery_bar_style";
+
+        /**
+         * @hide
+         */
+        public static final String STATUSBAR_BATTERY_BAR_ANIMATE = "statusbar_battery_bar_animate";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
@@ -4889,6 +4980,14 @@ public final class Settings {
          * Whether lock pattern is visible as user enters (0 = false, 1 = true)
          */
         public static final String LOCK_PATTERN_VISIBLE = "lock_pattern_visible_pattern";
+
+        /**
+         * Whether the NumKeyPad will change the orders of numbers
+         * in a PIN locked lockscreen
+         * 0 = off | 1 = always | 2 = only on request
+         * @hide
+         */
+        public static final String LOCK_NUMPAD_RANDOM = "lock_numpad_random";
 
         /**
          * Whether lock pattern will vibrate as user enters (0 = false, 1 =

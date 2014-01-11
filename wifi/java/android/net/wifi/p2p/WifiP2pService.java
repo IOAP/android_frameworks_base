@@ -2537,6 +2537,10 @@ public class WifiP2pService extends IWifiP2pManager.Stub {
     private String getDeviceName(String deviceAddress) {
         WifiP2pDevice d = mPeers.get(deviceAddress);
         if (d != null) {
+                String deviceName = d.deviceName;
+                if (deviceName.equals("")) {
+                    return deviceAddress;
+                }
                 return d.deviceName;
         }
         //Treat the address as name if there is no match
