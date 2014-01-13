@@ -1955,18 +1955,10 @@ public final class Settings {
         public static final String BUTTON_BACKLIGHT_TIMEOUT = "button_backlight_timeout";
 
         /**
-         * Control whether the screen off animation should be shown
-         * @hide
-         */
+         * Whether to enable the electron beam animation when turning screen off
+         *
+         * @hide */
         public static final String SCREEN_OFF_ANIMATION = "screen_off_animation";
-
-        /**
-         * Control which animation to use when turning the screen off
-         * 0 = electron beam
-         * 1 = fade
-         * @hide
-         */
-        public static final String SCREEN_ANIMATION_STYLE = "screen_animation_style";
 
         /**
          * Control whether the process CPU usage meter should be shown.
@@ -3761,6 +3753,14 @@ public final class Settings {
          */
         public static final String SWIPE_TO_SWITCH_SCREEN_DETECTION = "full_swipe_to_switch_detection";
 
+        /**
+	* @hide
+	* Show Wifi network name in notification drawer
+	* 0 - don't show
+	* 1 - show
+	*/
+        public static final String NOTIFICATION_SHOW_WIFI_SSID = "notification_show_wifi_ssid";
+
 
         /**
          * Whether to unlock the screen with the home key.  The value is boolean (1 or 0).
@@ -3910,6 +3910,16 @@ public final class Settings {
          * @hide
          */
         public static final String NAVIGATION_BAR_BUTTONS = "navigation_bar_buttons";
+
+	/**
+	* Electronic beam animation mode
+	* 0 = off,
+	* 1 = always horizontal,
+	* 2 = always vertical,
+	* 3 = dependent on orientation
+	* @hide
+	*/
+        public static final String SYSTEM_POWER_CRT_MODE = "system_power_crt_mode";
 
         /**
          * Whether to show the battery bar

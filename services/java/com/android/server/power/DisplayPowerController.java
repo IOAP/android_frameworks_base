@@ -248,16 +248,10 @@ final class DisplayPowerController {
 
     // True if we should fade the screen while turning it off, false if we should play
     // a stylish electron beam animation instead.
-    private boolean mElectronBeamFadesConfig() {
-        return Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.SCREEN_ANIMATION_STYLE, 0) == 1;
-    }
+    private boolean mElectronBeamFadesConfig;
 
-    // True if we should allow showing the screen-off animation
-    private boolean useScreenOffAnimation() {
-        return Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.SCREEN_OFF_ANIMATION, 1) == 1;
-    }
+    // Slim settings - override config for ElectronBeam
+    private int mElectronBeamMode;
 
     // The pending power request.
     // Initially null until the first call to requestPowerState.
@@ -465,6 +459,9 @@ final class DisplayPowerController {
                     com.android.internal.R.integer.config_lightSensorWarmupTime);
             updateAutomaticBrightnessSettings();
         }
+
+        mElectronBeamFadesConfig = resources.getBoolean(
+                com.android.internal.R.bool.config_animateScreenLights);
 
         if (!DEBUG_PRETEND_PROXIMITY_SENSOR_ABSENT) {
             mProximitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
@@ -687,7 +684,8 @@ final class DisplayPowerController {
 
     private void initialize() {
         mPowerState = new DisplayPowerState(
-                new ElectronBeam(mDisplayManager), mDisplayBlanker,
+                new ElectronBeam(mDisplayManager, mElectronBeamMode),
+                mDisplayBlanker,
                 mLights.getLight(LightsService.LIGHT_ID_BACKLIGHT));
 
         mElectronBeamOnAnimator = ObjectAnimator.ofFloat(
@@ -756,6 +754,12 @@ final class DisplayPowerController {
             }
 
             mustNotify = !mDisplayReadyLocked;
+        }
+
+        // update crt mode settings and force initialize if value changed
+        if (mElectronBeamMode != mPowerRequest.electronBeamMode) {
+            mElectronBeamMode = mPowerRequest.electronBeamMode;
+            mustInitialize = true;
         }
 
         // Initialize things the first time the power state is changed.
@@ -855,9 +859,9 @@ final class DisplayPowerController {
                                 if (mPowerState.getElectronBeamLevel() == 1.0f) {
                                     mPowerState.dismissElectronBeam();
                                 } else if (mPowerState.prepareElectronBeam(
-                                        mElectronBeamFadesConfig() ?
+                                        mElectronBeamFadesConfig ?
                                                 ElectronBeam.MODE_FADE :
-                                                ElectronBeam.MODE_WARM_UP)) {
+                                                        ElectronBeam.MODE_WARM_UP)) {
                                     mElectronBeamOnAnimator.start();
                                 } else {
                                     mElectronBeamOnAnimator.end();
@@ -878,9 +882,11 @@ final class DisplayPowerController {
                             setScreenOn(false);
                             unblockScreenOn();
                         } else if (mPowerState.prepareElectronBeam(
-                                mElectronBeamFadesConfig() ?
+                                mElectronBeamMode == 0 ?
                                         ElectronBeam.MODE_FADE :
-                                        ElectronBeam.MODE_COOL_DOWN)
+                                            (mElectronBeamMode == 4
+                                            ? ElectronBeam.MODE_SCALE_DOWN
+                                            : ElectronBeam.MODE_COOL_DOWN))
                                 && mPowerState.isScreenOn()
                                 && useScreenOffAnimation()) {
                             mElectronBeamOffAnimator.start();
@@ -1580,4 +1586,9 @@ final class DisplayPowerController {
             updatePowerState();
         }
     };
+
+    private boolean useScreenOffAnimation() {
+        return Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SCREEN_OFF_ANIMATION, 1) == 1;
+    }
 }
