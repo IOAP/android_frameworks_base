@@ -3406,6 +3406,19 @@ public final class Settings {
         */
         public static final String LOCKSCREEN_NOTIFICATIONS_PRIVACY_MODE = "lockscreen_notifications_privacy_mode";
 
+       /**
+        * Enables dynamic with for shown notifications on devices >= xxhdpi
+        * @hide
+        */
+        public static final String LOCKSCREEN_NOTIFICATIONS_DYNAMIC_WIDTH = "lockscreen_notifications_dynamic_width";
+
+       /**
+        * A list of packages to exclude from being displayed as lockscreen notifications.
+        * This should be a string of packages separated by |
+        * @hide
+        */
+        public static final String LOCKSCREEN_NOTIFICATIONS_EXCLUDED_APPS = "lockscreen_notifications_excluded_apps";
+
         /**
          * Expanded desktop on/off state
          * @hide
@@ -3442,11 +3455,11 @@ public final class Settings {
          */
         public static final String POWER_MENU_SCREENSHOT_ENABLED = "power_menu_screenshot_enabled";
 
-	/**
-         * Show ScreenRecord in Power Menu
+        /**
+         * Whether power menu screenrecord is enabled
          * @hide
          */
-        public static final String SCREENRECORD_IN_POWER_MENU = "screenrecord_in_power_menu";
+        public static final String POWER_MENU_SCREENRECORD_ENABLED = "power_menu_screenrecord_enabled";
 
         /**
          * Whether power menu expanded desktop is enabled
@@ -3946,6 +3959,50 @@ public final class Settings {
          * @hide
          */
         public static final String STATUSBAR_BATTERY_BAR_ANIMATE = "statusbar_battery_bar_animate";
+
+        /**
+         * ListView Animations
+         * 0 == None
+         * 1 == Wave (Left)
+         * 2 == Wave (Right)
+         * 3 == Scale
+         * 4 == Alpha
+         * 5 == Stack (Top)
+         * 6 == Stack (Bottom)
+         * 7 == Translate (Left)
+         * 8 == Translate (Right)
+         * @hide
+         */
+        public static final String LISTVIEW_ANIMATION = "listview_animation";
+
+        /**
+         * ListView Interpolators
+         * 0 == None
+         * 1 == accelerate_interpolator
+         * 2 == decelerate_interpolator
+         * 3 == accelerate_decelerate_interpolator
+         * 4 == anticipate_interpolator
+         * 5 == overshoot_interpolator
+         * 6 == anticipate_overshoot_interpolator
+         * 7 == bounce_interpolator
+         * @hide
+         */
+        public static final String LISTVIEW_INTERPOLATOR = "listview_interpolator";
+
+        /**
+         * Whether flip action during incomming call should mute or dismiss
+         * the call (mute = 0, dismiss = 1, nothing = 2 (default))
+         *
+         * @hide
+         */
+        public static final String CALL_FLIP_ACTION_KEY = "call_flip_action_key";
+
+        /**
+         * Should call status sounds be player
+         *
+         * @hide
+         */
+        public static final String CALL_END_SOUND = "call_end_sound";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
