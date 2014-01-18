@@ -3455,11 +3455,11 @@ public final class Settings {
          */
         public static final String POWER_MENU_SCREENSHOT_ENABLED = "power_menu_screenshot_enabled";
 
-        /**
-         * Whether power menu screenrecord is enabled
+	    /**
+         * Show ScreenRecord in Power Menu
          * @hide
          */
-        public static final String POWER_MENU_SCREENRECORD_ENABLED = "power_menu_screenrecord_enabled";
+        public static final String SCREENRECORD_IN_POWER_MENU = "screenrecord_in_power_menu";
 
         /**
          * Whether power menu expanded desktop is enabled
@@ -3758,13 +3758,6 @@ public final class Settings {
          * @hide
          */
         public static final String PERFORMANCE_PROFILE = "performance_profile";
-
-        /**
-         * Wether to allow full screen swipe detection on notification drawer
-         * for swipe to switch or not
-         * @hide
-         */
-        public static final String SWIPE_TO_SWITCH_SCREEN_DETECTION = "full_swipe_to_switch_detection";
 
         /**
 	* @hide
