@@ -2755,6 +2755,15 @@ public final class Settings {
         public static final String LOCKSCREEN_TARGETS = "lockscreen_targets";
 
         /**
+         * Lockscreen battery status visibility mode
+         * 0 = show if charging
+         * 1 = always show
+         * 2 = never show
+         * @hide
+         */
+        public static final String LOCKSCREEN_BATTERY_VISIBILITY = "lockscreen_always_show_battery";
+
+        /**
          * @deprecated Use {@link android.provider.Settings.Global#LOW_BATTERY_SOUND}
          * instead
          * @hide
@@ -2865,11 +2874,30 @@ public final class Settings {
         public static final String EGG_MODE = "egg_mode";
 
         /**
+         * Allows to show the background activity back the lockscreen
+         * @hide
+         */
+        public static final String LOCKSCREEN_SEE_THROUGH = "lockscreen_see_through";
+
+        /**
          * Quick Settings Panel Tiles to Use
          *
          * @hide
          */
         public static final String QUICK_SETTINGS_TILES = "quick_settings_tiles";
+
+        /**
+         * Number of QuickSettings tiles per row
+         * @hide
+         */
+        public static final String QUICK_TILES_PER_ROW = "quick_tiles_per_row";
+
+        /**
+         * Whether on landscape tiles quantity per row are duplicated
+         * @hide
+         */
+        public static final String QUICK_TILES_PER_ROW_DUPLICATE_LANDSCAPE =
+                "quick_tiles_per_row_duplicate_landscape";
 
         /**
          * Quick Settings Panel Dynamic Tiles
@@ -3019,11 +3047,6 @@ public final class Settings {
          */
         public static final String RECENTS_RAM_BAR_ACTIVE_APPS_COLOR = "recents_ram_bar_active_apps_color";
 
-         /**
-         * Allows to show the background activity back the lockscreen
-         * @hide
-         */
-        public static final String LOCKSCREEN_SEE_THROUGH = "lockscreen_see_through";
 
 
         /**
@@ -3118,6 +3141,13 @@ public final class Settings {
          * @hide
          */
         public static final String STATUS_BAR_BRIGHTNESS_CONTROL = "status_bar_brightness_control";
+
+        /**
+         * Whether or not to use a center clock in phone status bar
+         *
+         * @hide
+         */
+        public static final String STATUS_BAR_CENTER_CLOCK = "status_bar_center_clock";
 
          /**
          * MediaScanner behavior on boot.
@@ -3238,6 +3268,24 @@ public final class Settings {
         public static final String VOLBTN_MUSIC_CONTROLS = "volbtn_music_controls";
 
         /**
+         * Whether to wake the screen with the camera key half-press.
+         * @hide
+         */
+        public static final String CAMERA_WAKE_SCREEN = "camera_wake_screen";
+
+        /**
+         * Whether or not to send device back to sleep if Camera button is released ("Peek")
+         * @hide
+         */
+        public static final String CAMERA_SLEEP_ON_RELEASE = "camera_sleep_on_release";
+
+        /**
+         * Whether or not camera button music controls should be enabled to play/pause media tracks
+         * @hide
+         */
+        public static final String CAMERA_MUSIC_CONTROLS = "camera_music_controls";
+
+        /**
          * Whether or not to launch default music player when headset is connected
          * @hide
          */
@@ -3274,6 +3322,36 @@ public final class Settings {
         public static final String SHOW_LTE_OR_FOURGEE = "show_lte_or_fourgee";
 
         /**
+         * Whether to remove the sound from phone ringing during quiet hours.
+         * @hide
+         */
+        public static final String QUIET_HOURS_RINGER = "quiet_hours_ringer";
+
+        /**
+         * Constant: Keep ringer on for all numbers during quiet hours
+         * @hide
+         */
+        public static final int QUIET_HOURS_RINGER_ALLOW_ALL = 0;
+
+        /**
+         * Constant: Only ring for numbers in contact list during quiet hours
+         * @hide
+         */
+        public static final int QUIET_HOURS_RINGER_CONTACTS_ONLY = 1;
+
+        /**
+         * Constant: Only ring for favorite contacts during quiet hours
+         * @hide
+         */
+        public static final int QUIET_HOURS_RINGER_FAVORITES_ONLY = 2;
+
+        /**
+         * Constant: Disable ringer during quiet hours
+         * @hide
+         */
+        public static final int QUIET_HOURS_RINGER_DISABLED = 3;
+
+        /**
          * Whether to remove the sound from outgoing notifications during quiet hours.
          * @hide
          */
@@ -3290,6 +3368,86 @@ public final class Settings {
          * @hide
          */
         public static final String QUIET_HOURS_SYSTEM = "quiet_hours_system";
+
+        /**
+         * Enables/disables lockscreen notifications
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS = "lockscreen_notifications";
+
+        /**
+         * Turn screen on when device is pulled out of pocket
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_POCKET_MODE = "lockscreen_notifications_pocket_mode";
+
+        /**
+         * Turn screen on when pulled out of pocket even if no notifications are pending
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_SHOW_ALWAYS = "lockscreen_notifications_show_always";
+
+        /**
+         * Hide low priority notifications such as google now weather notifications from lockscreen notifications
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_HIDE_LOW_PRIORITY = "lockscreen_notifications_hide_low_priority";
+
+        /**
+         * Hide non clearable notifications from lockscreen notifications
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_HIDE_NON_CLEARABLE = "lockscreen_notifications_hide_non_clearable";
+
+        /**
+         * Allows dismissing even non-clearable notifications from lockscreen notifications.
+         * Of course, this doesn't really dismiss them, they're just not shown on lockscreen anymore.
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_DISMISS_ALL = "lockscreen_notifications_dismiss_all";
+
+        /**
+         * Toggle between extended and normal view by longpressing the notification
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_EXPANDED_VIEW = "lockscreen_notifications_expanded_view";
+
+        /**
+         * Show lockscreen notifications extended when possible
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_FORCE_EXPANDED_VIEW = "lockscreen_notifications_force_expanded_view";
+
+        /**
+         * Wakes the device when a new notifications is received
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_WAKE_ON_NOTIFICATION = "lockscreen_notifications_wake_on_notification";
+
+        /**
+         * Sets the count of notifications shown at once
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_HEIGHT = "lockscreen_notifications_height";
+
+        /**
+         * Changes the offset of the notifications to the top of the screen
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_OFFSET_TOP = "lockscreen_notifications_offset_top";
+
+        /**
+         * Enables a privacy mode which disables showing notifications.
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_PRIVACY_MODE = "lockscreen_notifications_privacy_mode";
+
+       /**
+         * A list of packages to exclude from being displayed as lockscreen notifications.
+         * This should be a string of packages separated by |
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_EXCLUDED_APPS = "lockscreen_notifications_excluded_apps";
 
         /**
          * Whether to remove the vibration from outgoing notifications during quiet hours.
@@ -3314,110 +3472,6 @@ public final class Settings {
          * @hide
          */
         public static final String LOCKSCREEN_BACKGROUND = "lockscreen_background";
-
-         /**
-         * Action for long-pressing back button on lock screen
-         * @hide
-         */
-        public static final String LOCKSCREEN_LONG_BACK_ACTION = "lockscreen_long_back_action";
-
-        /**
-         * Action for long-pressing home button on lock screen
-         * @hide
-         */
-        public static final String LOCKSCREEN_LONG_HOME_ACTION = "lockscreen_long_home_action";
-
-        /**
-         * Action for long-pressing menu button on lock screen
-         * @hide
-         */
-        public static final String LOCKSCREEN_LONG_MENU_ACTION = "lockscreen_long_menu_action";
-
-        /**
-         * Enables/disables lockscreen notifications
-         * @hide
-         */
-        public static final String LOCKSCREEN_NOTIFICATIONS = "lockscreen_notifications";
-
-        /**
-         * Turn screen on when device is pulled out of pocket
-         * @hide
-         */
-        public static final String LOCKSCREEN_NOTIFICATIONS_POCKET_MODE = "lockscreen_notifications_pocket_mode";
-
-       /**
-        * Turn screen on when pulled out of pocket even if no notifications are pending
-        * @hide
-        */
-       public static final String LOCKSCREEN_NOTIFICATIONS_SHOW_ALWAYS = "lockscreen_notifications_show_always";
-
-       /**
-        * Hide low priority notifications such as google now weather notifications from lockscreen notifications
-        * @hide
-        */
-       public static final String LOCKSCREEN_NOTIFICATIONS_HIDE_LOW_PRIORITY = "lockscreen_notifications_hide_low_priority";
-
-       /**
-        * Hide non clearable notifications from lockscreen notifications
-        * @hide
-        */
-       public static final String LOCKSCREEN_NOTIFICATIONS_HIDE_NON_CLEARABLE = "lockscreen_notifications_hide_non_clearable";
-
-       /**
-        * Allows dismissing even non-clearable notifications from lockscreen notifications.
-        * Of course, this doesn't really dismiss them, they're just not shown on lockscreen anymore.
-        * @hide
-        */
-       public static final String LOCKSCREEN_NOTIFICATIONS_DISMISS_ALL = "lockscreen_notifications_dismiss_all";
-
-       /**
-        * Toggle between extended and normal view by longpressing the notification
-        * @hide
-        */
-       public static final String LOCKSCREEN_NOTIFICATIONS_EXPANDED_VIEW = "lockscreen_notifications_expanded_view";
-
-       /**
-        * Show lockscreen notifications extended when possible
-        * @hide
-        */
-       public static final String LOCKSCREEN_NOTIFICATIONS_FORCE_EXPANDED_VIEW = "lockscreen_notifications_force_expanded_view";
-
-       /**
-        * Wakes the device when a new notifications is received
-        * @hide
-        */
-       public static final String LOCKSCREEN_NOTIFICATIONS_WAKE_ON_NOTIFICATION = "lockscreen_notifications_wake_on_notification";
-
-       /**
-        * Sets the count of notifications shown at once
-        * @hide
-        */
-        public static final String LOCKSCREEN_NOTIFICATIONS_HEIGHT = "lockscreen_notifications_height";
-
-       /**
-        * Changes the offset of the notifications to the top of the screen
-        * @hide
-        */
-        public static final String LOCKSCREEN_NOTIFICATIONS_OFFSET_TOP = "lockscreen_notifications_offset_top";
-
-       /**
-        * Enables a privacy mode which disables showing notifications.
-        * @hide
-        */
-        public static final String LOCKSCREEN_NOTIFICATIONS_PRIVACY_MODE = "lockscreen_notifications_privacy_mode";
-
-       /**
-        * Enables dynamic with for shown notifications on devices >= xxhdpi
-        * @hide
-        */
-        public static final String LOCKSCREEN_NOTIFICATIONS_DYNAMIC_WIDTH = "lockscreen_notifications_dynamic_width";
-
-       /**
-        * A list of packages to exclude from being displayed as lockscreen notifications.
-        * This should be a string of packages separated by |
-        * @hide
-        */
-        public static final String LOCKSCREEN_NOTIFICATIONS_EXCLUDED_APPS = "lockscreen_notifications_excluded_apps";
 
         /**
          * Expanded desktop on/off state
@@ -3541,22 +3595,40 @@ public final class Settings {
         public static final String POWER_MENU_SOUND_ENABLED = "power_menu_silent_enabled";
 
         /**
-          * Swap volume buttons when the screen is rotated
-          * 0 - Disabled
-          * 1 - Enabled (screen is rotated by 90 or 180 degrees: phone, hybrid)
-          * 2 - Enabled (screen is rotated by 180 or 270 degrees: tablet)
-          * @hide
-          */
-         public static final String SWAP_VOLUME_KEYS_ON_ROTATION = "swap_volume_keys_on_rotation";
+         * Swap volume buttons when the screen is rotated
+         * 0 - Disabled
+         * 1 - Enabled (screen is rotated by 90 or 180 degrees: phone, hybrid)
+         * 2 - Enabled (screen is rotated by 180 or 270 degrees: tablet)
+         * @hide
+         */
+        public static final String SWAP_VOLUME_KEYS_ON_ROTATION = "swap_volume_keys_on_rotation";
 
-         /**
-          * Volume keys control cursor in text fields (default is 0)
-          * 0 - Disabled
-          * 1 - Volume up/down moves cursor left/right
-          * 2 - Volume up/down moves cursor right/left
-          * @hide
-          */
-         public static final String VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
+        /**
+	* Volume keys control cursor in text fields (default is 0)
+	* 0 - Disabled
+	* 1 - Volume up/down moves cursor left/right
+	* 2 - Volume up/down moves cursor right/left
+	* @hide
+	*/
+        public static final String VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
+
+        /**
+	* Override and forcefully disable the fullscreen keyboard
+	* @hide
+	*/
+        public static final String DISABLE_FULLSCREEN_KEYBOARD = "disable_fullscreen_keyboard";
+
+        /**
+	* Automatic keyboard rotation timeout. 0 to disable completely.
+	* @hide
+	*/
+        public static final String KEYBOARD_ROTATION_TIMEOUT = "keyboard_rotation_timeout";
+
+        /**
+	* Forces formal text input. 1 to replace emoticon key with enter key.
+	* @hide
+	*/
+        public static final String FORMAL_TEXT_INPUT = "formal_text_input";
 
         /**
          * toggle to "fix" the following: (found in NotificationManagerService)
@@ -3607,73 +3679,74 @@ public final class Settings {
          */
         public static final String HARDWARE_KEY_REBINDING = "hardware_key_rebinding";
 
-         /**
-          * Action to perform when the home key is long-pressed. (Default is 2)
-          * 0 - Nothing
-          * 1 - Menu
-          * 2 - App-switch
-          * 3 - Search
-          * 4 - Voice search
-          * 5 - In-app search
-          * @hide
-          */
-         public static final String KEY_HOME_LONG_PRESS_ACTION = "key_home_long_press_action";
+        /**
+         * Action to perform when the home key is long-pressed. (Default is 2)
+         * 0 - Nothing
+         * 1 - Menu
+         * 2 - App-switch
+         * 3 - Search
+         * 4 - Voice search
+         * 5 - In-app search
+         * 6 - Launch Camera
+         * @hide
+         */
+        public static final String KEY_HOME_LONG_PRESS_ACTION = "key_home_long_press_action";
 
-         /**
-          * Action to perform when the home key is double-tapped. (Default is 0)
-          * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
-          * @hide
-          */
-         public static final String KEY_HOME_DOUBLE_TAP_ACTION = "key_home_double_tap_action";
+        /**
+         * Action to perform when the home key is double-tapped. (Default is 0)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_HOME_DOUBLE_TAP_ACTION = "key_home_double_tap_action";
 
-         /**
-          * Action to perform when the menu key is pressed. (Default is 1)
-          * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
-          * @hide
-          */
-         public static final String KEY_MENU_ACTION = "key_menu_action";
+        /**
+         * Action to perform when the menu key is pressed. (Default is 1)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_MENU_ACTION = "key_menu_action";
 
-         /**
-          * Action to perform when the menu key is long-pressed.
-          * (Default is 0 on devices with a search key, 3 on devices without)
-          * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
-          * @hide
-          */
-         public static final String KEY_MENU_LONG_PRESS_ACTION = "key_menu_long_press_action";
+        /**
+         * Action to perform when the menu key is long-pressed.
+         * (Default is 0 on devices with a search key, 3 on devices without)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_MENU_LONG_PRESS_ACTION = "key_menu_long_press_action";
 
-         /**
-          * Action to perform when the assistant (search) key is pressed. (Default is 3)
-          * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
-          * @hide
-          */
-         public static final String KEY_ASSIST_ACTION = "key_assist_action";
+        /**
+         * Action to perform when the assistant (search) key is pressed. (Default is 3)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_ASSIST_ACTION = "key_assist_action";
 
-         /**
-          * Action to perform when the assistant (search) key is long-pressed. (Default is 4)
-          * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
-          * @hide
-          */
-         public static final String KEY_ASSIST_LONG_PRESS_ACTION = "key_assist_long_press_action";
+        /**
+         * Action to perform when the assistant (search) key is long-pressed. (Default is 4)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_ASSIST_LONG_PRESS_ACTION = "key_assist_long_press_action";
 
-         /**
-          * Action to perform when the app switch key is pressed. (Default is 2)
-          * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
-          * @hide
-          */
-         public static final String KEY_APP_SWITCH_ACTION = "key_app_switch_action";
+        /**
+         * Action to perform when the app switch key is pressed. (Default is 2)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_APP_SWITCH_ACTION = "key_app_switch_action";
+
+        /**
+         * Action to perform when the app switch key is long-pressed. (Default is 0)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_APP_SWITCH_LONG_PRESS_ACTION = "key_app_switch_long_press_action";
 
         /**
          * Weather to minimize lockscreen challenge on screen turned on
          * @hide
          */
         public static final String LOCKSCREEN_MAXIMIZE_WIDGETS = "lockscreen_maximize_widgets";
-
-         /**
-          * Action to perform when the app switch key is long-pressed. (Default is 0)
-          * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
-          * @hide
-          */
-         public static final String KEY_APP_SWITCH_LONG_PRESS_ACTION = "key_app_switch_long_press_action";
 
         /**
          * Control the display of the action overflow button within app UI.
@@ -3752,6 +3825,24 @@ public final class Settings {
          */
         public static final String HALO_UNLOCK_PING = "halo_unlock_ping";
 
+         /**
+         * Action for long-pressing back button on lock screen
+         * @hide
+         */
+        public static final String LOCKSCREEN_LONG_BACK_ACTION = "lockscreen_long_back_action";
+
+        /**
+         * Action for long-pressing home button on lock screen
+         * @hide
+         */
+        public static final String LOCKSCREEN_LONG_HOME_ACTION = "lockscreen_long_home_action";
+
+        /**
+         * Action for long-pressing menu button on lock screen
+         * @hide
+         */
+        public static final String LOCKSCREEN_LONG_MENU_ACTION = "lockscreen_long_menu_action";
+
         /**
          * Performance profile
          * @see config_perf_profile_prop in frameworks/base/core/res/res/values/config.xml
@@ -3773,6 +3864,12 @@ public final class Settings {
          * @hide
          */
         public static final String HOME_UNLOCK_SCREEN = "home_unlock_screen";
+
+        /**
+         * Whether to unlock the screen with the camera key.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String CAMERA_UNLOCK_SCREEN = "camera_unlock_screen";
 
         /**
          * Whether the lockscreen vibrate should be enabled.
@@ -3927,6 +4024,12 @@ public final class Settings {
 	*/
         public static final String SYSTEM_POWER_CRT_MODE = "system_power_crt_mode";
 
+         /**
+         * Allows blurring the lockscreen background
+         * @hide
+         */
+        public static final String LOCKSCREEN_BLUR_RADIUS = "lockscreen_blur_radius";
+
         /**
          * Whether to show the battery bar
          * @hide
@@ -4076,7 +4179,9 @@ public final class Settings {
             QUIET_HOURS_ENABLED,
             QUIET_HOURS_START,
             QUIET_HOURS_END,
+            QUIET_HOURS_RINGER,
             QUIET_HOURS_MUTE,
+            QUIET_HOURS_HAPTIC,
             QUIET_HOURS_SYSTEM,
             QUIET_HOURS_STILL,
             QUIET_HOURS_DIM,
@@ -4088,6 +4193,7 @@ public final class Settings {
             POWER_MENU_SOUND_ENABLED,
             POWER_MENU_USER_ENABLED,
             LOCKSCREEN_VIBRATE_ENABLED,
+            LOCKSCREEN_BATTERY_VISIBILITY,
             PHONE_BLACKLIST_ENABLED,
             PHONE_BLACKLIST_NOTIFY_ENABLED,
             PHONE_BLACKLIST_PRIVATE_NUMBER_MODE,
