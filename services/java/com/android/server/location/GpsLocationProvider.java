@@ -1838,20 +1838,15 @@ public class GpsLocationProvider implements LocationProviderInterface {
         Uri uri = Uri.parse("content://telephony/carriers/preferapn");
         String apn = null;
 
-		Cursor cursor = null; 
-		
-		try {
-		    cursor = mContext.getContentResolver().query(uri, new String[] {"apn"},
-                    null, null, Carriers.DEFAULT_SORT_ORDER);
+        Cursor cursor = mContext.getContentResolver().query(uri, new String[] {"apn"},
+                null, null, Carriers.DEFAULT_SORT_ORDER);
 
-            if (cursor != null) {
+        if (null != cursor) {
+            try {
                 if (cursor.moveToFirst()) {
                     apn = cursor.getString(0);
                 }
-            }
-
-        } finally {
-			if (cursor !=null) {
+            } finally {
                 cursor.close();
             }
         }

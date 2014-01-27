@@ -76,6 +76,13 @@ class IInputMethodSessionWrapper extends IInputMethodSession.Stub
     public void executeMessage(Message msg) {
         if (mInputMethodSession == null) {
             // The session has been finished.
+            switch (msg.what) {
+                case DO_UPDATE_SELECTION:
+                case DO_APP_PRIVATE_COMMAND: {
+                    SomeArgs args = (SomeArgs)msg.obj;
+                    args.recycle();
+                }
+            }
             return;
         }
 

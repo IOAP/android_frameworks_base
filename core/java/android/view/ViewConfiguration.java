@@ -181,7 +181,7 @@ public class ViewConfiguration {
     /**
      * Maximum velocity to initiate a fling, as measured in dips per second
      */
-    private static final int MAXIMUM_FLING_VELOCITY = 15000;
+    private static final int MAXIMUM_FLING_VELOCITY = 8000;
 
     /**
      * Delay before dispatching a recurring accessibility event in milliseconds.
@@ -201,7 +201,7 @@ public class ViewConfiguration {
     /**
      * The coefficient of friction applied to flings/scrolls.
      */
-    private static final float SCROLL_FRICTION = 0.011f;
+    private static final float SCROLL_FRICTION = 0.015f;
 
     /**
      * Max distance in dips to overscroll for edge effects
@@ -684,22 +684,7 @@ public class ViewConfiguration {
      * @return true if a permanent menu key is present, false otherwise.
      */
     public boolean hasPermanentMenuKey() {
-        IWindowManager wm = WindowManagerGlobal.getWindowManagerService();
-        // Report no menu key if device has soft buttons
-        try {
-            if (wm.hasNavigationBar()) {
-                return false;
-            }
-        } catch (RemoteException ex) {
-            // do nothing, continue trying to guess
-        }
-
-        // Report menu key presence based on hardware key rebinding
-        try {
-            return wm.hasMenuKeyEnabled();
-        } catch (RemoteException ex) {
-            return true;
-        }
+        return false;
     }
 
     /**

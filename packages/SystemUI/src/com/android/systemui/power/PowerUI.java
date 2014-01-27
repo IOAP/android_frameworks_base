@@ -20,8 +20,6 @@ import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -29,7 +27,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
-import android.graphics.BitmapFactory;
+import android.graphics.BitmapFactory; 
 import android.media.AudioManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -118,7 +116,7 @@ public class PowerUI extends SystemUI {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.POWER_UI_LOW_BATTERY_WARNING_POLICY),
-                    false, this, UserHandle.USER_ALL);
+                    false, this);
         }
 
         @Override
@@ -140,9 +138,8 @@ public class PowerUI extends SystemUI {
      */
 
     private void setPreferences() {
-        int currentPref = Settings.System.getIntForUser(mContext.getContentResolver(),
-                    Settings.System.POWER_UI_LOW_BATTERY_WARNING_POLICY,
-                    0, UserHandle.USER_CURRENT);
+        int currentPref = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.POWER_UI_LOW_BATTERY_WARNING_POLICY, 0);
 
         switch (currentPref) {
             case 5:
@@ -257,24 +254,21 @@ public class PowerUI extends SystemUI {
                         && (bucket < oldBucket || oldPlugged)
                         && mBatteryStatus != BatteryManager.BATTERY_STATUS_UNKNOWN
                         && bucket < 0) {
-                    showLowBatteryWarning();
-
-		    if(mShowLowBatteryDialogWarning) {
+                    if(mShowLowBatteryDialogWarning) {
                         showLowBatteryWarning();
                     }
                     if(mShowLowBatteryNotificationWarning) {
                         showLowBatteryNotificationWarning();
-                    }
+                    }  
 
                     // only play SFX when the dialog comes up or the bucket changes
-                    if (mPlayLowBatterySound && (bucket != oldBucket || oldPlugged)) {
+                    if (mPlayLowBatterySound && (bucket != oldBucket || oldPlugged)) { 
                         playLowBatterySound();
                     }
-
                 } else if (plugged || (bucket > oldBucket && bucket > 0)) {
                     dismissLowBatteryWarning();
                     dismissLowBatteryNotificationWarning();
-                } else if (mShowLowBatteryDialogWarning && mBatteryLevelTextView != null) {
+                } else if (mShowLowBatteryDialogWarning && mBatteryLevelTextView != null) {  
                     showLowBatteryWarning();
                 }
             } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
@@ -404,7 +398,7 @@ public class PowerUI extends SystemUI {
 
     void showLowBatteryNotificationWarning() {
         if (DEBUG) {
-            Slog.i(TAG, "fire low battery notification!");
+           Slog.i(TAG, "fire low battery notification!");
         }
 
         CharSequence levelText = mContext.getString(

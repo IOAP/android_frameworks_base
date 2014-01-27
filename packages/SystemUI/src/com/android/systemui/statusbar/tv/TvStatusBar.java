@@ -93,6 +93,14 @@ public class TvStatusBar extends BaseStatusBar {
     }
 
     @Override // CommandQueue
+    public void toggleNotificationShade() {
+    }
+
+    @Override // CommandQueue
+    public void toggleQSShade() {
+    }
+
+    @Override // CommandQueue
     public void setAutoRotate(boolean enabled) {
     }
 
@@ -132,16 +140,6 @@ public class TvStatusBar extends BaseStatusBar {
     }
 
     @Override
-    protected boolean isNotificationPanelFullyVisible() {
-        return false;
-    }
-
-    @Override
-    protected boolean isTrackingNotificationPanel() {
-        return false;
-    }
-
-    @Override
     protected boolean shouldDisableNavbarGestures() {
         return true;
     }
@@ -155,7 +153,7 @@ public class TvStatusBar extends BaseStatusBar {
     }
 
     @Override
-    public void animateExpandSettingsPanel() {
+    public void animateExpandSettingsPanel(boolean flip) {
     }
 
     @Override
