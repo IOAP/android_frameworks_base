@@ -32,7 +32,6 @@ import android.os.RemoteException;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.ContactsContract;
-import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.Profile;
 import android.util.Log;
@@ -51,7 +50,6 @@ import com.android.systemui.statusbar.phone.QuickSettingsController;
 public class UserTile extends QuickSettingsTile {
 
     private static final String TAG = "UserTile";
-    private static final String INTENT_EXTRA_NEW_LOCAL_PROFILE = "newLocalProfile";
     private Drawable userAvatar;
     private AsyncTask<Void, Void, Pair<String, Drawable>> mUserInfoTask;
 
@@ -64,26 +62,16 @@ public class UserTile extends QuickSettingsTile {
                 mQsc.mBar.collapseAllPanels(true);
                 final UserManager um =
                         (UserManager) mContext.getSystemService(Context.USER_SERVICE);
-                int numUsers = um.getUsers(true).size();
-                if (numUsers <= 1) {
-                    final Cursor cursor = mContext.getContentResolver().query(
-                            Profile.CONTENT_URI, null, null, null, null);
-                    if (cursor.moveToNext() && !cursor.isNull(0)) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, ContactsContract.Profile.CONTENT_URI);
-                        startSettingsActivity(intent);
-                    } else {
-                        Intent intent = new Intent(Intent.ACTION_INSERT, Contacts.CONTENT_URI);
-                        intent.putExtra(INTENT_EXTRA_NEW_LOCAL_PROFILE, true);
-                        startSettingsActivity(intent);
-                    }
-                    cursor.close();
-                } else {
+                if (um.getUsers(true).size() > 1) {
                     try {
                         WindowManagerGlobal.getWindowManagerService().lockNow(
                                 null);
                     } catch (RemoteException e) {
                         Log.e(TAG, "Couldn't show user switcher", e);
                     }
+                } else {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, ContactsContract.Profile.CONTENT_URI);
+                    startSettingsActivity(intent);
                 }
             }
         };
@@ -113,6 +101,10 @@ public class UserTile extends QuickSettingsTile {
         TextView tv = (TextView) mTile.findViewById(R.id.user_textview);
         if (tv != null) {
             tv.setText(mLabel);
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTileTextSize);
+            if (mTileTextColor != -2) {
+                tv.setTextColor(mTileTextColor);
+            }
         }
         iv.setImageDrawable(userAvatar);
     }
@@ -157,6 +149,7 @@ public class UserTile extends QuickSettingsTile {
                 } else {
                     avatar = mContext.getResources().getDrawable(R.drawable.ic_qs_default_user);
                 }
+
                 // If it's a single-user device, get the profile name, since the nickname is not
                 // usually valid
                 if (um.getUsers().size() <= 1) {

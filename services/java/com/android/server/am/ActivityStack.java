@@ -75,15 +75,13 @@ import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.os.Trace;
 import android.os.UserHandle;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.provider.Settings;
 import android.util.EventLog;
-import android.util.Log;
 import android.util.Slog;
 import android.view.ContextThemeWrapper;
 import android.view.Display;
-import android.view.IWindowManager;
-import android.view.WindowManagerGlobal;
 import com.android.internal.app.ActivityTrigger;
 
 import java.io.FileDescriptor;
@@ -765,8 +763,8 @@ final class ActivityStack {
         prev.task.touchActiveTime();
         clearLaunchTime(prev);
         final ActivityRecord next = mStackSupervisor.topRunningActivityLocked();
-        if (!prev.isHomeActivity()) {
-        prev.updateThumbnail(screenshotActivities(prev), null);
+        if (next == null || next.task != prev.task) {
+            prev.updateThumbnail(screenshotActivities(prev), null);
         }
         stopFullyDrawnTraceIfNeeded();
 
@@ -1159,19 +1157,7 @@ final class ActivityStack {
                     // Aggregate current change flags.
                     configChanges |= r.configChangeFlags;
 
-		    int mHaloEnabled = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.HALO_ENABLED, 0));
-                    boolean isSplitView = false;
-
-		    if(mHaloEnabled != 1){
-		            try {
-		                IWindowManager wm = (IWindowManager) WindowManagerGlobal.getWindowManagerService();
-		                isSplitView = wm.isTaskSplitView(r.task.taskId);
-		            } catch (RemoteException e) {
-		                Slog.e(TAG, "Cannot get split view status", e);
-		            }
-		    }
-
-                    if (r.fullscreen && !isSplitView) {
+                    if (r.fullscreen) {
                         // At this point, nothing else needs to be shown
                         if (DEBUG_VISBILITY) Slog.v(TAG, "Fullscreen: at " + r);
                         behindFullscreen = true;
@@ -1278,7 +1264,6 @@ final class ActivityStack {
      * nothing happened.
      */
     final boolean resumeTopActivityLocked(ActivityRecord prev) {
-		Log.e("XPLOD", "Resume Top Activity Locked " + prev);
         return resumeTopActivityLocked(prev, null);
     }
 
@@ -1742,13 +1727,15 @@ final class ActivityStack {
 
         boolean privacy = mService.mAppOpsService.getPrivacyGuardSettingForPackage(
                 next.app.uid, next.packageName);
+        boolean privacyNotification = (Settings.Secure.getInt(mContext.getContentResolver(),
+                Settings.Secure.PRIVACY_GUARD_NOTIFICATION, 1) == 1);
 
         if (privacyGuardPackageName != null && !privacy) {
             Message msg = mService.mHandler.obtainMessage(
                     ActivityManagerService.CANCEL_PRIVACY_NOTIFICATION_MSG, next.userId);
             msg.sendToTarget();
             mStackSupervisor.mPrivacyGuardPackageName = null;
-        } else if (privacy) {
+        } else if (privacy && privacyNotification) {
             Message msg = mService.mHandler.obtainMessage(
                     ActivityManagerService.POST_PRIVACY_NOTIFICATION_MSG, next);
             msg.sendToTarget();

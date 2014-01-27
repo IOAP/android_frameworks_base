@@ -124,10 +124,9 @@ final class ElectronBeam {
      */
     public static final int MODE_SCALE_DOWN = 3;
 
-
     public ElectronBeam(DisplayManagerService displayManager, int mode) {
         mDisplayManager = displayManager;
-        mElectronBeamMode = mode;
+	mElectronBeamMode = mode;
     }
 
     /**
@@ -228,8 +227,7 @@ final class ElectronBeam {
         if (!attachEglContext()) {
             return false;
         }
-
-        if (mSurfaceLayout == null) {
+	if (mSurfaceLayout == null) {
             return false;
         }
         try {
@@ -245,12 +243,12 @@ final class ElectronBeam {
                 } else {
                     drawVStretch(1.0f - ((level - VSTRETCH_DURATION) / HSTRETCH_DURATION));
                 }
-            } else if (mElectronBeamMode == 4) {
+	    } else if (mElectronBeamMode == 4) {
                 drawScaled(level);
             } else {
                 // Draw the frame horizontal.
                 if (level < HSTRETCH_DURATION) {
-                    drawHStretch(1.0f - (level / HSTRETCH_DURATION));
+                   drawHStretch(1.0f - (level / HSTRETCH_DURATION));
                 } else {
                     drawVStretch(1.0f - ((level - HSTRETCH_DURATION) / VSTRETCH_DURATION));
                 }
@@ -774,7 +772,7 @@ final class ElectronBeam {
     private static final class NaturalSurfaceLayout implements DisplayTransactionListener {
         private final DisplayManagerService mDisplayManager;
         private SurfaceControl mSurfaceControl;
-        private boolean mIsLandscape;
+	private boolean mIsLandscape;
 
         public NaturalSurfaceLayout(DisplayManagerService displayManager, SurfaceControl surfaceControl) {
             mDisplayManager = displayManager;
@@ -789,7 +787,7 @@ final class ElectronBeam {
             mDisplayManager.unregisterDisplayTransactionListener(this);
         }
 
-        public boolean isLandscape() {
+	public boolean isLandscape() {
             return mIsLandscape;
         }
 
@@ -805,22 +803,22 @@ final class ElectronBeam {
                     case Surface.ROTATION_0:
                         mSurfaceControl.setPosition(0, 0);
                         mSurfaceControl.setMatrix(1, 0, 0, 1);
-                        mIsLandscape = false;
+			mIsLandscape = false;
                         break;
                     case Surface.ROTATION_90:
                         mSurfaceControl.setPosition(0, displayInfo.logicalHeight);
                         mSurfaceControl.setMatrix(0, -1, 1, 0);
-                        mIsLandscape = true;
+			mIsLandscape = true;
                         break;
                     case Surface.ROTATION_180:
                         mSurfaceControl.setPosition(displayInfo.logicalWidth, displayInfo.logicalHeight);
                         mSurfaceControl.setMatrix(-1, 0, 0, -1);
-                        mIsLandscape = false;
+			mIsLandscape = false;
                         break;
                     case Surface.ROTATION_270:
                         mSurfaceControl.setPosition(displayInfo.logicalWidth, 0);
                         mSurfaceControl.setMatrix(0, 1, -1, 0);
-                        mIsLandscape = true;
+			mIsLandscape = true;
                         break;
                 }
             }
