@@ -328,7 +328,7 @@ public final class PowerManagerService extends IPowerManager.Stub
     // The screen off timeout setting value in milliseconds.
     private int mScreenOffTimeoutSetting;
 
-    // Slim settings - override config for ElectronBeam
+    // Override config for ElectronBeam
     // used here to send values to DispLayPowerController handler
     // from SettingsObserver
     private int mElectronBeamMode;
@@ -613,11 +613,9 @@ public final class PowerManagerService extends IPowerManager.Stub
         mWakeUpWhenPluggedOrUnpluggedSetting = Settings.Global.getInt(resolver,
                 Settings.Global.WAKE_WHEN_PLUGGED_OR_UNPLUGGED,
                 (mWakeUpWhenPluggedOrUnpluggedConfig ? 1 : 0));
-
         mElectronBeamMode = Settings.System.getIntForUser(resolver,
                 Settings.System.SYSTEM_POWER_CRT_MODE,
                 1, UserHandle.USER_CURRENT);
-
 
         final int oldScreenBrightnessSetting = mScreenBrightnessSetting;
         mScreenBrightnessSetting = Settings.System.getIntForUser(resolver,
@@ -1571,11 +1569,13 @@ public final class PowerManagerService extends IPowerManager.Stub
 
     private int getScreenOffTimeoutLocked() {
         int timeout = mScreenOffTimeoutSetting;
-        if (isMaximumScreenOffTimeoutFromDeviceAdminEnforcedLocked()) {
-            timeout = Math.min(timeout, mMaximumScreenOffTimeoutFromDeviceAdmin);
-        }
-        if (mUserActivityTimeoutOverrideFromWindowManager >= 0) {
-            timeout = (int)Math.min(timeout, mUserActivityTimeoutOverrideFromWindowManager);
+        if (timeout != mMaximumScreenOffTimeoutFromDeviceAdmin) {
+            if (isMaximumScreenOffTimeoutFromDeviceAdminEnforcedLocked()) {
+                timeout = Math.min(timeout, mMaximumScreenOffTimeoutFromDeviceAdmin);
+            }
+            if (mUserActivityTimeoutOverrideFromWindowManager >= 0) {
+                timeout = (int)Math.min(timeout, mUserActivityTimeoutOverrideFromWindowManager);
+            }
         }
         return Math.max(timeout, MINIMUM_SCREEN_OFF_TIMEOUT);
     }

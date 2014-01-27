@@ -80,8 +80,8 @@ import android.widget.Toast;
 import com.android.internal.R;
 
 import com.android.internal.notification.NotificationScorer;
-import com.android.internal.util.cm.QuietHoursUtils;
 import com.android.internal.util.FastXmlSerializer;
+import com.android.internal.util.cm.QuietHoursUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
@@ -792,11 +792,14 @@ public class NotificationManagerService extends INotificationManager.Stub
         for (NotificationListenerInfo info : toRemove) {
             final ComponentName component = info.component;
             final int oldUser = info.userid;
-            if (!info.isSystem) {
+            
+	    if (!info.isSystem) {
                 Slog.v(TAG, "disabling notification listener for user " + oldUser + ": " + component);
-                if (!component.getPackageName().equals("HaloComponent")) unregisterListenerService(component, info.userid);
-            }
-        }
+                // Do not un-register HALO, we un-register only when HALO is closed
+                if (!component.getPackageName().equals("HaloComponent")) 
+			unregisterListenerService(component, info.userid);
+            }        
+	}
 
         final int N = toAdd.size();
         for (int i=0; i<N; i++) {
@@ -816,11 +819,14 @@ public class NotificationManagerService extends INotificationManager.Stub
     @Override
     public void registerListener(final INotificationListener listener,
             final ComponentName component, final int userid) {
-        final int permission = mContext.checkCallingPermission(
+	
+	final int permission = mContext.checkCallingPermission(
                 android.Manifest.permission.SYSTEM_NOTIFICATION_LISTENER);
-        if (permission == PackageManager.PERMISSION_DENIED)
-            if (!component.getPackageName().equals("HaloComponent")) checkCallerIsSystem();
-
+        if (permission == PackageManager.PERMISSION_DENIED) {
+            if (!component.getPackageName().equals("HaloComponent")) 
+			checkCallerIsSystem();
+	}
+        
         synchronized (mNotificationList) {
             try {
                 NotificationListenerInfo info
@@ -1360,6 +1366,9 @@ public class NotificationManagerService extends INotificationManager.Stub
             boolean queryRemove = false;
             boolean packageChanged = false;
             boolean cancelNotifications = true;
+
+	    boolean ScreenOnNotificationLed = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SCREEN_ON_NOTIFICATION_LED, 1) == 1; 
             
             if (action.equals(Intent.ACTION_PACKAGE_ADDED)
                     || (queryRemove=action.equals(Intent.ACTION_PACKAGE_REMOVED))
@@ -1452,8 +1461,11 @@ public class NotificationManagerService extends INotificationManager.Stub
                 }
             } else if (action.equals(Intent.ACTION_USER_PRESENT)) {
                 // turn off LED when user passes through lock screen
-                if (!mDreaming) {
+                if (!mDreaming && !ScreenOnNotificationLed) { 
                     mNotificationLight.turnOff();
+                    if (mLedNotification == null || !isLedNotificationForcedOn(mLedNotification)) {
+                        mNotificationLight.turnOff();
+                    }
                 }
             } else if (action.equals(Intent.ACTION_USER_SWITCHED)) {
                 // reload per-user settings
@@ -2574,8 +2586,20 @@ public class NotificationManagerService extends INotificationManager.Stub
         }
     }
 
+    private boolean isLedNotificationForcedOn(NotificationRecord r) {
+        if (r != null) {
+            final Notification n = r.sbn.getNotification();
+            if (n.extras != null) {
+                return n.extras.getBoolean(Notification.EXTRA_FORCE_SHOW_LIGHTS, false);
+            }
+        }
+        return false;
+    }
+
     // lock on mNotificationList
     private void updateLightsLocked() {
+        boolean ScreenOnNotificationLed = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SCREEN_ON_NOTIFICATION_LED, 1) == 1;
         // handle notification lights
         if (mLedNotification == null) {
             // use most recent light with highest score
@@ -2590,8 +2614,21 @@ public class NotificationManagerService extends INotificationManager.Stub
 
         // Don't flash while we are in a call, screen is on or we are
         // in quiet hours with light dimmed
-        if (mLedNotification == null || mInCall || (mScreenOn && !mDreaming)
-                || (QuietHoursUtils.inQuietHours(mContext, Settings.System.QUIET_HOURS_DIM))) {
+        // (unless Notification has EXTRA_FORCE_SHOW_LGHTS)
+        final boolean enableLed;
+        if (mLedNotification == null) {
+            enableLed = false;
+        } else if (isLedNotificationForcedOn(mLedNotification)) {
+            enableLed = true;
+        } else if (mInCall || (mScreenOn && !ScreenOnNotificationLed && !mDreaming)) {
+            enableLed = false;
+        } else if (QuietHoursUtils.inQuietHours(mContext, Settings.System.QUIET_HOURS_DIM)) {
+            enableLed = false;
+        } else {
+            enableLed = true;
+        }
+
+        if (!enableLed) {
             mNotificationLight.turnOff();
         } else if (mNotificationPulseEnabled) {
             final Notification ledno = mLedNotification.sbn.getNotification();

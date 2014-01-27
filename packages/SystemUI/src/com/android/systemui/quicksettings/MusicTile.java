@@ -17,6 +17,7 @@
 
 package com.android.systemui.quicksettings;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -27,9 +28,12 @@ import android.media.MediaMetadataEditor;
 import android.media.MediaMetadataRetriever;
 import android.media.RemoteControlClient;
 import android.media.RemoteController;
+import android.net.Uri;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.SystemClock;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -48,6 +52,7 @@ public class MusicTile extends QuickSettingsTile {
 
     private boolean mActive = false;
     private boolean mClientIdLost = true;
+    private int mMusicTileMode;
     private Metadata mMetadata = new Metadata();
 
     private RemoteController mRemoteController;
@@ -75,6 +80,9 @@ public class MusicTile extends QuickSettingsTile {
                 return true;
             }
         };
+
+        qsc.registerObservedContent(Settings.System.getUriFor(
+                Settings.System.MUSIC_TILE_MODE), this);
     }
 
     @Override
@@ -89,10 +97,30 @@ public class MusicTile extends QuickSettingsTile {
         super.updateResources();
     }
 
+    @Override
+    public void onChangeUri(ContentResolver resolver, Uri uri) {
+        updateResources();
+    }
+
     private void updateTile() {
+        mMusicTileMode = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.MUSIC_TILE_MODE, 3,
+                UserHandle.USER_CURRENT);
+        final ImageView background =
+                (ImageView) mTile.findViewById(R.id.background);
+        if (background != null) {
+            if (mMetadata.bitmap != null && (mMusicTileMode == 1 || mMusicTileMode == 3)) {
+                background.setImageDrawable(new BitmapDrawable(mMetadata.bitmap));
+                background.setColorFilter(
+                    Color.rgb(123, 123, 123), android.graphics.PorterDuff.Mode.MULTIPLY);
+            } else {
+                background.setImageDrawable(null);
+                background.setColorFilter(null);
+            }
+        }
         if (mActive) {
             mDrawable = R.drawable.ic_qs_media_pause;
-            mLabel = mMetadata.trackTitle != null
+            mLabel = mMetadata.trackTitle != null && mMusicTileMode > 1
                 ? mMetadata.trackTitle : mContext.getString(R.string.quick_settings_music_pause);
         } else {
             mDrawable = R.drawable.ic_qs_media_play;

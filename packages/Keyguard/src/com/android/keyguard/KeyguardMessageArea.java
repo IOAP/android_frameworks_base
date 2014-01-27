@@ -57,7 +57,7 @@ class KeyguardMessageArea extends TextView {
 
     static final int CHARGING_ICON = 0; //R.drawable.ic_lock_idle_charging;
     static final int BATTERY_LOW_ICON = 0; //R.drawable.ic_lock_idle_low_battery;
-    static final int DISCHARGING_ICON = 0; // no icon used in ics+ currently
+    static final int DISCHARGING_ICON = 0; // no icon used
 
     static final int SECURITY_MESSAGE_DURATION = 5000;
     protected static final int FADE_DURATION = 750;
@@ -165,12 +165,9 @@ class KeyguardMessageArea extends TextView {
             mBatteryCharged = status.isCharged();
             mBatteryIsLow = status.isBatteryLow();
             mAlwaysShowBattery = KeyguardUpdateMonitor.shouldAlwaysShowBatteryInfo(getContext());
-            if (KeyguardUpdateMonitor.shouldNeverShowBatteryInfo(getContext())) {
-                mShowingBatteryInfo = false;
-            } else {
-                mShowingBatteryInfo = status.isPluggedIn()
-                        || status.isBatteryLow() || mAlwaysShowBattery;
-            }
+            mShowingBatteryInfo = status.isPluggedIn()
+                    || status.isBatteryLow()
+                    || mAlwaysShowBattery;
             update();
         }
         public void onScreenTurnedOff(int why) {

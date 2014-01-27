@@ -946,17 +946,10 @@ static int getprocname(pid_t pid, char *buf, size_t len) {
     char filename[32];
     FILE *f;
 
-    snprintf(filename, sizeof(filename), "/proc/%d/cmdline", pid);
+    sprintf(filename, "/proc/%d/cmdline", pid);
     f = fopen(filename, "r");
-    if (!f) {
-        *buf = '\0';
-        return 1;
-    }
-    if (!fgets(buf, len, f)) {
-        *buf = '\0';
-        fclose(f);
-        return 2;
-    }
+    if (!f) { *buf = '\0'; return 1; }
+    if (!fgets(buf, len, f)) { *buf = '\0'; return 2; }
     fclose(f);
     return 0;
 }

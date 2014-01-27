@@ -743,8 +743,8 @@ public class KeyguardUpdateMonitor {
      */
     private void handleBatteryUpdate(BatteryStatus status) {
         if (DEBUG) Log.d(TAG, "handleBatteryUpdate");
-        final boolean batteryUpdateInteresting = isBatteryUpdateInteresting(mBatteryStatus, status,
-                mContext);
+        final boolean batteryUpdateInteresting = isBatteryUpdateInteresting(
+                mBatteryStatus, status, mContext);
         mBatteryStatus = status;
         if (batteryUpdateInteresting) {
             for (int i = 0; i < mCallbacks.size(); i++) {
@@ -841,8 +841,8 @@ public class KeyguardUpdateMonitor {
         return mSwitchingUser;
     }
 
-    private static boolean isBatteryUpdateInteresting(BatteryStatus old, BatteryStatus current,
-            Context context) {
+    private static boolean isBatteryUpdateInteresting(BatteryStatus old,
+            BatteryStatus current, Context context) {
         final boolean nowPluggedIn = current.isPluggedIn();
         final boolean wasPluggedIn = old.isPluggedIn();
         final boolean stateChangedWhilePluggedIn =
@@ -864,18 +864,13 @@ public class KeyguardUpdateMonitor {
                 && old.level != current.level) {
             return true;
         }
-
         return false;
     }
 
     public static boolean shouldAlwaysShowBatteryInfo(Context context) {
-        return Settings.System.getInt(context.getContentResolver(),
-                Settings.System.LOCKSCREEN_BATTERY_VISIBILITY, 0) == 1;
-    }
-
-    public static boolean shouldNeverShowBatteryInfo(Context context) {
-        return Settings.System.getInt(context.getContentResolver(),
-                Settings.System.LOCKSCREEN_BATTERY_VISIBILITY, 0) == 2;
+        return Settings.System.getIntForUser(context.getContentResolver(),
+                       Settings.System.LOCKSCREEN_ALWAYS_SHOW_BATTERY, 0,
+                       UserHandle.USER_CURRENT) == 1;
     }
 
     /**

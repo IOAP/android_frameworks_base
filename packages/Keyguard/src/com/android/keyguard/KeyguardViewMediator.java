@@ -127,6 +127,7 @@ public class KeyguardViewMediator {
     private static final int DISPATCH_EVENT = 15;
     private static final int LAUNCH_CAMERA = 16;
     private static final int DISMISS = 17;
+    private static final int START_CUSTOM_INTENT = 18;
 
     /**
      * The default amount of time we stay awake (used for all key input)
@@ -1151,6 +1152,9 @@ public class KeyguardViewMediator {
                 case SHOW_ASSISTANT:
                     handleShowAssistant();
                     break;
+                case START_CUSTOM_INTENT:
+                    handleShowCustomIntent((Intent) msg.obj);
+                    break;
                 case DISPATCH_EVENT:
                     handleDispatchEvent((MotionEvent) msg.obj);
                     break;
@@ -1255,9 +1259,8 @@ public class KeyguardViewMediator {
             }
             // If the stream is muted, don't play the sound
             if (mAudioManager.isStreamMute(mMasterStreamType)) return;
-
-            // If music is playing, don't play the sound
-            if (mAudioManager.isMusicActive()) return;
+            //mute sound if music is playing
+            if (mAudioManager.isMusicActive ()) return;
 
             mLockSoundStreamId = mLockSounds.play(whichSound,
                     mLockSoundVolume, mLockSoundVolume, 1/*priortiy*/, 0/*loop*/, 1.0f/*rate*/);
@@ -1429,6 +1432,15 @@ public class KeyguardViewMediator {
 
     public void handleShowAssistant() {
         mKeyguardViewManager.showAssistant();
+    }
+
+    public void showCustomIntent(Intent intent) {
+        Message msg = mHandler.obtainMessage(START_CUSTOM_INTENT, intent);
+        mHandler.sendMessage(msg);
+    }
+
+    public void handleShowCustomIntent(Intent intent) {
+        mKeyguardViewManager.showCustomIntent(intent);
     }
 
     private boolean isAssistantAvailable() {

@@ -1238,9 +1238,6 @@ int32_t InputDispatcher::findTouchedWindowTargetsLocked(nsecs_t currentTime,
                         }
                         break; // found touched window, exit window loop
                     }
-                } else {
-                    newTouchedWindowHandle = windowHandle;
-                    continue;
                 }
 
                 if (maskedAction == AMOTION_EVENT_ACTION_DOWN
@@ -1265,16 +1262,6 @@ int32_t InputDispatcher::findTouchedWindowTargetsLocked(nsecs_t currentTime,
                     "Waiting because a system error window is about to be displayed.");
             injectionPermission = INJECTION_PERMISSION_UNKNOWN;
             goto Unresponsive;
-        }
-
-        if (newTouchedWindowHandle != NULL
-                && (newTouchedWindowHandle->getInfo()->layoutParamsFlags
-                        & InputWindowInfo::FLAG_NOT_TOUCHABLE)) {
-#if DEBUG_FOCUS
-            ALOGD("Dropping event because newTouchedWindowHandle is not touchable!");
-#endif
-            injectionResult = INPUT_EVENT_INJECTION_FAILED;
-            goto Failed;
         }
 
         // Figure out whether splitting will be allowed for this window.

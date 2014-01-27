@@ -681,8 +681,7 @@ class ServerThread {
             }
 
             if (!disableNonCoreServices && context.getResources().getBoolean(
-                        R.bool.config_enableWallpaperService) &&
-                        !"0".equals(SystemProperties.get("persist.sys.show_wallpaper", "1"))) {
+                        R.bool.config_enableWallpaperService)) {
                 try {
                     Slog.i(TAG, "Wallpaper Service");
                     if (!headless) {
