@@ -943,7 +943,7 @@ static jboolean android_os_BinderProxy_isBinderAlive(JNIEnv* env, jobject obj)
 }
 
 static int getprocname(pid_t pid, char *buf, size_t len) {
-    char filename[32];
+    char filename[20];
     FILE *f;
 
     sprintf(filename, "/proc/%d/cmdline", pid);
