@@ -256,7 +256,9 @@ public class NetworkTimeUpdateService {
                     // Verify that it's a WIFI connection
                     if (netInfo.getState() == NetworkInfo.State.CONNECTED &&
                             (netInfo.getType() == ConnectivityManager.TYPE_WIFI ||
-                                netInfo.getType() == ConnectivityManager.TYPE_ETHERNET) ) {
+                                netInfo.getType() == ConnectivityManager.TYPE_ETHERNET ||
+                                netInfo.getType() == ConnectivityManager.TYPE_WIMAX ||
+                                netInfo.getType() == ConnectivityManager.TYPE_MOBILE)) {
                         mHandler.obtainMessage(EVENT_NETWORK_CONNECTED).sendToTarget();
                     }
                 }

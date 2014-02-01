@@ -1014,7 +1014,7 @@ public class ProgressBar extends View {
             }
             mIndeterminateDrawable.setBounds(left, top, right, bottom);
         }
-
+        
         if (mProgressDrawable != null) {
             mProgressDrawable.setBounds(0, 0, right, bottom);
         }
@@ -1073,20 +1073,20 @@ public class ProgressBar extends View {
         setMeasuredDimension(resolveSizeAndState(dw, widthMeasureSpec, 0),
                 resolveSizeAndState(dh, heightMeasureSpec, 0));
     }
-
+    
     @Override
     protected void drawableStateChanged() {
         super.drawableStateChanged();
         updateDrawableState();
     }
-
+        
     private void updateDrawableState() {
         int[] state = getDrawableState();
-
+        
         if (mProgressDrawable != null && mProgressDrawable.isStateful()) {
             mProgressDrawable.setState(state);
         }
-
+        
         if (mIndeterminateDrawable != null && mIndeterminateDrawable.isStateful()) {
             mIndeterminateDrawable.setState(state);
         }
@@ -1095,14 +1095,14 @@ public class ProgressBar extends View {
     static class SavedState extends BaseSavedState {
         int progress;
         int secondaryProgress;
-
+        
         /**
          * Constructor called from {@link ProgressBar#onSaveInstanceState()}
          */
         SavedState(Parcelable superState) {
             super(superState);
         }
-
+        
         /**
          * Constructor called from {@link #CREATOR}
          */
@@ -1136,10 +1136,10 @@ public class ProgressBar extends View {
         // Force our ancestor class to save its state
         Parcelable superState = super.onSaveInstanceState();
         SavedState ss = new SavedState(superState);
-
+        
         ss.progress = mProgress;
         ss.secondaryProgress = mSecondaryProgress;
-
+        
         return ss;
     }
 
@@ -1147,7 +1147,7 @@ public class ProgressBar extends View {
     public void onRestoreInstanceState(Parcelable state) {
         SavedState ss = (SavedState) state;
         super.onRestoreInstanceState(ss.getSuperState());
-
+        
         setProgress(ss.progress);
         setSecondaryProgress(ss.secondaryProgress);
     }

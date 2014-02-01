@@ -170,6 +170,7 @@ public class ScrollView extends FrameLayout {
             context.obtainStyledAttributes(attrs, com.android.internal.R.styleable.ScrollView, defStyle, 0);
 
         setFillViewport(a.getBoolean(R.styleable.ScrollView_fillViewport, false));
+
         a.recycle();
     }
 

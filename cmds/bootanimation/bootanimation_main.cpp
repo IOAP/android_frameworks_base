@@ -45,11 +45,8 @@ int main(int argc, char** argv)
     char value[PROPERTY_VALUE_MAX];
     property_get("debug.sf.nobootanimation", value, "0");
     int noBootAnimation = atoi(value);
-    char persistValue[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.nobootanimation", persistValue, "0");
-    int persistNoBootAnimation = atoi(persistValue);
-    ALOGI_IF(noBootAnimation || persistNoBootAnimation,  "boot animation disabled");
-    if (!noBootAnimation && !persistNoBootAnimation) {
+    ALOGI_IF(noBootAnimation,  "boot animation disabled");
+    if (!noBootAnimation) {
 
         sp<ProcessState> proc(ProcessState::self());
         ProcessState::self()->startThreadPool();
