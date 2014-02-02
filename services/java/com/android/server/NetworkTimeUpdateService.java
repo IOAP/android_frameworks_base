@@ -253,7 +253,6 @@ public class NetworkTimeUpdateService {
                         .getSystemService(Context.CONNECTIVITY_SERVICE);
                 final NetworkInfo netInfo = connManager.getActiveNetworkInfo();
                 if (netInfo != null) {
-                    // Verify that it's a WIFI connection
                     if (netInfo.getState() == NetworkInfo.State.CONNECTED &&
                             (netInfo.getType() == ConnectivityManager.TYPE_WIFI ||
                                 netInfo.getType() == ConnectivityManager.TYPE_ETHERNET ||
