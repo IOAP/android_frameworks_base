@@ -1940,7 +1940,9 @@ public class NetworkManagementService extends INetworkManagementService.Stub
         cmd.appendArg(iface);
         cmd.appendArg(metric);
 
-        if (route.isHostRoute()) {
+        // If route is not default then
+        // implicitly treat it as a host route
+        if (!route.isDefaultRoute()) {
             cmd.appendArg(route.getDestination().getAddress().getHostAddress());
         }
 
