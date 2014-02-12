@@ -677,6 +677,7 @@ public class ConnectivityService extends IConnectivityManager.Stub {
 
         // start network sampling ..
         Intent intent = new Intent(ACTION_PKT_CNT_SAMPLE_INTERVAL_ELAPSED, null);
+        intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
         mSampleIntervalElapsedIntent = PendingIntent.getBroadcast(mContext,
                 SAMPLE_INTERVAL_ELAPSED_REQUEST_CODE, intent, 0);
 
@@ -4217,7 +4218,7 @@ public class ConnectivityService extends IConnectivityManager.Stub {
             String server = Settings.Global.getString(mContext.getContentResolver(),
                     Settings.Global.CAPTIVE_PORTAL_SERVER);
             if (server == null) {
-                server = "clients3.google.com";
+                server = CaptivePortalTracker.DEFAULT_SERVER;
             }
             return "http://" + server + "/generate_204";
         }
