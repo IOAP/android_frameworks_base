@@ -23,7 +23,6 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaRecorder;
-import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -52,7 +51,6 @@ public class QuickRecordTile extends QuickSettingsTile {
     private Handler mHandler;
     private MediaPlayer mPlayer = null;
     private MediaRecorder mRecorder = null;
-    private String mPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PODCASTS).getAbsolutePath();
 
     private static String mQuickAudio = null;
 
@@ -61,8 +59,7 @@ public class QuickRecordTile extends QuickSettingsTile {
     public QuickRecordTile(Context context, QuickSettingsController qsc) {
         super(context, qsc);
 
-        mGenericCollapse = false;
-        mFile = new File(mPath + File.separator
+        mFile = new File(mContext.getFilesDir() + File.separator
                 + "quickrecord.3gp");
         mQuickAudio = mFile.getAbsolutePath();
         mHandler = new Handler();

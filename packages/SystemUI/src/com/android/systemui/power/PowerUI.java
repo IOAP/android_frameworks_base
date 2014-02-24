@@ -69,7 +69,7 @@ public class PowerUI extends SystemUI {
     private boolean mShowLowBatteryNotificationWarning;
     private boolean mPlayLowBatterySound;
 
-    private static final int NOTIFICATION_ID = 10000002;  
+    private static final int NOTIFICATION_ID = 10000002;
 
     AlertDialog mInvalidChargerDialog;
     AlertDialog mLowBatteryDialog;
@@ -95,7 +95,7 @@ public class PowerUI extends SystemUI {
 	// Register settings observer and set initial preferences
         SettingsObserver settingsObserver = new SettingsObserver(new Handler());
         settingsObserver.observe();
-        setPreferences(); 
+        setPreferences();
 
         // Register for Intent broadcasts for...
         IntentFilter filter = new IntentFilter();
@@ -136,12 +136,12 @@ public class PowerUI extends SystemUI {
      * 5 = none
      *
      */
+
     private void setPreferences() {
         int currentPref = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.POWER_UI_LOW_BATTERY_WARNING_POLICY, 0);
 
         switch (currentPref) {
-
             case 5:
                 mShowLowBatteryDialogWarning = false;
                 mShowLowBatteryNotificationWarning = false;
@@ -174,7 +174,7 @@ public class PowerUI extends SystemUI {
                 mPlayLowBatterySound = true;
                 break;
         }
-    }   
+    }
 
     /**
      * Buckets the battery level.
@@ -304,7 +304,7 @@ public class PowerUI extends SystemUI {
         NotificationManager notificationManager = (NotificationManager) mContext
                 .getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancel(NOTIFICATION_ID);
-    }  
+    }
 
     void showLowBatteryWarning() {
         Slog.i(TAG,
@@ -397,7 +397,6 @@ public class PowerUI extends SystemUI {
     }
 
     void showLowBatteryNotificationWarning() {
-
         if (DEBUG) {
            Slog.i(TAG, "fire low battery notification!");
         }
@@ -430,7 +429,7 @@ public class PowerUI extends SystemUI {
         notif.flags    |= Notification.FLAG_AUTO_CANCEL;
         notif.priority  = Notification.PRIORITY_HIGH;
         notificationManager.notify(NOTIFICATION_ID, notif);
-    }  
+    }
 
     void dismissInvalidChargerDialog() {
         if (mInvalidChargerDialog != null) {

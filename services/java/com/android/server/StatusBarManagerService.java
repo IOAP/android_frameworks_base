@@ -261,7 +261,7 @@ public class StatusBarManagerService extends IStatusBarService.Stub
         }
     }
 
-    /**
+    /** 
      * Hide or show the on-screen Menu key. Only call this from the window manager, typically in
      * response to a window with FLAG_NEEDS_MENU_KEY set.
      */
@@ -404,15 +404,6 @@ public class StatusBarManagerService extends IStatusBarService.Stub
         if (mBar != null) {
             try {
                 mBar.setWindowState(window, state);
-            } catch (RemoteException ex) {}
-        }
-    }
-
-    @Override
-    public void setPieTriggerMask(int newMask, boolean lock) {
-        if (mBar != null) {
-            try {
-                mBar.setPieTriggerMask(newMask, lock);
             } catch (RemoteException ex) {}
         }
     }

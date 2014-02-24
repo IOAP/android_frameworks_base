@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2007 The Android Open Source Project
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -941,13 +940,6 @@ public final class PowerManagerService extends IPowerManager.Stub
                 for (int index = 0; index < mWakeLocks.size(); index++) {
                     WakeLock wl = mWakeLocks.get(index);
                     if(wl != null) {
-                        if(wl.mTag.startsWith("*sync*") && wl.mOwnerUid == Process.SYSTEM_UID) {
-                            releaseWakeLockInternal(wl.mLock, wl.mFlags);
-                            index--;
-                            if (DEBUG_SPEW) Slog.v(TAG, "Internally releasing the wakelock"
-                                                      + "acquired by SyncManager");
-                            continue;
-                        }
                         // release the wakelock for the blocked uid
                         if (wl.mOwnerUid == uid || checkWorkSourceObjectId(uid, wl)) {
                             releaseWakeLockInternal(wl.mLock, wl.mFlags);

@@ -3060,12 +3060,6 @@ public final class Settings {
         public static final String STATUS_BAR_NETWORK_HIDE = "status_bar_network_hide";  
 
         /**
-         * Configurable LTE or 4G icon - up to per user defined
-         * @hide
-         */
-        public static final String SHOW_LTE_OR_FOURGEE = "show_lte_or_fourgee";
-
-        /**
          * Display style of AM/PM next to clock in status bar
          * 0: Normal display (Eclair stock)
          * 1: Small display (Froyo stock)
@@ -3567,180 +3561,6 @@ public final class Settings {
          public static final String ANIMATION_CONTROLS_NO_OVERRIDE = "animation_controls_no_override";
 
         /**
-         * Whether pie controls are enabled
-         * @hide
-         */
-        public static final String PIE_CONTROLS = "pie_controls";
-
-        /**
-         * Whether pie triggers on the left and right edge should be reduced if IME shows up.
-         * Default = 1 (enabled)
-         * @hide
-         */
-        public static final String PIE_IME_CONTROL = "pie_ime_control";
-
-        /**
-         * Whether dynamic menu button is shown or not or dynamic (default)
-         * @hide
-         */
-        public static final String PIE_MENU = "pie_menu";
-
-        /**
-         * Whether right edge PIE is mirrored or not
-         * @hide
-         */
-        public static final String PIE_MIRROR_RIGHT = "pie_mirror_right";
-
-        /**
-         * Pie show text (0 or 1)
-         * @hide
-         */
-        public static final String PIE_SHOW_TEXT = "pie_show_text";
-
-        /**
-         * Pie show snap (0 or 1)
-         * @hide
-         */
-        public static final String PIE_SHOW_SNAP = "pie_show_snap";
-
-        /**
-         * Pie show background (0 or 1)
-         * @hide
-         */
-        public static final String PIE_SHOW_BACKGROUND = "pie_show_background";
-
-        /**
-         * Locations of the pie in the screen.
-         * (1<<0) = LEFT
-         * (1<<1) = BOTTOM
-         * (1<<2) = RIGHT
-         * (1<<3) = TOP
-         * Default: LEFT
-         * @hide
-         */
-        public static final String PIE_GRAVITY = "pie_gravity";
-
-        /**
-         * Relative pie size (fraction)
-         * Default: 1.0f
-         * @hide
-         */
-        public static final String PIE_SIZE = "pie_size";
-
-        /**
-         * Pie button color
-         * @hide
-         */
-        public static final String PIE_BUTTON_COLOR = "pie_button_color";
-
-        /**
-         * Pie button press color
-         * @hide
-         */
-        public static final String PIE_BUTTON_PRESSED_COLOR = "pie_button_pressed_color";
-
-        /**
-         * Pie button long press color
-         * @hide
-         */
-        public static final String PIE_BUTTON_LONG_PRESSED_COLOR = "pie_button_long_pressed_color";
-
-        /**
-         * Pie button outline color
-         * @hide
-         */
-        public static final String PIE_BUTTON_OUTLINE_COLOR = "pie_button_outline_color";
-
-        /**
-         * Pie background color
-         * @hide
-         */
-        public static final String PIE_BACKGROUND_COLOR = "pie_background_color";
-
-        /**
-         * Pie snap color
-         * @hide
-         */
-        public static final String PIE_SNAP_COLOR = "pie_snap_color";
-
-        /**
-         * Pie text color
-         * @hide
-         */
-        public static final String PIE_TEXT_COLOR = "pie_text_color";
-
-        /**
-         * Pie icon color
-         * @hide
-         */
-        public static final String PIE_ICON_COLOR = "pie_icon_color";
-
-        /**
-         * Pie icon color mode
-         * @hide
-         */
-        public static final String PIE_ICON_COLOR_MODE = "pie_icon_color_mode";
-
-        /**
-         * Pie button alpha
-         * @hide
-         */
-        public static final String PIE_BUTTON_ALPHA = "pie_button_alpha";
-
-        /**
-         * Pie button pressed and long pressed alpha
-         * @hide
-         */
-        public static final String PIE_BUTTON_PRESSED_ALPHA = "pie_button_pressed_alpha";
-
-        /**
-         * Pie background alpha
-         * @hide
-         */
-        public static final String PIE_BACKGROUND_ALPHA = "pie_background_alpha";
-
-        /**
-         * Pie buttons configuration first layer
-         * @hide
-         */
-        public static final String PIE_BUTTONS_CONFIG = "pie_buttons_config";
-
-        /**
-         * Pie buttons configuration second layer
-         * @hide
-         */
-        public static final String PIE_BUTTONS_CONFIG_SECOND_LAYER =
-                "pie_buttons_config_second_layer";
-
-        /**
-         * Enable looking up of phone numbers of nearby places
-         *
-         * @hide
-         */
-        public static final String ENABLE_FORWARD_LOOKUP = "enable_forward_lookup";
-
-        /**
-         * Enable looking up of information of phone numbers not in the contacts
-         *
-         * @hide
-         */
-        public static final String ENABLE_REVERSE_LOOKUP = "enable_reverse_lookup";
-
-        /**
-         * The forward lookup provider
-         *
-         * @hide
-         */
-        public static final String FORWARD_LOOKUP_PROVIDER = "forward_lookup_provider";
-
-        /**
-         * The reverse lookup provider
-         *
-         * @hide
-         */
-        public static final String REVERSE_LOOKUP_PROVIDER = "reverse_lookup_provider";
-
-        /**
          * QuickSettings configuration
          * @hide
          */
@@ -3841,13 +3661,6 @@ public final class Settings {
          * @hide
          */
         public static final String QS_QUICK_PULLDOWN = "qs_quick_pulldown";
-
-
-        /**
-        * Set a custom notification background color
-        * @hide
-        */
-        public static final String LOCKSCREEN_NOTIFICATIONS_COLOR = "lockscreen_notifications_color";
 
         /**
          * Quick Settings Collapse Pane
@@ -4135,12 +3948,6 @@ public final class Settings {
          * @hide
          */
         public static final String CLEAR_RECENTS_BUTTON_LOCATION = "clear_recents_button_location";
-
-        /**
-         * Defines the custom path to use for UI sound effects (null for default)
-         * @hide
-         */
-        public static final String CUSTOM_SOUND_EFFECTS_PATH = "custom_sound_effects_path";
 
         /**
          * HALO, should default to 0 (no, do not show)
@@ -4478,54 +4285,6 @@ public final class Settings {
         public static final String SCREEN_RECORDER_BITRATE = "screen_recorder_bitrate";
 
         /**
-         * TeloRadio enable
-         * @hide
-         */
-        public static final String TELO_RADIO_ENABLED = "telo_radio_enabled";
-
-        /**
-         * TeloRadio 2g with wifi
-         * @hide
-         */
-        public static final String TELO_RADIO_2G_WIFI = "telo_radio_2g_wifi";
-
-        /**
-         * TeloRadio LTE in high power
-         * @hide
-         */
-        public static final String TELO_RADIO_LTE = "telo_radio_lte";
-
-        /**
-         * TeloRadio change 2g when screenoff
-         * @hide
-         */
-        public static final String TELO_RADIO_2G_SCREENOFF = "telo_radio_2g_screenoff";
-
-        /**
-         * TeloRadio time to change 2g when screenoff
-         * @hide
-         */
-        public static final String TELO_RADIO_2G_SCREENOFF_TIME = "telo_radio_2g_screenoff_timeout";
-
-        /**
-         * TeloRadio change 3g when unlock device
-         * @hide
-         */
-        public static final String TELO_RADIO_GO3G_UNLOCK = "telo_radio_go_3g_unlock";
-
-        /**
-         *  TeloRadio Low power network
-         * @hide
-         */
-        public static final String TELO_RADIO_LOW_POWER = "telo_radio_low_power";
-
-        /**
-         * TeloRadio High power network
-         * @hide
-         */
-        public static final String TELO_RADIO_HIGH_POWER = "telo_radio_high_power";
-
-        /**
          *  Enable statusbar double tap gesture on to put device to sleep
          * @hide
          */
@@ -4642,11 +4401,6 @@ public final class Settings {
             PHONE_BLACKLIST_UNKNOWN_NUMBER_MODE,
             PHONE_BLACKLIST_REGEX_ENABLED,
             LOCKSCREEN_ALWAYS_SHOW_BATTERY,
-            TELO_RADIO_ENABLED,
-            TELO_RADIO_2G_WIFI,
-            TELO_RADIO_LTE,
-            TELO_RADIO_2G_SCREENOFF,
-            TELO_RADIO_GO3G_UNLOCK,
         };
 
         // Settings moved to Settings.Secure

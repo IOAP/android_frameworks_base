@@ -2155,12 +2155,17 @@ public class NotificationManagerService extends INotificationManager.Stub
                                 + n.getPackageName());
                     }
 
-                    final ProfileManager profileManager =
-                        (ProfileManager) mContext.getSystemService(Context.PROFILE_SERVICE);
+                    try {
+                        final ProfileManager profileManager =
+                            (ProfileManager) mContext.getSystemService(Context.PROFILE_SERVICE);
 
-                    ProfileGroup group = profileManager.getActiveProfileGroup(pkg);
-                    if (group != null) {
-                        group.applyOverridesToNotification(notification);
+                        ProfileGroup group = profileManager.getActiveProfileGroup(pkg);
+                        if (group != null) {
+                            // FIXME: local variable notification is accessed from within inner class; needs to be declared final
+                            //notification = group.processNotification(notification);
+                        }
+                    } catch(Throwable th) {
+                        Log.e(TAG, "An error occurred profiling the notification.", th);
                     }
 
                     final boolean alertsDisabled =

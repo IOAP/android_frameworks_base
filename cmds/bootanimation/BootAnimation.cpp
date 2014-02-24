@@ -337,6 +337,9 @@ bool BootAnimation::threadLoop()
         r = movie();
     }
 
+    // No need to force exit anymore
+    property_set(EXIT_PROP_NAME, "0");
+
     eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglDestroyContext(mDisplay, mContext);
     eglDestroySurface(mDisplay, mSurface);

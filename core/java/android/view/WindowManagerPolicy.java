@@ -1260,11 +1260,4 @@ public interface WindowManagerPolicy {
      */
     public void toggleGlobalMenu();
 
-    /**
-     * Toggle statusbar on expanded desktop
-     *
-     * @hide
-     */
-    void toggleStatusBar();
-
 }
