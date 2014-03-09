@@ -16,7 +16,6 @@
 
 package com.android.internal.policy.impl.keyguard;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -190,14 +189,6 @@ public class KeyguardServiceWrapper implements IKeyguardService {
         }
     }
 
-    public void showCustomIntent(Intent intent) {
-        try {
-            mService.showCustomIntent(intent);
-        } catch (RemoteException e) {
-            Slog.w(TAG , "Remote Exception", e);
-        }
-    }
-
     public void setBackgroundBitmap(Bitmap bmp) {
         try {
             mService.setBackgroundBitmap(bmp);
@@ -211,6 +202,10 @@ public class KeyguardServiceWrapper implements IKeyguardService {
     }
 
     public void dispatch(MotionEvent event) {
+        // Not used by PhoneWindowManager.  See code in {@link NavigationBarView}
+    }
+
+    public void dispatchButtonClick(int buttonId) {
         // Not used by PhoneWindowManager.  See code in {@link NavigationBarView}
     }
 

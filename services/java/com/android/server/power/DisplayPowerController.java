@@ -250,7 +250,7 @@ final class DisplayPowerController {
     // a stylish electron beam animation instead.
     private boolean mElectronBeamFadesConfig;
 
-    // Override config for ElectronBeam
+    // Slim settings - override config for ElectronBeam
     private int mElectronBeamMode;
 
     // The pending power request.
@@ -404,13 +404,13 @@ final class DisplayPowerController {
             DisplayManagerService displayManager,
             SuspendBlocker displaySuspendBlocker, DisplayBlanker displayBlanker,
             Callbacks callbacks, Handler callbackHandler) {
+        mContext = context;
         mHandler = new DisplayControllerHandler(looper);
         mNotifier = notifier;
         mDisplaySuspendBlocker = displaySuspendBlocker;
         mDisplayBlanker = displayBlanker;
         mCallbacks = callbacks;
         mCallbackHandler = callbackHandler;
-        mContext = context;
 
         mLights = lights;
         mTwilight = twilight;
@@ -482,12 +482,8 @@ final class DisplayPowerController {
 
         Intent intent = new Intent();
         intent.setClassName("com.android.keyguard", "com.android.keyguard.KeyguardService");
-        if (!context.bindServiceAsUser(intent, mKeyguardConnection,
-                Context.BIND_AUTO_CREATE, UserHandle.OWNER)) {
-            Log.e(TAG, "*** Keyguard: can't bind to keyguard");
-        } else {
-            Log.e(TAG, "*** Keyguard started");
-        }
+        context.bindServiceAsUser(intent, mKeyguardConnection,
+                Context.BIND_AUTO_CREATE, UserHandle.OWNER);
     }
 
     private void updateAutomaticBrightnessSettings() {
@@ -640,12 +636,10 @@ final class DisplayPowerController {
 
             boolean seeThrough = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.LOCKSCREEN_SEE_THROUGH, 0) == 1;
-            int blurRadius = Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.LOCKSCREEN_BLUR_RADIUS, 12);
             if (changed && !mPendingRequestChangedLocked) {
                 if ((mKeyguardService == null || !mKeyguardService.isShowing()) &&
                             request.screenState == DisplayPowerRequest.SCREEN_STATE_OFF &&
-                            seeThrough && blurRadius > 0) {
+                            seeThrough) {
                     DisplayInfo di = mDisplayManager
                             .getDisplayInfo(mDisplayManager.getDisplayIds() [0]);
                     /* Limit max screenshot capture layer to 22000.
@@ -657,14 +651,14 @@ final class DisplayPowerController {
 
                         // scale image if its too large
                         if (bmp.getWidth() > MAX_BLUR_WIDTH) {
-                            tmpBmp = bmp.createScaledBitmap(bmp, MAX_BLUR_WIDTH, MAX_BLUR_HEIGHT, true);
+                                tmpBmp = bmp.createScaledBitmap(bmp, MAX_BLUR_WIDTH, MAX_BLUR_HEIGHT, true);
                         }
 
                         mKeyguardService.setBackgroundBitmap(tmpBmp);
                         bmp.recycle();
                         tmpBmp.recycle();
                     }
-                } else if (mKeyguardService != null && (!seeThrough || blurRadius == 0)) mKeyguardService.setBackgroundBitmap(null);
+                }
                 mPendingRequestChangedLocked = true;
                 sendUpdatePowerStateLocked();
             }
@@ -762,7 +756,7 @@ final class DisplayPowerController {
             mustNotify = !mDisplayReadyLocked;
         }
 
-	// update crt mode settings and force initialize if value changed
+        // update crt mode settings and force initialize if value changed
         if (mElectronBeamMode != mPowerRequest.electronBeamMode) {
             mElectronBeamMode = mPowerRequest.electronBeamMode;
             mustInitialize = true;
@@ -888,14 +882,13 @@ final class DisplayPowerController {
                             setScreenOn(false);
                             unblockScreenOn();
                         } else if (mPowerState.prepareElectronBeam(
-                                //mElectronBeamFadesConfig ?
-				mElectronBeamMode == 0 ?
+                                mElectronBeamMode == 0 ?
                                         ElectronBeam.MODE_FADE :
-                                        (mElectronBeamMode == 4
+                                            (mElectronBeamMode == 4
                                             ? ElectronBeam.MODE_SCALE_DOWN
                                             : ElectronBeam.MODE_COOL_DOWN))
                                 && mPowerState.isScreenOn()
-                                /*&& useScreenOffAnimation()*/) {
+                                && useScreenOffAnimation()) {
                             mElectronBeamOffAnimator.start();
                         } else {
                             mElectronBeamOffAnimator.end();
@@ -1594,8 +1587,8 @@ final class DisplayPowerController {
         }
     };
 
-    //private boolean useScreenOffAnimation() {
-    //    return Settings.System.getInt(mContext.getContentResolver(),
-    //            Settings.System.SCREEN_OFF_ANIMATION, 1) == 1;
-    //}
+    private boolean useScreenOffAnimation() {
+        return Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SCREEN_OFF_ANIMATION, 1) == 1;
+    }
 }

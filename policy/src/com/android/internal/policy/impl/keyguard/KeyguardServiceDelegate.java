@@ -263,12 +263,6 @@ public class KeyguardServiceDelegate {
         }
     }
 
-    public void showCustomIntent(Intent intent) {
-        if (mKeyguardService != null) {
-            mKeyguardService.showCustomIntent(intent);
-        }
-    }
-
     public void setCurrentUser(int newUserId) {
         if (mKeyguardService != null) {
             mKeyguardService.setCurrentUser(newUserId);

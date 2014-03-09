@@ -71,7 +71,7 @@ public class ZygoteInit {
     private static final int LOG_BOOT_PROGRESS_PRELOAD_END = 3030;
 
     /** when preloading, GC after allocating this many bytes */
-    private static final int PRELOAD_GC_THRESHOLD = 50000;
+    private static final int PRELOAD_GC_THRESHOLD = 1000000;
 
     public static final String USAGE_STRING =
             " <\"start-system-server\"|\"\" for startSystemServer>";
@@ -88,7 +88,7 @@ public class ZygoteInit {
      * The number of times that the main Zygote loop
      * should run before calling gc() again.
      */
-    static final int GC_LOOP_COUNT = 10;
+    static final int GC_LOOP_COUNT = 15;
 
     /**
      * The name of a resource file that contains classes to preload.
@@ -199,6 +199,16 @@ public class ZygoteInit {
         }
 
         sServerSocket = null;
+    }
+
+    /**
+     * Return the server socket's underlying file descriptor, so that
+     * ZygoteConnection can pass it to the native code for proper
+     * closure after a child process is forked off.
+     */
+
+    static FileDescriptor getServerSocketFileDescriptor() {
+        return sServerSocket.getFileDescriptor();
     }
 
     private static final int UNPRIVILEGED_UID = 9999;

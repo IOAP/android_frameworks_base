@@ -2,29 +2,6 @@
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
-    <!--ScreenShot QuickTrash-->
-    <string name="trash">Trash</string>
-
-    <!-- Animation Strings -->
-    <string name="animation_fade">Fade</string>
-    <string name="animation_slide_right">Slide in right</string>
-    <string name="animation_slide_left">Slide in left</string>
-    <string name="animation_slide_right_no_fade">Slide in right (No fade)</string>
-    <string name="animation_slide_left_no_fade">Slide in left (No fade)</string>
-    <string name="animation_slide_up">Slide in bottom</string>
-    <string name="animation_slide_down">Slide in top</string>
-    <string name="animation_default">Default</string>
-    <string name="animation_translucent">Translucent</string>
-    <string name="animation_grow_shrink">Grow in (Top)</string>
-    <string name="animation_grow_shrink_center">Grow in (Center)</string>
-    <string name="animation_grow_shrink_bottom">Grow in (Bottom)</string>
-    <string name="animation_grow_shrink_left">Grow in (Left)</string>
-    <string name="animation_grow_shrink_right">Grow in (Right)</string>
-    <string name="action_null">Blank</string>
-
-    <!-- Description of accessibility direction for targets [CHAR LIMIT=NONE] -->
-    <string name="accessibility_target_direction">Swipe to activate a target</string>
-
     <!-- Title of an application permission that lets an application view/edit revoked permissions. -->
     <string name="permlab_revokePermissions">Allows view and edit of revoked permissions. Not for use by normal applications.</string>
     <!-- Description of an application permission that lets lets an application view/edit revoked permissions. -->
@@ -35,15 +12,35 @@
     <!-- Description of an application permission that lets lets an application access the ThemeManagerService -->
     <string name="permdesc_accessThemeService">Allows an application to set/reset themes. Not for use by normal applications.</string>
 
-    <!-- label for screen record item in phone options dialog -->
-    <string name="global_action_screen_record">Screen record</string>
-
-    <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
-    <string name="permlab_recordScreen">Record content being displayed</string>
-    <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
-    <string name="permdesc_recordScreen">Allows the app to record the users screen.</string>
-
-    <!-- Error description on theme switch with ligtsensor mode enabled -->
-    <string name="theme_auto_switch_mode_error">Automatic light condition change mode is enabled. Manual switching is not possible.</string>
+    <!-- Awesome Action Stuff-->
+    <string name="action_home">Home</string>
+    <string name="action_back">Back</string>
+    <string name="action_recents">Recents</string>
+    <string name="action_recents_gb">Recents (GB style)</string>
+    <string name="action_search">Search</string>
+    <string name="action_screenshot">Screenshot</string>
+    <string name="action_menu">Menu</string>
+    <string name="action_ime">Open IME Switcher</string>
+    <string name="action_kill">Kill task</string>
+    <string name="action_lastapp">Last app</string>
+    <string name="action_power">Power</string>
+    <string name="action_notifications">Notifications</string>
+    <string name="action_assist">Search (Google Now)</string>
+    <string name="action_clockoptions">Clock options</string>
+    <string name="action_voiceassist">Voice search</string>
+    <string name="action_torch">Torch</string>
+    <string name="action_silent">Ring/Silent</string>
+    <string name="action_vib">Ring/Vibrate</string>
+    <string name="action_silent_vib">Ring/Vibrate/Silent</string>
+    <string name="action_event">Event</string>
+    <string name="action_today">Today</string>
+    <string name="action_alarm">Alarm</string>
+    <string name="action_unlock">Unlock</string>
+    <string name="action_camera">Camera</string>
+    <string name="action_null">Blank</string>
+    <string name="action_widgets">Nav Widgets</string>
+    <string name="action_app_window">App Window</string>
+    <string name="action_ribbon">AOKP Ribbon</string>
+    <string name="action_app">Custom App/Shortcut</string>
 
 </resources>

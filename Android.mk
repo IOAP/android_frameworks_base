@@ -25,6 +25,7 @@ LOCAL_PATH := $(call my-dir)
 # R.java file as a prerequisite.
 # TODO: find a more appropriate way to do this.
 framework_res_source_path := APPS/framework-res_intermediates/src
+framework_ioap_res_source_path := APPS/framework-ioap-res_intermediates/src
 
 # Build the master framework library.
 # The framework contains too many method references (>64K) for poor old DEX.
@@ -63,6 +64,7 @@ LOCAL_SRC_FILES += \
 	core/java/android/app/IActivityPendingResult.aidl \
 	core/java/android/app/IAlarmManager.aidl \
 	core/java/android/app/IBackupAgent.aidl \
+	core/java/android/app/IBatteryService.aidl \
 	core/java/android/app/IInstrumentationWatcher.aidl \
 	core/java/android/app/INotificationManager.aidl \
 	core/java/android/app/IProfileManager.aidl \
@@ -84,6 +86,8 @@ LOCAL_SRC_FILES += \
 	core/java/android/app/backup/IFullBackupRestoreObserver.aidl \
 	core/java/android/app/backup/IRestoreObserver.aidl \
 	core/java/android/app/backup/IRestoreSession.aidl \
+	core/java/android/wipower/IWipower.aidl \
+	core/java/android/wipower/IWipowerManagerCallback.aidl \
 	core/java/android/bluetooth/IBluetooth.aidl \
 	core/java/android/bluetooth/IQBluetooth.aidl \
 	core/java/android/bluetooth/IBluetoothA2dp.aidl \
@@ -186,6 +190,9 @@ LOCAL_SRC_FILES += \
 	core/java/android/service/dreams/IDreamManager.aidl \
 	core/java/android/service/dreams/IDreamService.aidl \
 	core/java/android/service/gesture/IGestureService.aidl \
+	core/java/android/service/gesture/IEdgeGestureService.aidl \
+	core/java/android/service/gesture/IEdgeGestureActivationListener.aidl \
+	core/java/android/service/gesture/IEdgeGestureHostCallback.aidl \
 	core/java/android/service/wallpaper/IWallpaperConnection.aidl \
 	core/java/android/service/wallpaper/IWallpaperEngine.aidl \
 	core/java/android/service/wallpaper/IWallpaperService.aidl \
@@ -251,8 +258,8 @@ LOCAL_SRC_FILES += \
 	location/java/android/location/IFusedProvider.aidl \
 	location/java/android/location/IGeocodeProvider.aidl \
 	location/java/android/location/IGeofenceProvider.aidl \
-        location/java/android/location/IGeoFencer.aidl \
-        location/java/android/location/IGeoFenceListener.aidl \
+	location/java/android/location/IGeoFencer.aidl \
+	location/java/android/location/IGeoFenceListener.aidl \
 	location/java/android/location/IGpsStatusListener.aidl \
 	location/java/android/location/IGpsStatusProvider.aidl \
 	location/java/android/location/ILocationListener.aidl \
@@ -276,9 +283,12 @@ LOCAL_SRC_FILES += \
 	media/java/android/media/IRingtonePlayer.aidl \
 	telephony/java/com/android/internal/telephony/IPhoneStateListener.aidl \
 	telephony/java/com/android/internal/telephony/IPhoneSubInfo.aidl \
+	telephony/java/com/android/internal/telephony/msim/IPhoneSubInfoMSim.aidl \
 	telephony/java/com/android/internal/telephony/ITelephony.aidl \
+	telephony/java/com/android/internal/telephony/msim/ITelephonyMSim.aidl \
 	telephony/java/com/android/internal/telephony/ISms.aidl \
 	telephony/java/com/android/internal/telephony/ITelephonyRegistry.aidl \
+	telephony/java/com/android/internal/telephony/ITelephonyRegistryMSim.aidl \
 	telephony/java/com/android/internal/telephony/IWapPushManager.aidl \
 	wifi/java/android/net/wifi/IWifiManager.aidl \
 	wifi/java/android/net/wifi/p2p/IWifiP2pManager.aidl \
@@ -292,7 +302,8 @@ LOCAL_AIDL_INCLUDES += $(FRAMEWORKS_BASE_JAVA_SRC_DIRS)
 LOCAL_INTERMEDIATE_SOURCES := \
 			$(framework_res_source_path)/android/R.java \
 			$(framework_res_source_path)/android/Manifest.java \
-			$(framework_res_source_path)/com/android/internal/R.java
+			$(framework_res_source_path)/com/android/internal/R.java \
+			$(framework_ioap_res_source_path)/pac/R.java
 
 LOCAL_NO_STANDARD_LIBRARIES := true
 LOCAL_JAVA_LIBRARIES := bouncycastle conscrypt core core-junit ext okhttp
@@ -308,6 +319,12 @@ include $(BUILD_STATIC_JAVA_LIBRARY)
 framework_res_R_stamp := \
 	$(call intermediates-dir-for,APPS,framework-res,,COMMON)/src/R.stamp
 $(full_classes_compiled_jar): $(framework_res_R_stamp)
+
+# Make sure that R.java and Manifest.java are built before we build
+# the source for this library.
+framework_ioap_res_R_stamp := \
+	$(call intermediates-dir-for,APPS,framework-ioap-res,,COMMON)/src/R.stamp
+$(full_classes_compiled_jar): $(framework_ioap_res_R_stamp)
 
 # Build part 1 of the framework library.
 # ============================================================
@@ -347,6 +364,7 @@ framework2_module := $(LOCAL_INSTALLED_MODULE)
 # Make sure that all framework modules are installed when framework is.
 # ============================================================
 $(framework_module): | $(dir $(framework_module))framework-res.apk
+$(framework_module): | $(dir $(framework_module))framework-ioap-res.apk
 $(framework_module): | $(dir $(framework_module))framework2.jar
 
 framework_built := $(call java-lib-deps,framework framework2)
@@ -414,7 +432,9 @@ aidl_files := \
 	frameworks/base/location/java/com/android/internal/location/ProviderRequest.aidl \
 	frameworks/base/telephony/java/android/telephony/ServiceState.aidl \
 	frameworks/base/telephony/java/com/android/internal/telephony/IPhoneSubInfo.aidl \
+	frameworks/base/telephony/java/com/android/internal/telephony/msim/IPhoneSubInfoMSim.aidl \
 	frameworks/base/telephony/java/com/android/internal/telephony/ITelephony.aidl \
+    frameworks/base/telephony/java/com/android/internal/telephony/msim/ITelephonyMSim.aidl \
 	frameworks/base/wifi/java/android/net/wifi/BatchedScanSettings.aidl \
 	frameworks/base/wifi/java/android/net/wifi/BatchedScanResult.aidl \
 

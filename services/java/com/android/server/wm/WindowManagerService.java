@@ -5079,15 +5079,6 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     @Override
-    public void showCustomIntentOnKeyguard(Intent intent) {
-        if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.DEVICE_POWER)
-                != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        mPolicy.showCustomIntentOnKeyguard(intent);
-    }
-
-    @Override
     public void dismissKeyguard() {
         if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.DISABLE_KEYGUARD)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -5244,10 +5235,10 @@ public class WindowManagerService extends IWindowManager.Stub
         mPolicy.setTouchExplorationEnabled(enabled);
     }
 
-    // Called by window manager policy. Not exposed externally.
+    // Called by window manager policy.  Not exposed externally.
     @Override
     public void reboot() {
-        ShutdownThread.reboot(mContext, null, true);
+        ShutdownThread.reboot(getUiContext(), null, true);
     }
 
     public void setCurrentUser(final int newUserId) {
@@ -9624,7 +9615,6 @@ public class WindowManagerService extends IWindowManager.Stub
     void scheduleAnimationLocked() {
         if (!mAnimationScheduled) {
             mAnimationScheduled = true;
-            mPolicy.windowAnimationStarted();
             mChoreographer.postCallback(
                     Choreographer.CALLBACK_ANIMATION, mAnimator.mAnimationRunnable, null);
         }
@@ -10932,34 +10922,8 @@ public class WindowManagerService extends IWindowManager.Stub
         return mWindowMap;
     }
 
-    /* @hide */
-    @Override
-    public boolean expandedDesktopHidesNavigationBar() {
-        return mPolicy.expandedDesktopHidesNavigationBar();
-    }
-
-    /* @hide */
-    @Override
-    public boolean expandedDesktopHidesStatusBar() {
-        return mPolicy.expandedDesktopHidesStatusBar();
-    }
-
-    /* @hide */
-    @Override
-    public int getCurrentNavigationBarSize() {
-        return mPolicy.getCurrentNavigationBarSize();
-    }
-
-    /* @hide */
-    @Override
-    public void toggleGlobalMenu() {
-        mPolicy.toggleGlobalMenu();
-    }
-
-    /* @hide */
     @Override
     public void addSystemUIVisibilityFlag(int flag) {
         mLastStatusBarVisibility |= flag;
     }
-
 }

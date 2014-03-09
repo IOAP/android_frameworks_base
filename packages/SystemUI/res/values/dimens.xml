@@ -58,6 +58,10 @@
     <dimen name="status_bar_recents_app_icon_left_margin">0dp</dimen>
     <dimen name="status_bar_recents_app_icon_top_margin">8dp</dimen>
 
+    <!-- Status bar battery icons dimensions -->
+    <dimen name="status_bar_battery_height">16dp</dimen>
+    <dimen name="status_bar_battery_width">10.5dp</dimen>
+
     <!-- Amount to offset bottom of notification peek window from top of status bar. -->
     <dimen name="peek_window_y_offset">-12dp</dimen>
 
@@ -74,7 +78,7 @@
     <dimen name="status_bar_icon_size">@*android:dimen/status_bar_icon_size</dimen>
 
     <!-- Height of a small notification in the status bar -->
-    <dimen name="notification_min_height">72dp</dimen>
+    <dimen name="notification_min_height">64dp</dimen>
 
     <!-- Height of a large notification in the status bar -->
     <dimen name="notification_max_height">256dp</dimen>
@@ -223,6 +227,9 @@
     <!-- used by DessertCase -->
     <dimen name="dessert_case_cell_size">192dp</dimen>
 
+    <!-- Padding under status bar battery icon -->
+    <dimen name="status_bar_battery_bottom_padding">1px</dimen>
+
     <!-- Quick Settings tile geometry: gap between icon and text 4 per row-->
     <dimen name="qs_4_column_text_padding">14dp</dimen>
     <!-- Quick Settings tile geometry: gap between icon and text 5 per row-->
@@ -234,5 +241,4 @@
     <dimen name="qs_4_column_text_size">10sp</dimen>
     <!-- Quick Settings tile geometry: text size for 5 tile per row-->
     <dimen name="qs_5_column_text_size">9sp</dimen>
-
 </resources>

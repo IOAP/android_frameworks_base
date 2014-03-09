@@ -46,9 +46,11 @@ interface ITelephony {
 
     /**
      * Toggle between 3G and LTE (NT_MODE_CDMA, NT_MODE_GLOBAL)
-     * {@hide}
      */
     void toggleLTE();
+
+    int getPreferredNetworkMode();
+    int getLteState();
 
     /**
      * If there is currently a call in progress, show the call screen.
@@ -150,6 +152,11 @@ interface ITelephony {
      * @return whether the operation was a success.
      */
     boolean supplyPin(String pin);
+
+    /**
+     * Gets the number of attempts remaining for PIN1/PUK1 unlock.
+     */
+    int getIccPin1RetryCount();
 
     /**
      * Supply puk to unlock the SIM and set SIM pin to new pin.
@@ -332,5 +339,11 @@ interface ITelephony {
     void setCellInfoListRate(int rateInMillis);
 
     int getLteOnGsmMode();
-}
 
+    /**
+     * Toggle between 2G and 3G (NT_MODE_GSM, NT_MODE_WCDMA_PREF)
+     * @param boolean to turn on and off 2G
+     * @hide
+     */
+     void toggle2G(boolean on);
+}

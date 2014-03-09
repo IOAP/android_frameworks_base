@@ -91,7 +91,7 @@ static void android_server_AlarmManagerService_clear(JNIEnv* env, jobject obj, j
 	}
 }
 
-static jint android_server_AlarmManagerService_waitForAlarm(JNIEnv*, jobject, jint fd)
+static jint android_server_AlarmManagerService_waitForAlarm(JNIEnv* env, jobject obj, jint fd)
 {
     int result = 0;
 

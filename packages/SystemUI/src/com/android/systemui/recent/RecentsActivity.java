@@ -114,12 +114,13 @@ public class RecentsActivity extends Activity {
     }
 
     public static boolean forceOpaqueBackground(Context context) {
-        return WallpaperManager.getInstance(context).getWallpaperInfo() != null;
+        return WallpaperManager.getInstance(context).getWallpaperInfo() != null
+                && !ActivityManager.isHighEndGfx();
     }
 
     @Override
     public void onStart() {
-        // Hide wallpaper if it's not a static image
+        // Hide wallpaper if it's not a static image and device is low-end
         if (forceOpaqueBackground(this)) {
             updateWallpaperVisibility(false);
         } else {
@@ -154,7 +155,6 @@ public class RecentsActivity extends Activity {
                     | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
             startActivityAsUser(homeIntent, new UserHandle(UserHandle.USER_CURRENT));
             mRecentsPanel.show(false);
-            RecentTasksLoader.getInstance(this).cancelPreloadingFirstTask();
         }
     }
 

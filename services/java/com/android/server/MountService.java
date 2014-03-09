@@ -91,6 +91,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -216,7 +217,6 @@ class MountService extends IMountService.Stub
     private final CountDownLatch mConnectedSignal = new CountDownLatch(1);
     private final CountDownLatch mAsecsScanned = new CountDownLatch(1);
     private boolean                               mSendUmsConnectedOnBoot = false;
-    private boolean                               mUmsSupported = false;
 
     /**
      * Private hash of currently mounted secure containers.
@@ -385,18 +385,37 @@ class MountService extends IMountService.Stub
     }
 
     class ShutdownCallBack extends UnmountCallBack {
-        IMountShutdownObserver observer;
-        ShutdownCallBack(String path, IMountShutdownObserver observer) {
+        MountShutdownLatch mMountShutdownLatch;
+        ShutdownCallBack(String path, final MountShutdownLatch mountShutdownLatch) {
             super(path, true, false);
-            this.observer = observer;
+            mMountShutdownLatch = mountShutdownLatch;
         }
 
         @Override
         void handleFinished() {
             int ret = doUnmountVolume(path, true, removeEncryption);
-            if (observer != null) {
+            Slog.i(TAG, "Unmount completed: " + path + ", result code: " + ret);
+            mMountShutdownLatch.countDown();
+        }
+    }
+
+    static class MountShutdownLatch {
+        private IMountShutdownObserver mObserver;
+        private AtomicInteger mCount;
+
+        MountShutdownLatch(final IMountShutdownObserver observer, int count) {
+            mObserver = observer;
+            mCount = new AtomicInteger(count);
+        }
+
+        void countDown() {
+            boolean sendShutdown = false;
+            if (mCount.decrementAndGet() == 0) {
+                sendShutdown = true;
+            }
+            if (sendShutdown && mObserver != null) {
                 try {
-                    observer.onShutDownComplete(ret);
+                    mObserver.onShutDownComplete(StorageResultCode.OperationSucceeded);
                 } catch (RemoteException e) {
                     Slog.w(TAG, "RemoteException when shutting down");
                 }
@@ -885,7 +904,7 @@ class MountService extends IMountService.Stub
                 /* Send the media unmounted event first */
                 if (DEBUG_EVENTS) Slog.i(TAG, "Sending unmounted event first");
                 updatePublicVolumeState(volume, Environment.MEDIA_UNMOUNTED);
-                sendStorageIntent(Intent.ACTION_MEDIA_UNMOUNTED, volume, UserHandle.ALL);
+                sendStorageIntent(Environment.MEDIA_UNMOUNTED, volume, UserHandle.ALL);
 
                 if (DEBUG_EVENTS) Slog.i(TAG, "Sending media removed");
                 updatePublicVolumeState(volume, Environment.MEDIA_REMOVED);
@@ -1181,7 +1200,6 @@ class MountService extends IMountService.Stub
     private void sendStorageIntent(String action, StorageVolume volume, UserHandle user) {
         final Intent intent = new Intent(action, Uri.parse("file://" + volume.getPath()));
         intent.putExtra(StorageVolume.EXTRA_STORAGE_VOLUME, volume);
-        intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
         Slog.d(TAG, "sendStorageIntent " + intent + " to " + user);
         mContext.sendBroadcastAsUser(intent, user);
     }
@@ -1274,7 +1292,6 @@ class MountService extends IMountService.Stub
                             mVolumeStates.put(volume.getPath(), Environment.MEDIA_UNMOUNTED);
                             volume.setState(Environment.MEDIA_UNMOUNTED);
                         }
-                        mUmsSupported |= allowMassStorage;
                     }
 
                     a.recycle();
@@ -1374,8 +1391,9 @@ class MountService extends IMountService.Stub
         userFilter.addAction(Intent.ACTION_USER_REMOVED);
         mContext.registerReceiver(mUserReceiver, userFilter, null, mHandler);
 
-        // Watch for USB changes
-        if (mUmsSupported) {
+        // Watch for USB changes on primary volume
+        final StorageVolume primary = getPrimaryPhysicalVolume();
+        if (primary != null && primary.allowMassStorage()) {
             mContext.registerReceiver(
                     mUsbReceiver, new IntentFilter(UsbManager.ACTION_USB_STATE), null, mHandler);
         }
@@ -1443,6 +1461,10 @@ class MountService extends IMountService.Stub
 
         Slog.i(TAG, "Shutting down");
         synchronized (mVolumesLock) {
+            // Get all volumes to be unmounted.
+            MountShutdownLatch mountShutdownLatch = new MountShutdownLatch(observer,
+                                                            mVolumeStates.size());
+
             for (String path : mVolumeStates.keySet()) {
                 String state = mVolumeStates.get(path);
 
@@ -1478,19 +1500,16 @@ class MountService extends IMountService.Stub
 
                 if (state.equals(Environment.MEDIA_MOUNTED)) {
                     // Post a unmount message.
-                    ShutdownCallBack ucb = new ShutdownCallBack(path, observer);
+                    ShutdownCallBack ucb = new ShutdownCallBack(path, mountShutdownLatch);
                     mHandler.sendMessage(mHandler.obtainMessage(H_UNMOUNT_PM_UPDATE, ucb));
                 } else if (observer != null) {
                     /*
-                     * Observer is waiting for onShutDownComplete when we are done.
-                     * Since nothing will be done send notification directly so shutdown
-                     * sequence can continue.
+                     * Count down, since nothing will be done. The observer will be
+                     * notified when we are done so shutdown sequence can continue.
                      */
-                    try {
-                        observer.onShutDownComplete(StorageResultCode.OperationSucceeded);
-                    } catch (RemoteException e) {
-                        Slog.w(TAG, "RemoteException when shutting down");
-                    }
+                    mountShutdownLatch.countDown();
+                    Slog.i(TAG, "Unmount completed: " + path +
+                        ", result code: " + StorageResultCode.OperationSucceeded);
                 }
             }
         }
@@ -1546,6 +1565,9 @@ class MountService extends IMountService.Stub
     public void setUsbMassStorageEnabled(boolean enable) {
         waitForReady();
         validatePermission(android.Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS);
+
+        final StorageVolume primary = getPrimaryPhysicalVolume();
+        if (primary == null) return;
 
         // TODO: Add support for multiple share methods
 

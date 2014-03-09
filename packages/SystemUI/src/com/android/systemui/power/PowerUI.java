@@ -27,7 +27,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
-import android.graphics.BitmapFactory; 
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -136,12 +136,12 @@ public class PowerUI extends SystemUI {
      * 5 = none
      *
      */
-
     private void setPreferences() {
         int currentPref = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.POWER_UI_LOW_BATTERY_WARNING_POLICY, 0);
 
         switch (currentPref) {
+
             case 5:
                 mShowLowBatteryDialogWarning = false;
                 mShowLowBatteryNotificationWarning = false;
@@ -259,16 +259,16 @@ public class PowerUI extends SystemUI {
                     }
                     if(mShowLowBatteryNotificationWarning) {
                         showLowBatteryNotificationWarning();
-                    }  
+                    }
 
                     // only play SFX when the dialog comes up or the bucket changes
-                    if (mPlayLowBatterySound && (bucket != oldBucket || oldPlugged)) { 
+                    if (mPlayLowBatterySound && (bucket != oldBucket || oldPlugged)) {
                         playLowBatterySound();
                     }
                 } else if (plugged || (bucket > oldBucket && bucket > 0)) {
                     dismissLowBatteryWarning();
                     dismissLowBatteryNotificationWarning();
-                } else if (mShowLowBatteryDialogWarning && mBatteryLevelTextView != null) {  
+                } else if (mShowLowBatteryDialogWarning && mBatteryLevelTextView != null) {
                     showLowBatteryWarning();
                 }
             } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
@@ -397,6 +397,7 @@ public class PowerUI extends SystemUI {
     }
 
     void showLowBatteryNotificationWarning() {
+
         if (DEBUG) {
            Slog.i(TAG, "fire low battery notification!");
         }

@@ -20,6 +20,7 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.res.Resources;
+import android.telephony.MSimTelephonyManager;
 import android.view.View;
 
 import com.android.systemui.R;
@@ -33,8 +34,7 @@ public final class PhoneStatusBarTransitions extends BarTransitions {
     private final float mIconAlphaWhenOpaque;
 
     private View mLeftSide, mStatusIcons, mSignalCluster;
-    private View mBattery, mCircleBattery, mClock, mCenterClock;
-    private View mNetStats;
+    private View mBattery, mDockBattery, mClock, mCenterClock, mNetStats;
     private Animator mCurrentAnimation;
 
     public PhoneStatusBarTransitions(PhoneStatusBarView view) {
@@ -47,12 +47,16 @@ public final class PhoneStatusBarTransitions extends BarTransitions {
     public void init() {
         mLeftSide = mView.findViewById(R.id.notification_icon_area);
         mStatusIcons = mView.findViewById(R.id.statusIcons);
-        mSignalCluster = mView.findViewById(R.id.signal_cluster);
+        if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
+            mSignalCluster = mView.findViewById(R.id.msim_signal_cluster);
+        } else {
+            mSignalCluster = mView.findViewById(R.id.signal_cluster);
+        }
         mBattery = mView.findViewById(R.id.battery);
-        mCircleBattery = mView.findViewById(R.id.circle_battery);
+        mDockBattery = mView.findViewById(R.id.dock_battery);
         mCenterClock = mView.findViewById(R.id.center_clock);
-	mNetStats = mView.findViewById(R.id.network_stats);
         mClock = mView.findViewById(R.id.clock);
+        mNetStats = mView.findViewById(R.id.network_stats);
         applyModeBackground(-1, getMode(), false /*animate*/);
         applyMode(getMode(), false /*animate*/);
     }
@@ -95,11 +99,11 @@ public final class PhoneStatusBarTransitions extends BarTransitions {
                     animateTransitionTo(mLeftSide, newAlpha),
                     animateTransitionTo(mStatusIcons, newAlpha),
                     animateTransitionTo(mSignalCluster, newAlpha),
+                    animateTransitionTo(mNetStats, newAlpha),
+                    animateTransitionTo(mDockBattery, newAlphaBC),
                     animateTransitionTo(mBattery, newAlphaBC),
-                    animateTransitionTo(mCircleBattery, newAlphaBC),
                     animateTransitionTo(mClock, newAlphaBC),
-                    animateTransitionTo(mCenterClock, newAlphaBC),
-		    animateTransitionTo(mNetStats, newAlphaBC)
+                    animateTransitionTo(mCenterClock, newAlphaBC)
                     );
             if (mode == MODE_LIGHTS_OUT) {
                 anims.setDuration(LIGHTS_OUT_DURATION);
@@ -110,11 +114,11 @@ public final class PhoneStatusBarTransitions extends BarTransitions {
             mLeftSide.setAlpha(newAlpha);
             mStatusIcons.setAlpha(newAlpha);
             mSignalCluster.setAlpha(newAlpha);
+            mNetStats.setAlpha(newAlpha);
+            mDockBattery.setAlpha(newAlphaBC);
             mBattery.setAlpha(newAlphaBC);
-            mCircleBattery.setAlpha(newAlphaBC);
             mClock.setAlpha(newAlphaBC);
-	    mCenterClock.setAlpha(newAlphaBC);
-	    mNetStats.setAlpha(newAlphaBC);
+            mCenterClock.setAlpha(newAlphaBC);
         }
     }
 }

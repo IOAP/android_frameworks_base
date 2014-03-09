@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
 /*
+** Copyright (c) 2013 The Linux Foundation. All rights reserved.
+** Not a Contribution.
 ** Copyright 2009, The Android Open Source Project
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +37,7 @@
        <item><xliff:g id="id">volume</xliff:g></item>
        <item><xliff:g id="id">wifi</xliff:g></item>
        <item><xliff:g id="id">cdma_eri</xliff:g></item>
+       <item><xliff:g id="id">phone_signal_second_sub</xliff:g></item>
        <item><xliff:g id="id">data_connection</xliff:g></item>
        <item><xliff:g id="id">phone_evdo_signal</xliff:g></item>
        <item><xliff:g id="id">phone_signal</xliff:g></item>
@@ -59,7 +62,7 @@
          at performing a blur.  Used by parts of the UI to turn off
          the blur effect where it isn't worth the performance hit.
          As of Honeycomb, blurring is not supported anymore. -->
-    <bool name="config_sf_slowBlur">true</bool>
+    <bool name="config_sf_slowBlur">false</bool>
 
     <!-- Flag indicating that the media framework should allow changing
          master volume stream and nothing else . -->
@@ -93,17 +96,17 @@
     <bool name="config_sendAudioBecomingNoisy">true</bool>
 
     <!-- The duration (in milliseconds) of a short animation. -->
-    <integer name="config_shortAnimTime">200</integer>
+    <integer name="config_shortAnimTime">120</integer>
 
     <!-- The duration (in milliseconds) of a medium-length animation. -->
-    <integer name="config_mediumAnimTime">400</integer>
+    <integer name="config_mediumAnimTime">300</integer>
 
     <!-- The duration (in milliseconds) of a long animation. -->
-    <integer name="config_longAnimTime">500</integer>
+    <integer name="config_longAnimTime">400</integer>
 
     <!-- The duration (in milliseconds) of the activity open/close and fragment open/close animations. -->
-    <integer name="config_activityShortDur">150</integer>
-    <integer name="config_activityDefaultDur">220</integer>
+    <integer name="config_activityShortDur">125</integer>
+    <integer name="config_activityDefaultDur">200</integer>
 
     <!-- Duration for the dim animation behind a dialog.  This may be either
          a percentage, which is relative to the duration of the enter/open
@@ -129,6 +132,9 @@
          your device's memory use without going to the point of causing applications to turn
          off features. -->
     <bool name="config_avoidGfxAccel">false</bool>
+
+    <!-- Whether to enable auto provisioning the app for new SIM card on boot.-->
+    <bool name="config_auto_provision_enable">false</bool>
 
     <!-- Device configuration setting the minfree tunable in the lowmemorykiller in the kernel.
          A high value will cause the lowmemorykiller to fire earlier, keeping more memory
@@ -562,11 +568,12 @@
 
     <!-- Display low battery warning when battery level dips to this value.
          Also, the battery stats are flushed to disk when we hit this level.  -->
-    <integer name="config_criticalBatteryWarningLevel">4</integer>
+    <integer name="config_criticalBatteryWarningLevel">5</integer>
 
     <!-- Shutdown if the battery temperature exceeds (this value * 0.1) Celsius. -->
     <integer name="config_shutdownBatteryTemperature">680</integer>
 
+    <!-- Display low battery warning when battery level dips to this value -->
     <!-- Display low battery warning when battery level dips to this value -->
     <integer name="config_lowBatteryWarningLevel">15</integer>
 
@@ -580,7 +587,7 @@
     <integer name="config_defaultNotificationLedOn">500</integer>
 
     <!-- Default LED off time for notification LED in milliseconds. -->
-    <integer name="config_defaultNotificationLedOff">2000</integer>
+    <integer name="config_defaultNotificationLedOff">1500</integer>
 
     <!-- Default value for led color when battery is low on charge -->
     <integer name="config_notificationsBatteryLowARGB">0xFFFF0000</integer>
@@ -816,7 +823,9 @@
          -->
     <string-array name="config_locationProviderPackageNames" translatable="false">
         <!-- The standard AOSP fused location provider -->
-        <item>com.android.location.fused</item>
+       <item>com.android.location.fused</item>
+       <item>com.google.android.location</item>
+       <item>com.google.android.gms</item>
     </string-array>
 
     <!-- Component name of the service providing geofence API support. -->
@@ -844,7 +853,7 @@
     <integer name="config_datause_threshold_bytes">0</integer>
 
     <!-- The default reduced-datarate value in kilobits per sec -->
-    <integer name="config_datause_throttle_kbitsps">300</integer>
+    <integer name="config_datause_throttle_kbitsps">0</integer>
 
     <!-- The default iface on which to monitor data use -->
     <string name="config_datause_iface" translatable="false">rmnet0</string>
@@ -994,6 +1003,9 @@
     <!-- Sets whether menu shortcuts should be displayed on panel menus when
          a keyboard is present. -->
     <bool name="config_showMenuShortcutsWhenKeyboardPresent">false</bool>
+
+    <!-- Sets whether IME switcher on statusbar should be shown or not. -->
+    <bool name="config_show_IMESwitcher">true</bool>
 
     <!-- Do not translate. Defines the slots is Two Digit Number for dialing normally not USSD -->
     <string-array name="config_twoDigitNumberPattern" translatable="false">
@@ -1159,6 +1171,10 @@
     <!-- Set to true to add links to Cell Broadcast app from Settings and MMS app. -->
     <bool name="config_cellBroadcastAppLinks">false</bool>
 
+    <!-- Boolean indicating if RADIO POWER OFF should be skipped on receiving SIM REFRESH with RESET-->
+    <!-- This will be handled by modem if it is true-->
+    <bool translatable="false" name="skip_radio_power_off_on_sim_refresh_reset">true</bool>
+
     <!-- The default value if the SyncStorageEngine should sync automatically or not -->
     <bool name="config_syncstorageengine_masterSyncAutomatically">true</bool>
 
@@ -1189,6 +1205,11 @@
     <!-- Configure mobile network MTU. The standard default is set here but each carrier
          may have a specific value set in an overlay config.xml file. -->
     <integer name="config_mobile_mtu">1500</integer>
+
+
+    <!-- Configuration to send sms on 1x when UE is attached to eHRPD and there is an active
+         1xRTT voice call, irrespective of IMS registration state  -->
+    <bool name="config_send_sms1x_on_voice_call">true</bool>
 
     <!-- Whether WiFi display is supported by this device.
          There are many prerequisites for this feature to work correctly.
@@ -1446,6 +1467,10 @@
          config to 7. -->
     <integer name="config_deviceHardwareKeys">15</integer>
 
+    <!-- Indicates that the device has Single-stage Camera key
+         (without "Focus" state) instead of Dual-stage. -->
+    <bool name="config_singleStageCameraKey">false</bool>
+
     <!-- Defines the system property to set for performance profile xe: sys.cpu.modes. Leave it
          blank if the device do not support performance profiles -->
     <string name="config_perf_profile_prop" translatable="false"></string>
@@ -1455,5 +1480,33 @@
          for "perf_profile_values" array. Leave it blank if the device do not support
          performance profiles  -->
     <string name="config_perf_profile_default_entry" translatable="false"></string>
+
+    <!-- Enable statusbar double tap gesture to put device to sleep -->
+    <bool name="config_disableDoubleTapSleepGesture">false</bool>
+
+    <!-- bool value to for enabling motion accelerometer -->
+    <bool name="use_motion_accel">false</bool>
+
+    <!-- set to false if we dont need to consider data
+         service state to display signal strength bars -->
+    <bool name="config_combined_signal">true</bool>
+
+    <!-- Configuration to restart radio upon PDP_DEACTIVATE with
+         error cause as Regular deactivation(36). -->
+    <bool name="config_radio_reset_on_regular_deactivation">true</bool>
+
+    <!-- Configuartion to support 7bit Ascii encoding and decoding
+         for long messages. -->
+    <bool name="config_ascii_7bit_support_for_long_message">false</bool>
+
+    <!-- Configuration to sending and receiving Mms when mobile data is disable.-->
+    <bool name="config_setup_mms_data">false</bool>
+
+    <!-- Configuration to set delete any partial segments expire age -->
+    <!-- 30 days by default (60 * 60 * 1000) * 24 * 30 , no long so use string-->
+    <string name="config_partial_segment_expire_age">2592000000</string>
+
+    <!-- Configuration to enable non-default PDP during IWLAN -->
+    <bool name="config_feature_iwlan_enabled">false</bool>
 
 </resources>

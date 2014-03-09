@@ -23,7 +23,6 @@ import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.os.Handler;
-import android.os.Looper;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
@@ -51,33 +50,28 @@ public class KeyguardStatusView extends GridLayout {
     //On the first boot, keygard will start to receiver TIME_TICK intent.
     //And onScreenTurnedOff will not get called if power off when keyguard is not started.
     //Set initial value to false to skip the above case.
-    private boolean mEnableRefresh = false;
+    private boolean enableRefresh = false;
 
     private KeyguardUpdateMonitorCallback mInfoCallback = new KeyguardUpdateMonitorCallback() {
 
         @Override
         public void onTimeChanged() {
-            if (mEnableRefresh) {
+            if (enableRefresh) {
                 refresh();
             }
         }
 
         @Override
-        void onKeyguardVisibilityChanged(boolean showing) {
-            // Do nothing
-        };
-
-        @Override
         public void onScreenTurnedOn() {
             setEnableMarquee(true);
-            mEnableRefresh = true;
+            enableRefresh = true;
             refresh();
         };
 
         @Override
         public void onScreenTurnedOff(int why) {
             setEnableMarquee(false);
-            mEnableRefresh = false;
+            enableRefresh = false;
         };
     };
 
@@ -158,6 +152,9 @@ public class KeyguardStatusView extends GridLayout {
 
         mContext.getContentResolver().registerContentObserver(
                 Settings.System.getUriFor(Settings.System.TIME_12_24), false, mContentObserver);
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.NEXT_ALARM_FORMATTED),
+                false, mContentObserver);
     }
 
     @Override

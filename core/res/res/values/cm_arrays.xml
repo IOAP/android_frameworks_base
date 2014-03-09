@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2013 The CyanogenMod Project
+<!--
+     Copyright (C) 2013-2014 The CyanogenMod Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,14 +14,13 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-
     <!-- Defines the shutdown options shown in the reboot dialog. -->
     <array name="shutdown_reboot_options" translatable="false">
         <item>@string/reboot_reboot</item>
         <item>@string/reboot_recovery</item>
         <item>@string/reboot_bootloader</item>
+        <item>@string/reboot_hot</item>
     </array>
 
     <!-- Do not translate. Defines the shutdown actions passed to the kernel.
@@ -29,6 +29,7 @@
         <item></item>
         <item>recovery</item>
         <item>bootloader</item>
+        <item>hot</item>
     </string-array>
 
     <!-- Do not translate. Defines the mapping of notification package names
@@ -51,5 +52,4 @@
         <item>1</item>
         <item>2</item>
     </string-array>
-
 </resources>

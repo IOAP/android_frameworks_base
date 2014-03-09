@@ -408,15 +408,10 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     Settings.Secure.SELECTED_INPUT_METHOD_SUBTYPE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_IME_SWITCHER),
-                    false, new ContentObserver(mHandler) {
-                        public void onChange(boolean selfChange) {
-                            updateFromSettingsLocked(true);
-                        }
-                    }, UserHandle.USER_ALL);
+                    false, this, UserHandle.USER_ALL);
         }
 
-        @Override
-        public void onChange(boolean selfChange) {
+        @Override public void onChange(boolean selfChange) {
             synchronized (mMethodMap) {
                 boolean enabledChanged = false;
                 String newEnabled = mSettings.getEnabledInputMethodsStr();
@@ -1671,14 +1666,13 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             mCurMethodId = null;
             unbindCurrentMethodLocked(true, false);
         }
-        // code to disable the IME switcher with config_show_cmIMESwitcher set = false
+        // code to disable the CM Phone IME switcher with config_show_cmIMESwitcher set = false
         try {
-            mShowOngoingImeSwitcherForPhones =
-                Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_IME_SWITCHER, UserHandle.USER_CURRENT) == 1;
+            mShowOngoingImeSwitcherForPhones = Settings.System.getInt(mContext.getContentResolver(),
+            Settings.System.STATUS_BAR_IME_SWITCHER) == 1;
         } catch (SettingNotFoundException e) {
             mShowOngoingImeSwitcherForPhones = mRes.getBoolean(
-                com.android.internal.R.bool.config_show_cmIMESwitcher);
+            com.android.internal.R.bool.config_show_cmIMESwitcher);
         }
     }
 

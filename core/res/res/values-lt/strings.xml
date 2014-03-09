@@ -151,10 +151,10 @@
     <string name="silent_mode_vibrate" msgid="7072043388581551395">"Vibracija skambinant"</string>
     <string name="silent_mode_ring" msgid="8592241816194074353">"Skambutis įjungtas"</string>
     <string name="shutdown_progress" msgid="2281079257329981203">"Išsijungia..."</string>
-    <string name="shutdown_confirm" product="tablet" msgid="3385745179555731470">"Jūsų planšetinis k
-ompiuteris išsijungs."</string>
-    <string name="shutdown_confirm" product="default" msgid="649792175242821353">"Jūsų telefonas išs
-ijungs."</string>
+    <string name="shutdown_confirm" product="tablet" msgid="3385745179555731470">"Jūsų planšetinis kompiuteris išsijungs."</string>
+
+    <string name="shutdown_confirm" product="default" msgid="649792175242821353">"Jūsų telefonas išsijungs."</string>
+
     <string name="shutdown_confirm_question" msgid="2906544768881136183">"Ar norite išjungti?"</string>
     <string name="reboot_safemode_title" msgid="7054509914500140361">"Iš naujo įkelti operacinę sistemą saugos režimu"</string>
     <string name="reboot_safemode_confirm" msgid="55293944502784668">"Ar norite iš naujo įkelti operacinę sistemą saugos režimu? Dėl to bus neleidžiamos visos įdiegtos trečiųjų šalių programos. Jos bus atkurtos dar kartą iš naujo įkėlus operacinę sistemą."</string>
@@ -1121,8 +1121,8 @@ ijungs."</string>
     <string name="no" msgid="5141531044935541497">"Atšaukti"</string>
     <string name="dialog_alert_title" msgid="2049658708609043103">"Dėmesio"</string>
     <string name="loading" msgid="7933681260296021180">"Įkeliama..."</string>
-    <string name="capital_on" msgid="1544682755514494298">"ĮJ."</string>
-    <string name="capital_off" msgid="6815870386972805832">"IŠJ."</string>
+    <string name="capital_on" msgid="1544682755514494298">"\u2759"</string>
+    <string name="capital_off" msgid="6815870386972805832">"\u3007"</string>
     <string name="whichApplication" msgid="4533185947064773386">"Užbaigti veiksmą naudojant"</string>
     <string name="whichHomeApplication" msgid="4616420172727326782">"Pasirinkite programą, paleidžiamą spustelėjus pagrindinio ekrano mygtuką"</string>
     <string name="alwaysUse" msgid="4583018368000610438">"Šiam veiksmui tai naudoti pagal numatytuosius nustatymus."</string>

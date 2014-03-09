@@ -32,7 +32,6 @@ import static android.net.NetworkPolicyManager.RULE_ALLOW_ALL;
 import static android.net.NetworkPolicyManager.RULE_REJECT_METERED;
 
 import android.app.AlarmManager;
-import android.app.AppOpsManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -677,6 +676,7 @@ public class ConnectivityService extends IConnectivityManager.Stub {
 
         // start network sampling ..
         Intent intent = new Intent(ACTION_PKT_CNT_SAMPLE_INTERVAL_ELAPSED, null);
+        intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
         mSampleIntervalElapsedIntent = PendingIntent.getBroadcast(mContext,
                 SAMPLE_INTERVAL_ELAPSED_REQUEST_CODE, intent, 0);
 
@@ -1820,16 +1820,9 @@ public class ConnectivityService extends IConnectivityManager.Stub {
     /**
      * @see ConnectivityManager#setMobileDataEnabled(boolean)
      */
-    public void setMobileDataEnabled(String callingPackage, boolean enabled) {
+    public void setMobileDataEnabled(boolean enabled) {
         enforceChangePermission();
         if (DBG) log("setMobileDataEnabled(" + enabled + ")");
-
-        AppOpsManager appOps = (AppOpsManager)mContext.getSystemService(Context.APP_OPS_SERVICE);
-        int callingUid = Binder.getCallingUid();
-        if (appOps.noteOp(AppOpsManager.OP_DATA_CONNECT_CHANGE, callingUid, callingPackage) !=
-                AppOpsManager.MODE_ALLOWED) {
-            return;
-        }
 
         mHandler.sendMessage(mHandler.obtainMessage(EVENT_SET_MOBILE_DATA,
                 (enabled ? ENABLED : DISABLED), 0));

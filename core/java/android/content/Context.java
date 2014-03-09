@@ -1798,7 +1798,7 @@ public abstract class Context {
      * @hide like {@link #stopService(Intent)} but for a specific user.
      */
     public abstract boolean stopServiceAsUser(Intent service, UserHandle user);
-    
+
     /**
      * Connect to an application service, creating it if needed.  This defines
      * a dependency between your application and the service.  The given
@@ -2275,6 +2275,17 @@ public abstract class Context {
 
     /**
      * Use with {@link #getSystemService} to retrieve a
+     * {android.telephony.MSimTelephonyManager} for handling the management
+     * of the telephony features of the multi sim device.
+     *
+     * @see #getSystemService
+     * @see android.telephony.MSimTelephonyManager
+     * @hide
+     */
+    public static final String MSIM_TELEPHONY_SERVICE = "phone_msim";
+
+    /**
+     * Use with {@link #getSystemService} to retrieve a
      * {@link android.text.ClipboardManager} for accessing and modifying
      * the contents of the global clipboard.
      *
@@ -2465,6 +2476,16 @@ public abstract class Context {
      * @see android.hardware.ConsumerIrManager
      */
     public static final String CONSUMER_IR_SERVICE = "consumer_ir";
+
+    /**
+     * Use with {@link #getSystemService} to retrieve a
+     * {@link android.os.BatteryManager} for access battery information.
+     *
+     * @see #getSystemService
+     * @see android.os.BatteryManager
+     * @hide
+     */
+    public static final String BATTERY_SERVICE = "battery";
 
     /**
      * Determine whether the given permission is allowed for a particular

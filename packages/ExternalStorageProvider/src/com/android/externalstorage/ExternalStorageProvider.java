@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2013 The Android Open Source Project
+ * Modifications Copyright (C) 2013 The OmniROM Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +42,10 @@ import com.android.internal.annotations.GuardedBy;
 import com.google.android.collect.Lists;
 import com.google.android.collect.Maps;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -147,7 +150,11 @@ public class ExternalStorageProvider extends DocumentsProvider {
                 if (ROOT_ID_PRIMARY_EMULATED.equals(rootId)) {
                     root.title = getContext().getString(R.string.root_internal_storage);
                 } else {
-                    root.title = volume.getUserLabel();
+                    if (volume.getUserLabel() != null){
+                        root.title = path.getName() + " - " + volume.getUserLabel();
+                    } else {
+                        root.title = path.getName();
+                    }
                 }
                 root.docId = getDocIdForFile(path);
                 mRoots.add(root);
@@ -358,7 +365,7 @@ public class ExternalStorageProvider extends DocumentsProvider {
         pending.add(parent);
         while (!pending.isEmpty() && result.getCount() < 24) {
             final File file = pending.removeFirst();
-            if (file.isDirectory()) {
+            if (file.isDirectory() && file.listFiles() != null) {
                 for (File child : file.listFiles()) {
                     pending.add(child);
                 }

@@ -2040,8 +2040,9 @@ public final class ActivityManagerService extends ActivityManagerNative
         File dataDir = Environment.getDataDirectory();
         File systemDir = new File(dataDir, "system");
         systemDir.mkdirs();
-        mBatteryStatsService = new BatteryStatsService(new File(
-                systemDir, "batterystats.bin").toString());
+        mBatteryStatsService = new BatteryStatsService(
+                new File(systemDir, "batterystats.bin").toString(),
+                new File(systemDir, "dockbatterystats.bin").toString());
         mBatteryStatsService.getActiveStatistics().readLocked();
         mBatteryStatsService.getActiveStatistics().writeAsyncLocked();
         mOnBattery = DEBUG_POWER ? true
@@ -5290,7 +5291,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                                 },
                                 0, null, null,
                                 android.Manifest.permission.RECEIVE_BOOT_COMPLETED,
-                                AppOpsManager.OP_BOOT_COMPLETED, true, false, MY_PID, Process.SYSTEM_UID,
+                                AppOpsManager.OP_NONE, true, false, MY_PID, Process.SYSTEM_UID,
                                 userId);
                     }
                 }
@@ -7700,7 +7701,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     // pending on the process even though we managed to update its
                     // adj level.  Not sure what to do about this, but at least
                     // the race is now smaller.
-                    if (!success) {
+                    if (!success || !Process.isAlive(cpr.proc.pid)) {
                         // Uh oh...  it looks like the provider's process
                         // has been killed on us.  We need to wait for a new
                         // process to be started, and make sure its death
@@ -7709,7 +7710,9 @@ public final class ActivityManagerService extends ActivityManagerNative
                                 "Existing provider " + cpr.name.flattenToShortString()
                                 + " is crashing; detaching " + r);
                         boolean lastRef = decProviderCountLocked(conn, cpr, token, stable);
-                        appDiedLocked(cpr.proc, cpr.proc.pid, cpr.proc.thread);
+                        if (!success) {
+                            appDiedLocked(cpr.proc, cpr.proc.pid, cpr.proc.thread);
+                        }
                         if (!lastRef) {
                             // This wasn't the last ref our process had on
                             // the provider...  we have now been killed, bail.
@@ -13218,7 +13221,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                         + " was previously registered for user " + rl.userId);
             }
             BroadcastFilter bf = new BroadcastFilter(filter, rl, callerPackage,
-                    permission, callingUid, userId, (callerApp.info.flags & ApplicationInfo.FLAG_SYSTEM) != 0);
+                    permission, callingUid, userId,
+                    (callerApp != null && callerApp.info != null && (callerApp.info.flags & ApplicationInfo.FLAG_SYSTEM) != 0));
             rl.add(bf);
             if (!bf.debugCheck()) {
                 Slog.w(TAG, "==> For Dynamic broadast");
@@ -16429,7 +16433,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 intent.addFlags(Intent.FLAG_RECEIVER_NO_ABORT);
                 broadcastIntentLocked(null, null, intent,
                         null, null, 0, null, null,
-                        android.Manifest.permission.RECEIVE_BOOT_COMPLETED, AppOpsManager.OP_BOOT_COMPLETED,
+                        android.Manifest.permission.RECEIVE_BOOT_COMPLETED, AppOpsManager.OP_NONE,
                         true, false, MY_PID, Process.SYSTEM_UID, userId);
             }
             int num = mUserLru.size();

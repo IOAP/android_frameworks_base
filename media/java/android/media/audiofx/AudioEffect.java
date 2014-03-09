@@ -97,7 +97,6 @@ public class AudioEffect {
      */
     public static final UUID EFFECT_TYPE_VIRTUALIZER = UUID
             .fromString("37cc2c00-dddd-11db-8577-0002a5d5c51b");
-
     /**
      * UUID for stereowide effect
      */
