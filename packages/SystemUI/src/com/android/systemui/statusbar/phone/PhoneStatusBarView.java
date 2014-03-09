@@ -176,6 +176,7 @@ public class PhoneStatusBarView extends PanelBar {
     public void onPanelPeeked() {
         super.onPanelPeeked();
         mBar.makeExpandedVisible();
+        mBar.setTakenSpace();
     }
 
     @Override
@@ -187,6 +188,7 @@ public class PhoneStatusBarView extends PanelBar {
         if (DEBUG) {
             Log.v(TAG, "start opening: " + panel + " shouldfade=" + mShouldFade);
         }
+        mBar.toggleReminderFlipper(true);
         mFadingPanel = panel;
     }
 
