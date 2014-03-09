@@ -16,6 +16,11 @@
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
+    <!--General String-->
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="dlg_ok">Ok</string>
+    <string name="cancel">Cancel</string>
     <!--ScreenShot Trash-->
     <string name="delete">Delete</string>
 
