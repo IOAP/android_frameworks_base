@@ -25,6 +25,9 @@
     <string name="dessert_case_settings_cm_title">Значки CyanogenMod</string>
     <string name="dessert_case_settings_cm_summary">Показывать Сида вместе с «десертами» в заставке</string>
 
+    <string name="bean_dream_settings_cid_title">Голова Сида</string>
+    <string name="bean_dream_settings_cid_summary">Заменить желейные конфеты на голову Сида</string>
+
     <string name="powerwidget_screen_timeout_toast">Задержка выкл. экрана: %1$d %2$s</string>
 
     <string name="quick_settings_battery_charged_label">Заряжено</string>
@@ -82,4 +85,5 @@
 
     <string name="screenshot_delete_action">Удалить</string>
     <string name="screenshot_delete_confirmation">Скриншот удалён.</string>
+
 </resources>

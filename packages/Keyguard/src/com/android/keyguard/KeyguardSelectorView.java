@@ -34,17 +34,15 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
+import android.graphics.Color;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.StateListDrawable;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.PowerManager;
 import android.os.UserHandle;
 import android.provider.Settings;
@@ -56,13 +54,10 @@ import android.util.Slog;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.widget.LinearLayout;
 
 import com.android.internal.telephony.IccCardConstants.State;
 import com.android.internal.util.cm.LockscreenTargetUtils;
-import com.android.internal.util.cm.TorchConstants;
-import com.android.internal.view.RotationPolicy;
 import com.android.internal.widget.LockPatternUtils;
 import com.android.internal.widget.multiwaveview.GlowPadView;
 import com.android.internal.widget.multiwaveview.GlowPadView.OnTriggerListener;
@@ -74,8 +69,6 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
     private static final String ASSIST_ICON_METADATA_NAME =
         "com.android.systemui.action_assist_icon";
 
-    private Handler mHandler = new Handler();
-
     private KeyguardSecurityCallback mCallback;
     private GlowPadView mGlowPadView;
     private ObjectAnimator mAnim;
@@ -83,16 +76,12 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
     private boolean mIsBouncing;
     private boolean mCameraDisabled;
     private boolean mSearchDisabled;
-    private boolean mGlowTorch;
-    private boolean mGlowTorchRunning;
-    private boolean mUserRotation;
     private LockPatternUtils mLockPatternUtils;
     private SecurityMessageDisplay mSecurityMessageDisplay;
     private Drawable mBouncerFrame;
     private float mBatteryLevel;
     private String[] mStoredTargets;
     private int mTargetOffset;
-    private int mTaps;
     private boolean mIsScreenLarge;
     private GestureDetector mDoubleTapGesture;
 
@@ -154,13 +143,11 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
             if (!mIsBouncing) {
                 doTransition(mFadeView, 1.0f);
             }
-            killGlowpadTorch();
         }
 
         public void onGrabbed(View v, int handle) {
             mCallback.userActivity(0);
             doTransition(mFadeView, 0.0f);
-            startGlowpadTorch();
         }
 
         public void onGrabbedStateChange(View v, int handle) {
@@ -172,15 +159,7 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
         }
 
         public void onTargetChange(View v, final int target) {
-            if (target != -1) {
-                killGlowpadTorch();
-            } else {
-                if (mGlowTorch && mGlowTorchRunning) {
-                    // Keep screen alive extremely tiny and
-                    // unintentional movement is logged here
-                    mCallback.userActivity(0);
-                }
-            }
+
         }
 
     };
@@ -244,76 +223,26 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-
-        int lockColor = Settings.Secure.getIntForUser(
-                mContext.getContentResolver(),
-                Settings.Secure.LOCKSCREEN_LOCK_COLOR, -2,
-                UserHandle.USER_CURRENT);
-
-        int dotColor = Settings.Secure.getIntForUser(
-                mContext.getContentResolver(),
-                Settings.Secure.LOCKSCREEN_DOTS_COLOR, -2,
-                UserHandle.USER_CURRENT);
-
-        String lockIcon = Settings.Secure.getStringForUser(
-                mContext.getContentResolver(),
-                Settings.Secure.LOCKSCREEN_LOCK_ICON,
-                UserHandle.USER_CURRENT);
-
         mGlowPadView = (GlowPadView) findViewById(R.id.glow_pad_view);
         mGlowPadView.setOnTriggerListener(mOnTriggerListener);
-
-        Bitmap lock = null;
-
-        if (lockIcon != null && lockIcon.length() > 0) {
-            File f = new File(lockIcon);
-            if (f.exists()) {
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                lock = BitmapFactory.decodeFile(lockIcon, options);
-
-                if (Settings.Secure.getIntForUser(
-                        mContext.getContentResolver(),
-                        Settings.Secure.LOCKSCREEN_COLORIZE_LOCK, 0,
-                        UserHandle.USER_CURRENT) == 0) {
-                    lockColor = -2;
-                }
-            }
-        }
-
-        mGlowPadView.setColoredIcons(lockColor, dotColor, lock);
-
         updateTargets();
 
         mSecurityMessageDisplay = new KeyguardMessageArea.Helper(this);
         View bouncerFrameView = findViewById(R.id.keyguard_selector_view_frame);
-        mBouncerFrame =
-                KeyguardSecurityViewHelper.colorizeFrame(
-                mContext, bouncerFrameView.getBackground());
+        mBouncerFrame = bouncerFrameView.getBackground();
 
         mDoubleTapGesture = new GestureDetector(mContext,
                 new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                int doubletapoption = Settings.System.getInt(mContext.getContentResolver(), Settings.System.LOCKSCREEN_GLOWPAD_DOUBLETAP_OPTION, 0);
-                switch(doubletapoption) {
-                case 0:
                 PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
                 if (pm != null) pm.goToSleep(e.getEventTime());
-                break;
-                case 1:
-                Intent i = new Intent(TorchConstants.ACTION_TOGGLE_STATE);
-                i.putExtra("strobe", false);
-                i.putExtra("bright", false);
-                mContext.sendBroadcast(i);
-                break;
-                }
                 return true;
             }
         });
 
         if (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.DOUBLE_TAP_GLOWPAD_GESTURE, 0) == 1) {
+                    Settings.System.DOUBLE_TAP_SLEEP_GESTURE, 0) == 1) {
             mGlowPadView.setOnTouchListener(new OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
@@ -322,7 +251,7 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
             });
         }
 
-        final boolean lockBeforeUnlock = Settings.Secure.getIntForUser(
+	final boolean lockBeforeUnlock = Settings.Secure.getIntForUser(
                 mContext.getContentResolver(),
                 Settings.Secure.LOCK_BEFORE_UNLOCK, 0,
                 UserHandle.USER_CURRENT) == 1;
@@ -385,7 +314,7 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
         mSearchDisabled = disabledBySimState || !searchActionAvailable || !searchTargetPresent
                 || !currentUserSetup;
         updateResources();
-        updateLockscreenBattery(null);
+	updateLockscreenBattery(null);
     }
 
     public void updateResources() {
@@ -534,54 +463,6 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
         mLockPatternUtils = utils;
     }
 
-    private void startGlowpadTorch() {
-        if (mGlowTorch) {
-            mHandler.removeCallbacks(checkDouble);
-            mHandler.removeCallbacks(checkLongPress);
-            if (mTaps > 0) {
-                mHandler.postDelayed(checkLongPress,
-                        ViewConfiguration.getLongPressTimeout());
-                mTaps = 0;
-            } else {
-                mTaps += 1;
-                mHandler.postDelayed(checkDouble, 400);
-            }
-        }
-    }
-
-    private void killGlowpadTorch() {
-        if (mGlowTorch) {
-            mHandler.removeCallbacks(checkLongPress);
-            // Don't mess with torch if we didn't start it
-            if (mGlowTorchRunning) {
-                mGlowTorchRunning = false;
-                Intent intent = new Intent(TorchConstants.ACTION_OFF);
-                mContext.sendBroadcastAsUser(
-                        intent, new UserHandle(UserHandle.USER_CURRENT));
-                // Restore user rotation policy
-                RotationPolicy.setRotationLock(mContext, mUserRotation);
-            }
-        }
-    }
-
-    final Runnable checkLongPress = new Runnable () {
-        public void run() {
-            mGlowTorchRunning = true;
-            mUserRotation = RotationPolicy.isRotationLocked(mContext);
-            // Lock device so user doesn't accidentally rotate and lose torch
-            RotationPolicy.setRotationLock(mContext, true);
-            Intent intent = new Intent(TorchConstants.ACTION_ON);
-            mContext.sendBroadcastAsUser(
-                    intent, new UserHandle(UserHandle.USER_CURRENT));
-        }
-    };
-
-    final Runnable checkDouble = new Runnable () {
-        public void run() {
-            mTaps = 0;
-        }
-    };
-
     @Override
     public void reset() {
         mGlowPadView.reset(false);
@@ -621,29 +502,6 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
                 hideBouncer(mSecurityMessageDisplay, mFadeView, mBouncerFrame, duration);
     }
 
-    public void updateLockscreenBattery(KeyguardUpdateMonitor.BatteryStatus status) {
-        if (Settings.System.getIntForUser(
-                mContext.getContentResolver(),
-                Settings.System.BATTERY_AROUND_LOCKSCREEN_RING,
-                0 /*default */,
-                UserHandle.USER_CURRENT) == 1) {
-            if (status != null) mBatteryLevel = status.level;
-            float cappedBattery = mBatteryLevel;
-
-            if (mBatteryLevel < 15) {
-                cappedBattery = 15;
-            }
-            else if (mBatteryLevel > 90) {
-                cappedBattery = 90;
-            }
-
-            final float hue = (cappedBattery - 15) * 1.6f;
-            mGlowPadView.setArc(mBatteryLevel * 3.6f, Color.HSVToColor(0x80, new float[]{ hue, 1.f, 1.f }));
-        } else {
-            mGlowPadView.setArc(0, 0);
-        }
-    }
-
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
@@ -664,6 +522,28 @@ public class KeyguardSelectorView extends LinearLayout implements KeyguardSecuri
                 mCallback.userActivity(0);
                 mCallback.dismiss(false);
             }
+        }
+    }
+    public void updateLockscreenBattery(KeyguardUpdateMonitor.BatteryStatus status) {
+        if (Settings.System.getIntForUser(
+                mContext.getContentResolver(),
+                Settings.System.BATTERY_AROUND_LOCKSCREEN_RING,
+                0 /*default */,
+                UserHandle.USER_CURRENT) == 1) {
+            if (status != null) mBatteryLevel = status.level;
+            float cappedBattery = mBatteryLevel;
+
+            if (mBatteryLevel < 15) {
+                cappedBattery = 15;
+            }
+            else if (mBatteryLevel > 90) {
+                cappedBattery = 90;
+            }
+
+            final float hue = (cappedBattery - 15) * 1.6f;
+            mGlowPadView.setArc(mBatteryLevel * 3.6f, Color.HSVToColor(0x80, new float[]{ hue, 1.f, 1.f }));
+        } else {
+            mGlowPadView.setArc(0, 0);
         }
     }
 }

@@ -29,6 +29,7 @@ import com.android.server.display.DisplayManagerService;
 import com.android.server.dreams.DreamManagerService;
 
 import android.Manifest;
+import android.app.AppOpsManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -629,11 +630,9 @@ public final class PowerManagerService extends IPowerManager.Stub
         mWakeUpWhenPluggedOrUnpluggedSetting = Settings.Global.getInt(resolver,
                 Settings.Global.WAKE_WHEN_PLUGGED_OR_UNPLUGGED,
                 (mWakeUpWhenPluggedOrUnpluggedConfig ? 1 : 0));
-
         mElectronBeamMode = Settings.System.getIntForUser(resolver,
                 Settings.System.SYSTEM_POWER_CRT_MODE,
                 1, UserHandle.USER_CURRENT);
-
         mWakeLockBlockingEnabled = Settings.System.getIntForUser(resolver,
                 Settings.System.WAKELOCK_BLOCKING_ENABLED,
                 0, UserHandle.USER_CURRENT);
@@ -724,6 +723,19 @@ public final class PowerManagerService extends IPowerManager.Stub
 
         final int uid = Binder.getCallingUid();
         final int pid = Binder.getCallingPid();
+
+        try {
+            if (mAppOps.checkOperation(AppOpsManager.OP_WAKE_LOCK, uid, packageName)
+                    != AppOpsManager.MODE_ALLOWED) {
+                Slog.d(TAG, "acquireWakeLock: ignoring request from " + packageName);
+                // For (ignore) accounting purposes
+                mAppOps.noteOperation(AppOpsManager.OP_WAKE_LOCK, uid, packageName);
+                // silent return
+                return;
+            }
+        } catch (RemoteException e) {
+        }
+
         final long ident = Binder.clearCallingIdentity();
         try {
             acquireWakeLockInternal(lock, flags, tag, packageName, ws, uid, pid);
@@ -753,9 +765,7 @@ public final class PowerManagerService extends IPowerManager.Stub
             boolean blockWakelock = false;
 
             if (!mSeenWakeLocks.contains(tag)){
-                if ((flags & PowerManager.WAKE_LOCK_LEVEL_MASK) == PowerManager.PARTIAL_WAKE_LOCK){
-                    mSeenWakeLocks.add(tag);
-                }
+                mSeenWakeLocks.add(tag);
             }
 
             if (mWakeLockBlockingEnabled == 1){
@@ -768,7 +778,6 @@ public final class PowerManagerService extends IPowerManager.Stub
             int index = findWakeLockIndexLocked(lock);
             if (index >= 0) {
                 wakeLock = mWakeLocks.get(index);
-                wakeLock.setIsBlocked(blockWakelock);
                 if (!wakeLock.hasSameProperties(flags, tag, ws, uid, pid)) {
                     // Update existing wake lock.  This shouldn't happen but is harmless.
                     notifyWakeLockReleasedLocked(wakeLock);
@@ -782,14 +791,22 @@ public final class PowerManagerService extends IPowerManager.Stub
                 } catch (RemoteException ex) {
                     throw new IllegalArgumentException("Wake lock is already dead.");
                 }
-                wakeLock.setIsBlocked(blockWakelock);
                 notifyWakeLockAcquiredLocked(wakeLock);
                 mWakeLocks.add(wakeLock);
             }
 
-            applyWakeLockFlagsOnAcquireLocked(wakeLock);
-            mDirty |= DIRTY_WAKE_LOCKS;
-            updatePowerStateLocked();
+            wakeLock.setIsBlocked(blockWakelock);
+
+            if (!wakeLock.isBlocked()){
+                applyWakeLockFlagsOnAcquireLocked(wakeLock);
+                mDirty |= DIRTY_WAKE_LOCKS;
+                updatePowerStateLocked();
+            } else {
+                Slog.d(TAG, "acquireWakeLockInternal: blocked lock=" + Objects.hashCode(lock)
+                        + ", flags=0x" + Integer.toHexString(flags)
+                        + ", tag=\"" + tag + "\", ws=" + ws + ", uid=" + uid + ", pid=" + pid);
+
+            }
         }
     }
 
@@ -1017,19 +1034,17 @@ public final class PowerManagerService extends IPowerManager.Stub
 
     private void notifyWakeLockAcquiredLocked(WakeLock wakeLock) {
         if (mSystemReady) {
-            if (!wakeLock.isBlocked()){
-                mNotifier.onWakeLockAcquired(wakeLock.mFlags, wakeLock.mTag, wakeLock.mPackageName,
+            wakeLock.mNotifiedAcquired = true;
+            mNotifier.onWakeLockAcquired(wakeLock.mFlags, wakeLock.mTag, wakeLock.mPackageName,
                     wakeLock.mOwnerUid, wakeLock.mOwnerPid, wakeLock.mWorkSource);
-            }
         }
     }
 
     private void notifyWakeLockReleasedLocked(WakeLock wakeLock) {
-        if (mSystemReady) {
-            if (!wakeLock.isBlocked()){
-                mNotifier.onWakeLockReleased(wakeLock.mFlags, wakeLock.mTag, wakeLock.mPackageName,
+        if (mSystemReady && wakeLock.mNotifiedAcquired) {
+            wakeLock.mNotifiedAcquired = false;
+            mNotifier.onWakeLockReleased(wakeLock.mFlags, wakeLock.mTag, wakeLock.mPackageName,
                     wakeLock.mOwnerUid, wakeLock.mOwnerPid, wakeLock.mWorkSource);
-            }
         }
     }
 
@@ -1536,12 +1551,6 @@ public final class PowerManagerService extends IPowerManager.Stub
                 final WakeLock wakeLock = mWakeLocks.get(i);
                 switch (wakeLock.mFlags & PowerManager.WAKE_LOCK_LEVEL_MASK) {
                     case PowerManager.PARTIAL_WAKE_LOCK:
-                        if (wakeLock.isBlocked()){
-                            //Slog.d(TAG, "updateWakeLockSummaryLocked: PARTIAL_WAKE_LOCK blocked tag=" + wakeLock.mTag);
-                          continue;
-                         }
-
-                        //Slog.d(TAG, "updateWakeLockSummaryLocked: PARTIAL_WAKE_LOCK tag=" + wakeLock.mTag);
                         mWakeLockSummary |= WAKE_LOCK_CPU;
                         break;
                     case PowerManager.FULL_WAKE_LOCK:
@@ -2803,8 +2812,9 @@ public final class PowerManagerService extends IPowerManager.Stub
         public String mTag;
         public final String mPackageName;
         public WorkSource mWorkSource;
-        public int mOwnerUid;
-        public int mOwnerPid;
+        public final int mOwnerUid;
+        public final int mOwnerPid;
+        public boolean mNotifiedAcquired;
         private boolean mIsBlocked;
 
         public WakeLock(IBinder lock, int flags, String tag, String packageName,

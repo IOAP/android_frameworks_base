@@ -23,13 +23,14 @@
     <color name="system_bar_background_opaque">#ff000000</color>
     <color name="system_bar_background_semi_transparent">#66000000</color> <!-- 40% black -->
     <color name="notification_panel_solid_background">#ff000000</color>
-    <drawable name="status_bar_recents_app_thumbnail_background">#88000000</drawable>
-    <color name="status_bar_recents_app_label_color">#ffffffff</color>
+    <drawable name="status_bar_recents_app_thumbnail_background">#880d0d0d</drawable>
+    <color name="status_bar_recents_app_label_color">#ff737373</color>
     <drawable name="status_bar_notification_row_background_color">#ff090909</drawable>
     <color name="notification_list_shadow_top">#80000000</color>
-    <drawable name="recents_callout_line">#99ffffff</drawable>
+    <drawable name="recents_callout_line">#99737373</drawable>
     <drawable name="notification_item_background_legacy_color">#ffaaaaaa</drawable>
     <drawable name="heads_up_notification_bg_pressed">#ff33B5E5</drawable>
+    <drawable name="notification_header_bg">#FF000000</drawable>
     <color name="notification_panel_scrim_color">#B0000000</color>
     <color name="batterymeter_frame_color">#66FFFFFF</color><!-- 40% white -->
     <color name="batterymeter_charge_color">#FFFFFFFF</color>
@@ -38,4 +39,17 @@
     <color name="batterymeter_low">#FFFF0000</color>
     <color name="batterymeter_full">#FFFFFFFF</color>
     <color name="status_bar_clock_color">#FFFFFFFF</color>
+
+    <!-- Slim recent -->
+    <color name="recent_background">#80f5f5f5</color>
+
+    <!-- Card Color -->
+    <color name="card_background">#ffffffff</color>
+    <color name="card_background_header">#ffffffff</color>
+    <color name="card_backgroundExpand">#fff5f5f5</color>
+
+    <color name="card_text_color_header">#ff000000</color>
+
+    <!-- Used by selector -->
+    <color name="card_pressed">#7e3c3c3c</color>
 </resources>

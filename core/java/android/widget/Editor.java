@@ -1009,9 +1009,14 @@ public class Editor {
 
     void onWindowFocusChanged(boolean hasWindowFocus) {
         if (hasWindowFocus) {
-            resumeBlink();
+            if (mBlink != null) {
+                mBlink.uncancel();
+                makeBlink();
+            }
         } else {
-            suspendBlink();
+            if (mBlink != null) {
+                mBlink.cancel();
+            }
             if (mInputContentType != null) {
                 mInputContentType.enterDown = false;
             }

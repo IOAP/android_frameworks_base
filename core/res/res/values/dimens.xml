@@ -19,9 +19,9 @@
 -->
 <resources>
     <!-- The width that is used when creating thumbnails of applications. -->
-    <dimen name="thumbnail_width">164dp</dimen>
+    <dimen name="thumbnail_width">168dp</dimen>
     <!-- The height that is used when creating thumbnails of applications. -->
-    <dimen name="thumbnail_height">145dp</dimen>
+    <dimen name="thumbnail_height">263dp</dimen>
     <!-- The standard size (both width and height) of an application icon that
          will be displayed in the app launcher and elsewhere. -->
     <dimen name="app_icon_size">48dip</dimen>
@@ -359,11 +359,11 @@
     <!-- width of ImmersiveModeConfirmation (-1 for match_parent) -->
     <dimen name="immersive_mode_cling_width">-1px</dimen>
 
+
     <!-- EdgeGesture service: Distance a swipe must travel to be recognized as swipe. -->
     <dimen name="edge_gesture_trigger_distance">12dp</dimen>
 
-    <!-- EdgeGesture service: This is the distance a swipe can travel orthogonally to its actual swipe
-         direction to be still recognized as swipe. -->
+    <!-- EdgeGesture service: This is the distance a swipe can travel orthogonally to its actual swipe direction to be still recognized as swipe. -->
     <dimen name="edge_gesture_perpendicular_distance">15dp</dimen>
 
     <!-- EdgeGesture service: Thickness of the active trigger fields around the screen border -->

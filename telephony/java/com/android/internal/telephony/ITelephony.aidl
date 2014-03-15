@@ -197,6 +197,13 @@ interface ITelephony {
     boolean handlePinMmi(String dialString);
 
     /**
+     * Toggle between 3G and 2G
+     * @param networkState {RILConstants.NETWORK_MODE}
+     * {@hide}
+     */
+     void toggleMobileNetwork(int networkState);
+
+    /**
      * Toggles the radio on or off.
      */
     void toggleRadioOnOff();
@@ -339,11 +346,5 @@ interface ITelephony {
     void setCellInfoListRate(int rateInMillis);
 
     int getLteOnGsmMode();
-
-    /**
-     * Toggle between 2G and 3G (NT_MODE_GSM, NT_MODE_WCDMA_PREF)
-     * @param boolean to turn on and off 2G
-     * @hide
-     */
-     void toggle2G(boolean on);
 }
+

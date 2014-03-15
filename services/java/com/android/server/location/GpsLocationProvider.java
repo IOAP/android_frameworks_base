@@ -634,6 +634,8 @@ public class GpsLocationProvider implements LocationProviderInterface {
                 if (DEBUG) Log.d(TAG, "call native_agps_data_conn_failed");
                 mAGpsApn = null;
                 mAGpsDataConnectionState = AGPS_DATA_CONNECTION_CLOSED;
+                mConnMgr.stopUsingNetworkFeature(
+                        ConnectivityManager.TYPE_MOBILE, Phone.FEATURE_ENABLE_SUPL);
                 native_agps_data_conn_failed();
             }
         }
@@ -1838,15 +1840,20 @@ public class GpsLocationProvider implements LocationProviderInterface {
         Uri uri = Uri.parse("content://telephony/carriers/preferapn");
         String apn = null;
 
-        Cursor cursor = mContext.getContentResolver().query(uri, new String[] {"apn"},
-                null, null, Carriers.DEFAULT_SORT_ORDER);
+		Cursor cursor = null; 
+		
+		try {
+		    cursor = mContext.getContentResolver().query(uri, new String[] {"apn"},
+                    null, null, Carriers.DEFAULT_SORT_ORDER);
 
-        if (null != cursor) {
-            try {
+            if (cursor != null) {
                 if (cursor.moveToFirst()) {
                     apn = cursor.getString(0);
                 }
-            } finally {
+            }
+
+        } finally {
+			if (cursor !=null) {
                 cursor.close();
             }
         }

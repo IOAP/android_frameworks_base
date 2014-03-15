@@ -100,6 +100,7 @@ import com.android.internal.os.BinderInternal;
 import com.android.internal.os.RuntimeInit;
 import com.android.internal.os.SamplingProfilerIntegration;
 import com.android.internal.util.FastPrintWriter;
+import com.android.internal.util.Objects;
 import com.android.org.conscrypt.OpenSSLSocketImpl;
 import com.google.android.collect.Lists;
 
@@ -115,7 +116,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
@@ -231,7 +231,7 @@ public final class ActivityThread {
         public boolean equals(Object o) {
             if (o instanceof ProviderKey) {
                 final ProviderKey other = (ProviderKey) o;
-                return Objects.equals(authority, other.authority) && userId == other.userId;
+                return Objects.equal(authority, other.authority) && userId == other.userId;
             }
             return false;
         }
@@ -2049,6 +2049,18 @@ public final class ActivityThread {
         return mActivities.get(token).activity;
     }
 
+    protected void performFinishFloating() {
+        synchronized (mPackages) {
+            Activity a = null;
+            for (ActivityClientRecord ar : mActivities.values()) {
+                a = ar.activity;
+                if (a != null && !a.mFinished && a.getWindow() != null && a.getWindow().mIsFloatingWindow) {
+                    a.finish();
+                }
+            }
+        }
+    }
+
     public final void sendActivityResult(
             IBinder token, String id, int requestCode,
             int resultCode, Intent data) {
@@ -2804,12 +2816,7 @@ public final class ActivityThread {
                 r.stopped = false;
                 r.state = null;
             } catch (Exception e) {
-                if (!mInstrumentation.onException(r.activity, e)) {
-                    throw new RuntimeException(
-                        "Unable to resume activity "
-                        + r.intent.getComponent().toShortString()
-                        + ": " + e.toString(), e);
-                }
+                // Unable to resume activity
             }
         }
         return r;

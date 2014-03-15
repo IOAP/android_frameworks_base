@@ -467,6 +467,15 @@ public class TelephonyManager {
     }
 
     /**
+     * {@hide}
+     */
+    public void toggleMobileNetwork(int networkState) {
+        try {
+            getITelephony().toggleMobileNetwork(networkState);
+        } catch (RemoteException e) { }
+    }
+
+    /**
      * The contents of the /proc/cmdline file
      */
     private static String getProcCmdLine()
@@ -1566,15 +1575,5 @@ public class TelephonyManager {
         if (mContext == null) return null;
         return mContext.getResources().getString(
                 com.android.internal.R.string.config_mms_user_agent_profile_url);
-    }
-
-    /**
-     * @hide
-     */
-    public void toggle2G(boolean twoGees) {
-        try {
-            getITelephony().toggle2G(twoGees);
-        } catch (RemoteException e) {
-        }
     }
 }

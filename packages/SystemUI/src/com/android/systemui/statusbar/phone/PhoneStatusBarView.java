@@ -20,11 +20,9 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
-import android.os.PowerManager;
 import android.util.AttributeSet;
 import android.util.EventLog;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
@@ -38,7 +36,7 @@ import com.android.systemui.R;
 public class PhoneStatusBarView extends PanelBar {
     private static final String TAG = "PhoneStatusBarView";
     private static final boolean DEBUG = PhoneStatusBar.DEBUG;
-    private static final boolean DEBUG_GESTURES = true;
+    private static final boolean DEBUG_GESTURES = false;
 
     PhoneStatusBar mBar;
     int mScrimColor;
@@ -60,8 +58,7 @@ public class PhoneStatusBarView extends PanelBar {
         mScrimColor = res.getColor(R.color.notification_panel_scrim_color);
         mSettingsPanelDragzoneMin = res.getDimension(R.dimen.settings_panel_dragzone_min);
         try {
-            mSettingsPanelDragzoneFrac = res.getFraction(
-                    R.dimen.settings_panel_dragzone_fraction, 1, 1);
+            mSettingsPanelDragzoneFrac = res.getFraction(R.dimen.settings_panel_dragzone_fraction, 1, 1);
         } catch (NotFoundException ex) {
             mSettingsPanelDragzoneFrac = 0f;
         }
@@ -112,12 +109,6 @@ public class PhoneStatusBarView extends PanelBar {
             mSettingsPanel = pv;
         }
         pv.setRubberbandingEnabled(!mFullWidthNotifications);
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        mBar.onBarViewDetached();
     }
 
     @Override
@@ -176,7 +167,6 @@ public class PhoneStatusBarView extends PanelBar {
     public void onPanelPeeked() {
         super.onPanelPeeked();
         mBar.makeExpandedVisible();
-        mBar.setTakenSpace();
     }
 
     @Override
@@ -188,7 +178,6 @@ public class PhoneStatusBarView extends PanelBar {
         if (DEBUG) {
             Log.v(TAG, "start opening: " + panel + " shouldfade=" + mShouldFade);
         }
-        mBar.toggleReminderFlipper(true);
         mFadingPanel = panel;
     }
 
@@ -281,6 +270,6 @@ public class PhoneStatusBarView extends PanelBar {
 
         mBar.animateHeadsUp(mNotificationPanel == panel, mPanelExpandedFractionSum);
 
-        mBar.updateCarrierAndWifiLabelVisibility(false);
+        mBar.updateCarrierLabelVisibility(false);
     }
 }

@@ -154,13 +154,13 @@ please see styles_device_defaults.xml.
     </style>
 
     <style name="Animation.Toast.Fade">
-        <item name="windowEnterAnimation">@anim/fade_in</item>
+	<item name="windowEnterAnimation">@anim/fade_in</item>
         <item name="windowExitAnimation">@anim/fade_out</item>
     </style>
 
     <style name="Animation.Toast.SlideRight">
-        <item name="windowEnterAnimation">@anim/slide_in_right</item>
-        <item name="windowExitAnimation">@anim/slide_out_right</item>
+	<item name="windowEnterAnimation">@anim/slide_in_right</item>
+	<item name="windowExitAnimation">@anim/slide_out_right</item>
     </style>
 
     <style name="Animation.Toast.SlideLeft">
@@ -231,6 +231,12 @@ please see styles_device_defaults.xml.
     <style name="Animation.DropDownUp">
         <item name="windowEnterAnimation">@anim/grow_fade_in_from_bottom</item>
         <item name="windowExitAnimation">@anim/shrink_fade_out_from_bottom</item>
+    </style>
+
+    <!-- Slim recent app screen animation -->
+    <style name="Animation.RecentScreen">
+        <item name="windowEnterAnimation">@anim/recent_screen_enter</item>
+        <item name="windowExitAnimation">@anim/recent_screen_exit</item>
     </style>
 
     <!-- Window animations that are applied to input method overlay windows. -->
@@ -350,7 +356,7 @@ please see styles_device_defaults.xml.
     </style>
 
     <style name="TextAppearance.AutoCorrectionSuggestion" parent="TextAppearance.Suggestion">
-        <item name="android:textUnderlineColor">@color/white</item>
+        <item name="android:textUnderlineColor">@color/holo_blue_light</item>
     </style>
 
     <!-- Widget Styles -->
@@ -1630,8 +1636,8 @@ please see styles_device_defaults.xml.
     </style>
 
     <style name="Widget.Holo.StackView">
-        <item name="android:resOutColor">@android:color/white</item>
-        <item name="android:clickColor">@android:color/white</item>
+        <item name="android:resOutColor">@android:color/holo_blue_light</item>
+        <item name="android:clickColor">@android:color/holo_blue_light</item>
     </style>
 
     <style name="Widget.Holo.Button.Borderless">

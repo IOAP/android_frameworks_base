@@ -230,23 +230,21 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
             mNotificationBuilder.addAction(R.drawable.ic_menu_share,
                      r.getString(com.android.internal.R.string.share),
                      PendingIntent.getActivity(context, 0, chooserIntent,
-                     PendingIntent.FLAG_CANCEL_CURRENT));
+                             PendingIntent.FLAG_CANCEL_CURRENT));
 
-            // ScreenShot QuickDelete starts here
             Intent deleteIntent = new Intent();
             deleteIntent.setClass(context, DeleteScreenshot.class);
             deleteIntent.putExtra(DeleteScreenshot.SCREENSHOT_URI, uri.toString());
 
             mNotificationBuilder.addAction(R.drawable.ic_menu_delete,
-                     r.getString(R.string.delete),
+                     r.getString(R.string.screenshot_delete_action),
                      PendingIntent.getBroadcast(context, 0, deleteIntent,
-                     PendingIntent.FLAG_CANCEL_CURRENT));
+                             PendingIntent.FLAG_CANCEL_CURRENT));
 
             OutputStream out = resolver.openOutputStream(uri);
             image.compress(Bitmap.CompressFormat.PNG, 100, out);
             out.flush();
             out.close();
-            // Ends Here
 
             // update file size in the database
             values.clear();
@@ -317,7 +315,7 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
 class GlobalScreenshot {
     private static final String TAG = "GlobalScreenshot";
 
-    public static final int SCREENSHOT_NOTIFICATION_ID = 789;
+    protected static final int SCREENSHOT_NOTIFICATION_ID = 789;
     private static final int SCREENSHOT_FLASH_TO_PEAK_DURATION = 130;
     private static final int SCREENSHOT_DROP_IN_DURATION = 430;
     private static final int SCREENSHOT_DROP_OUT_DELAY = 500;
@@ -585,6 +583,7 @@ class GlobalScreenshot {
                 mScreenshotView.setTranslationY(0f);
                 mScreenshotView.setScaleX(SCREENSHOT_SCALE + mBgPaddingScale);
                 mScreenshotView.setScaleY(SCREENSHOT_SCALE + mBgPaddingScale);
+                mScreenshotView.setRotation(5.0f);
                 mScreenshotView.setVisibility(View.VISIBLE);
                 mScreenshotFlash.setAlpha(0f);
                 mScreenshotFlash.setVisibility(View.VISIBLE);

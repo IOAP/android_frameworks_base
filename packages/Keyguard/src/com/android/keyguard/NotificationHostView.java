@@ -1,18 +1,18 @@
 /*
-* Copyright (C) 2013 Team AOSPAL
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (C) 2013 Team AOSPAL
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.android.keyguard;
 
@@ -107,7 +107,7 @@ public class NotificationHostView extends FrameLayout {
             hitRect.bottom = nv.getBottom();
             if (hitRect.contains(x, y))
                 return nv;
-            }
+        }
         return null;
     }
 
@@ -160,13 +160,13 @@ public class NotificationHostView extends FrameLayout {
         public ViewPropertyAnimator animateChild() {
             final ViewPropertyAnimator animation = getChildAt(0).animate();
             animation.withEndAction(new Runnable() {
-                public void run() {
-                    animations--;
-                    if (animations == 0 && onAnimationEnd != null){
+               public void run() {
+                   animations--;
+                   if (animations == 0 && onAnimationEnd != null){
                        onAnimationEnd.run();
                        onAnimationEnd = null;
-                    }
-                }
+                   }
+               }
             });
             animation.withStartAction(new Runnable() {
                 public void run() {
@@ -220,7 +220,7 @@ public class NotificationHostView extends FrameLayout {
                         if (canBeDismissed() && (mShownNotifications == 0 || (shown && mShownNotifications == 1)))
                             NotificationHostView.this.setBackgroundColor(Color.argb(MAX_ALPHA -
                                     (int)(Math.abs(xr) / v.getWidth() * MAX_ALPHA), 0, 0, 0));
-                        if (swipeGesture || Math.abs(event.getX() - initialX) > CLICK_THRESHOLD) {
+                        if (swipeGesture  || Math.abs(event.getX() - initialX) > CLICK_THRESHOLD) {
                             swipeGesture = true;
                             v.cancelPendingInputEvents();
                             mScrollView.requestDisallowInterceptTouchEvent(true);
@@ -282,9 +282,9 @@ public class NotificationHostView extends FrameLayout {
         mNotificationMinRowHeight = mContext.getResources().getDimensionPixelSize(R.dimen.notification_row_min_height);
         mNotificationManager = INotificationManager.Stub.asInterface(
                 ServiceManager.getService(Context.NOTIFICATION_SERVICE));
-        if (NotificationViewManager.config != null) {
-            mDynamicWidth = NotificationViewManager.config.dynamicWidth;
-        }
+
+        mDynamicWidth = getResources().getBoolean(R.bool.config_lnDynamicWidth);
+
     }
 
     @Override
@@ -300,7 +300,7 @@ public class NotificationHostView extends FrameLayout {
                     if (mShownNotifications > 0) {
                         hideAllNotifications();
                     }
-                return false;
+                    return false;
                 }
             });
             Point p = new Point();
@@ -323,7 +323,6 @@ public class NotificationHostView extends FrameLayout {
                 StatusBarNotification[] sbns = mNotificationManager.getActiveNotificationsFromListener(NotificationViewManager.NotificationListener);
                 StatusBarNotification dismissedSbn;
                 for (StatusBarNotification sbn : sbns) {
-
                     if ((dismissedSbn = mDismissedNotifications.get(describeNotification(sbn))) == null || dismissedSbn.getPostTime() != sbn.getPostTime())
                         addNotification(sbn);
                 }
@@ -367,7 +366,6 @@ public class NotificationHostView extends FrameLayout {
             }
         }
     }
-
     View.OnLayoutChangeListener mLayoutListener = new View.OnLayoutChangeListener() {
         public void onLayoutChange(View v, int left, int top, int right, int bottom,
                 int oldLeft, int oldTop, int oldRight, int oldBottom) {
@@ -378,7 +376,6 @@ public class NotificationHostView extends FrameLayout {
             v.removeOnLayoutChangeListener(this);
         }
     };
-
     private void handleAddNotification(final boolean showNotification, boolean forceBigContentView) {
         final NotificationView nv = mNotificationsToAdd.poll();
         Log.d(TAG, "Add: " + describeNotification(nv.statusBarNotification));
@@ -486,7 +483,7 @@ public class NotificationHostView extends FrameLayout {
             if (!sbn.isClearable()) {
                 mDismissedNotifications.put(describeNotification(sbn), sbn);
             }
-            int duration = getDurationFromDistance(v.getChildAt(0), v.shown ? -mDisplayWidth : mDisplayWidth, 0);
+            int duration =  getDurationFromDistance(v.getChildAt(0), v.shown ? -mDisplayWidth : mDisplayWidth, 0);
             v.animateChild().setDuration(duration).alpha(0).start();
             mNotifications.remove(describeNotification(sbn));
             v.onAnimationEnd = new Runnable() {

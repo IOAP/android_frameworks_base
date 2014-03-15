@@ -231,6 +231,11 @@ interface IWindowManager
     boolean hasMenuKeyEnabled();
 
     /**
+     * Device wants a navigation bar (becuase it has hardware keys)
+     */
+    boolean wantsNavigationBar();
+
+    /**
      * Lock the device immediately with the specified options (can be null).
      */
     void lockNow(in Bundle options);
@@ -287,4 +292,21 @@ interface IWindowManager
      * @param enabled Whether touch exploration is enabled.
      */
     void setTouchExplorationEnabled(boolean enabled);
+
+    /** SPLIT VIEW **/
+    boolean isTaskSplitView(int taskId);
+    void setTaskSplitView(int taskId, boolean split);
+    void setTaskChildSplit(IBinder token, boolean split);
+    Rect getSplitViewRect(int taskId, boolean resetLocation);
+    void notifyActivityTouched(IBinder token, boolean force);
+    void setSplitViewRect(int l, int t, int r, int b);
+
+    /** SPLIT VIEW END **/
+
+    /**
+     * Get current system ui visibility mode.
+     *
+     * @hide
+     */
+    int getSystemUIVisibility();
 }

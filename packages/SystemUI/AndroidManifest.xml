@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
         package="com.android.systemui"
-        android:sharedUserId="android.uid.systemui"
+        android:sharedUserId="android.uid.system"
         coreApp="true">
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -19,6 +19,9 @@
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
     <uses-permission android:name="android.permission.REMOTE_AUDIO_PLAYBACK" />
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT" />
 
     <uses-permission android:name="android.permission.MANAGE_USERS" />
     <uses-permission android:name="android.permission.READ_PROFILE" />
@@ -73,13 +76,13 @@
 
     <!-- Keyguard -->
     <uses-permission android:name="android.permission.CONTROL_KEYGUARD" />
+ 
+    <!--Halo-->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
     <!-- Sync -->
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
-
-    <!-- Active display -->
-    <uses-permission android:name="android.permission.SYSTEM_NOTIFICATION_LISTENER" />
 
     <!-- Development shortcut -->
     <uses-permission android:name="android.permission.CLEAR_APP_USER_DATA" />
@@ -88,8 +91,8 @@
     <!-- Wifi Display -->
     <uses-permission android:name="android.permission.CONFIGURE_WIFI_DISPLAY" />
 
-    <!-- Record Audio QuickRecord -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Active display -->
+    <uses-permission android:name="android.permission.SYSTEM_NOTIFICATION_LISTENER" />
 
     <application
         android:persistent="true"
@@ -121,34 +124,18 @@
         <service android:name=".LoadAverageService"
                 android:exported="true" />
 
+        <service android:name=".batterysaver.BatterySaverService" />
+
         <service android:name=".CPUInfoService"
                 android:exported="true" />
-
-        <service android:name=".screenstate.ScreenStateService"
-                android:exported="true" >
-            <intent-filter>
-               <android name="android.intent.action.SCREEN_STATE_SERVICE_UPDATE"/>
-            </intent-filter>
-        </service>
 
         <service android:name=".ImageWallpaper"
                 android:permission="android.permission.BIND_WALLPAPER"
                 android:exported="true" />
 
-        <receiver android:name=".statusbar.StatusBarMonitor"
-                android:exported="true" />
-
-        <service android:name=".service.ReminderService"/>
-
         <receiver android:name=".BootReceiver" androidprv:primaryUserOnly="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-
-        <receiver android:name=".ReminderReceiver">
-            <intent-filter>
-                <action android:name="com.android.systemui.POST_REMINDER_NOTIFY"/>
             </intent-filter>
         </receiver>
 
@@ -236,20 +223,6 @@
             android:taskAffinity="com.android.systemui.net"
             android:excludeFromRecents="true" />
 
-        <!-- Reminder dialog sets -->
-        <activity
-            android:name="com.android.systemui.timedialog.ReminderTimeDialog"
-            android:theme="@android:style/Theme.Holo.Dialog.NoActionBar"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:excludeFromRecents="true"
-            android:taskAffinity="com.android.systemui.timedialog.ReminderTimeDialog"
-            android:launchMode="singleInstance" >
-            <intent-filter>
-                <action android:name="com.android.systemui.timedialog.ReminderTimeDialog" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-
         <!-- platform logo easter egg activity -->
         <activity
             android:name=".DessertCase"
@@ -280,7 +253,20 @@
                 <action android:name="android.service.dreams.DreamService" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data
+                android:name="android.service.dream"
+                android:resource="@xml/dream_info" />
         </service>
+
+        <activity android:name=".DessertCaseDreamSettings"
+            android:process=":sweetsweetdesserts"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
 
         <activity android:name=".Somnambulator"
             android:label="@string/start_dreams"
@@ -302,6 +288,11 @@
             </intent-filter>
         </activity>
 
+  	<!-- Halo -->
+        <activity android:name="com.android.systemui.Transparent"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+	<!-- Active display -->
         <activity android:name=".statusbar.policy.activedisplay.DummyActivity"
                   android:label=""
                   android:taskAffinity=""
@@ -310,6 +301,7 @@
                   android:theme="@style/Theme.DummyActivity">
         </activity>
 
+	<!-- App sidebar -->
         <activity android:name=".statusbar.sidebar.SidebarConfigurationActivity"
                   android:label="@string/title_activity_sidebar_configuration"
                   android:taskAffinity=""
@@ -324,6 +316,13 @@
             android:name=".statusbar.sidebar.SidebarContentProvider"
             android:authorities="org.chameleonos.sidebar.contentprovider" >
         </provider>
+
+        <service android:name=".powersaver.PowerSaverService"
+            android:exported="true" >
+            <intent-filter>
+                <android name="android.intent.action.POWER_SAVER_SERVICE_UPDATE"/>
+            </intent-filter>
+        </service>
 
     </application>
 </manifest>

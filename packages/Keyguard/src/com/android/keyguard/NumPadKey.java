@@ -35,9 +35,11 @@ import java.util.List;
 public class NumPadKey extends Button {
     // list of "ABC", etc per digit, starting with '0'
     static String sKlondike[];
+
     static List<Integer> sDigits = asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
     static int sCount = 0;
     static boolean sShuffled;
+
     int mDigit = -1;
     int mTextViewResId;
     TextView mTextView = null;
@@ -120,7 +122,7 @@ public class NumPadKey extends Button {
                 }
             }
         }
-        sCount++;
+	sCount++;
         setText(builder);
     }
 

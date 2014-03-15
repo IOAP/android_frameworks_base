@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.content.ContentResolver;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiConfiguration;
@@ -158,6 +159,8 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
     ArrayList<SignalCluster> mSignalClusters = new ArrayList<SignalCluster>();
     ArrayList<NetworkSignalChangedCallback> mSignalsChangedCallbacks =
             new ArrayList<NetworkSignalChangedCallback>();
+    ArrayList<SignalStrengthChangedCallback> mSignalStrengthChangedCallbacks =
+            new ArrayList<SignalStrengthChangedCallback>();
     int mLastPhoneSignalIconId = -1;
     int mLastDataDirectionIconId = -1;
     int mLastDataDirectionOverlayIconId = -1;
@@ -191,6 +194,10 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
                 boolean activityIn, boolean activityOut,
                 String dataTypeContentDescriptionId, String description);
         void onAirplaneModeChanged(boolean enabled);
+    }
+
+    public interface SignalStrengthChangedCallback {
+        void onPhoneSignalStrengthChanged(int dbm);
     }
 
     /**
@@ -247,6 +254,14 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
         updateAirplaneMode();
 
         mLastLocale = mContext.getResources().getConfiguration().locale;
+    }
+
+    public void unregisterController(Context context) {
+        context.unregisterReceiver(this);
+        if (mPhone != null) {
+            mPhone.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
+        }
+        mPhoneStateListener = null;
     }
 
     public boolean hasMobileDataFeature() {
@@ -329,6 +344,15 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
         mSignalsChangedCallbacks.remove(cb);
     }
 
+    public void addSignalStrengthChangedCallback(SignalStrengthChangedCallback cb) {
+        mSignalStrengthChangedCallbacks.add(cb);
+        notifySignalStrengthChangedCallbacks(cb);
+    }
+
+    public void removeSignalStrengthChangedCallback(SignalStrengthChangedCallback cb) {
+        mSignalStrengthChangedCallbacks.remove(cb);
+    }
+
     public void refreshSignalCluster(SignalCluster cluster) {
         if (mDemoMode) return;
         cluster.setWifiIndicators(
@@ -398,6 +422,11 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
             }
         }
         cb.onAirplaneModeChanged(mAirplaneMode);
+    }
+
+    private void notifySignalStrengthChangedCallbacks(SignalStrengthChangedCallback cb) {
+        int dbm = mSignalStrength != null ? mSignalStrength.getDbm() : 0;
+        cb.onPhoneSignalStrengthChanged(dbm);
     }
 
     public void setStackedMode(boolean stacked) {
@@ -628,6 +657,18 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
         }
     }
 
+    public static boolean getBoolean(ContentResolver cr, String name, boolean def) {
+         String v = Settings.System.getString(cr, name);
+         try {
+                if(v != null)
+                 return "1".equals(v);
+                else
+                 return def;
+         } catch (NumberFormatException e) {
+                return def;
+         }
+    }
+
     private final void updateDataNetType() {
         if (mIsWimaxEnabled && mWimaxConnected) {
             // wimax is a special 4g network not handled by telephony
@@ -689,11 +730,19 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
                     }
                     break;
                 case TelephonyManager.NETWORK_TYPE_HSPAP:
-                    mDataIconList = TelephonyIcons.DATA_HP[mInetCondition];
-                    mDataTypeIconId = R.drawable.stat_sys_data_fully_connected_hp;
-                    mQSDataTypeIconId = TelephonyIcons.QS_DATA_HP[mInetCondition];
-                    mContentDescriptionDataType = mContext.getString(
-                            R.string.accessibility_data_connection_HP);
+                    if (mHspaDataDistinguishable) {
+                        mDataIconList = TelephonyIcons.DATA_HP[mInetCondition];
+                        mDataTypeIconId = R.drawable.stat_sys_data_fully_connected_hp;
+                        mQSDataTypeIconId = TelephonyIcons.QS_DATA_HP[mInetCondition];
+                        mContentDescriptionDataType = mContext.getString(
+                                R.string.accessibility_data_connection_HP);
+                    } else {
+                        mDataIconList = TelephonyIcons.DATA_3G[mInetCondition];
+                        mDataTypeIconId = R.drawable.stat_sys_data_fully_connected_3g;
+                        mQSDataTypeIconId = TelephonyIcons.QS_DATA_3G[mInetCondition];
+                        mContentDescriptionDataType = mContext.getString(
+                                R.string.accessibility_data_connection_3g);
+                    }
                     break;
                 case TelephonyManager.NETWORK_TYPE_CDMA:
                     if (!mShowAtLeastThreeGees) {
@@ -729,7 +778,9 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
                             R.string.accessibility_data_connection_3g);
                     break;
                 case TelephonyManager.NETWORK_TYPE_LTE:
-                    boolean show4GforLTE = mContext.getResources().getBoolean(R.bool.config_show4GForLTE);
+                    boolean defValue = mContext.getResources().getBoolean(R.bool.config_show4GForLTE);
+                    boolean show4GforLTE = getBoolean(mContext.getContentResolver(),
+                    Settings.System.SHOW_LTE_OR_FOURGEE, defValue);
                     if (show4GforLTE) {
                         mDataIconList = TelephonyIcons.DATA_4G[mInetCondition];
                         mDataTypeIconId = R.drawable.stat_sys_data_fully_connected_4g;
@@ -1088,8 +1139,6 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
         String mobileLabel = "";
         int N;
         final boolean emergencyOnly = isEmergencyOnly();
-        final String customLabel = Settings.System.getString(mContext.getContentResolver(),
-                Settings.System.CUSTOM_CARRIER_LABEL);
 
         if (!mHasMobileDataFeature) {
             mDataSignalIconId = mPhoneSignalIconId = 0;
@@ -1248,14 +1297,18 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
             }
         }
 
-        if (customLabel != null && customLabel.length() > 0) {
-            combinedLabel = customLabel;
-            mobileLabel = customLabel;
-        }
-
         // Cleanup the double quotes
         if (wifiLabel.length() > 0) {
             wifiLabel = wifiLabel.replaceAll("^\"|\"$", "");
+        }
+
+        final String customLabel = Settings.System.getString(mContext.getContentResolver(),
+                Settings.System.NOTIFICATION_CUSTOM_CARRIER_LABEL);
+        if (customLabel != null && customLabel.length() > 0) {
+            if (combinedLabel.equals(mobileLabel)) {
+                combinedLabel = customLabel;
+            }
+            mobileLabel = customLabel;
         }
 
         if (!mAirplaneMode && mSimState == IccCardConstants.State.ABSENT) {
@@ -1295,6 +1348,10 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
         // update QS
         for (NetworkSignalChangedCallback cb : mSignalsChangedCallbacks) {
             notifySignalsChangedCallbacks(cb);
+        }
+
+        for (SignalStrengthChangedCallback cb : mSignalStrengthChangedCallbacks) {
+            notifySignalStrengthChangedCallbacks(cb);
         }
 
         if (mLastPhoneSignalIconId          != mPhoneSignalIconId

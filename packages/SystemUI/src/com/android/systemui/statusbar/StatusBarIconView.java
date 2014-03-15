@@ -40,6 +40,7 @@ import com.android.internal.statusbar.StatusBarIcon;
 import com.android.systemui.R;
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
 
 public class StatusBarIconView extends AnimatedImageView {
     private static final String TAG = "StatusBarIconView";
@@ -53,6 +54,7 @@ public class StatusBarIconView extends AnimatedImageView {
     private String mNumberText;
     private Notification mNotification;
     private boolean mShowNotificationCount;
+    private GlobalSettingsObserver mObserver;
 
     public StatusBarIconView(Context context, String slot, Notification notification) {
         super(context);
@@ -67,12 +69,12 @@ public class StatusBarIconView extends AnimatedImageView {
         mNumberPain.setTypeface(Typeface.DEFAULT_BOLD);
         mNumberPain.setTextSize(scaledPx);
         mNotification = notification;
-        mShowNotificationCount = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_NOTIF_COUNT, 0) == 1;
+        mShowNotificationCount = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_NOTIF_COUNT, 0, UserHandle.USER_CURRENT) == 1;
         setContentDescription(notification);
 
-        SettingsObserver observer = new SettingsObserver(new Handler());
-        observer.observe();
+        mObserver = GlobalSettingsObserver.getInstance(context);
+
         // We do not resize and scale system icons (on the right), only notification icons (on the
         // left).
         if (notification != null) {
@@ -252,6 +254,24 @@ public class StatusBarIconView extends AnimatedImageView {
     }
 
     @Override
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        if (mObserver != null) {
+            mObserver.attach(this);
+        }
+    }
+
+    @Override
+    public void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+
+        if (mObserver != null) {
+            mObserver.detach(this);
+        }
+    }
+
+    @Override
     protected void debug(int depth) {
         super.debug(depth);
         Log.d("View", debugIndent(depth) + "slot=" + mSlot);
@@ -305,24 +325,55 @@ public class StatusBarIconView extends AnimatedImageView {
             + " notification=" + mNotification + ")";
     }
 
-    class SettingsObserver extends ContentObserver {
-        SettingsObserver(Handler handler) {
+    static class GlobalSettingsObserver extends ContentObserver {
+        private static GlobalSettingsObserver sInstance;
+        private ArrayList<StatusBarIconView> mIconViews = new ArrayList<StatusBarIconView>();
+        private Context mContext;
+
+        GlobalSettingsObserver(Handler handler, Context context) {
             super(handler);
+            mContext = context.getApplicationContext();
         }
+
+        static GlobalSettingsObserver getInstance(Context context) {
+            if (sInstance == null) {
+                sInstance = new GlobalSettingsObserver(new Handler(), context);
+            }
+            return sInstance;
+        }
+
+        void attach(StatusBarIconView sbiv) {
+            if (mIconViews.isEmpty()) {
+                observe();
+            }
+            mIconViews.add(sbiv);
+        }
+
+        void detach(StatusBarIconView sbiv) {
+            mIconViews.remove(sbiv);
+            if (mIconViews.isEmpty()) {
+                unobserve();
+            }
+        }
+
         void observe() {
             mContext.getContentResolver().registerContentObserver(
                     Settings.System.getUriFor(Settings.System.STATUS_BAR_NOTIF_COUNT),
                     false, this);
         }
+
         void unobserve() {
             mContext.getContentResolver().unregisterContentObserver(this);
         }
+
         @Override
         public void onChange(boolean selfChange) {
-            mShowNotificationCount = Settings.System.getInt(
-                    mContext.getContentResolver(),
-                    Settings.System.STATUS_BAR_NOTIF_COUNT, 0) == 1;
-            set(mIcon, true);
+            boolean showIconCount = Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.STATUS_BAR_NOTIF_COUNT, 0, UserHandle.USER_CURRENT) == 1;
+            for (StatusBarIconView sbiv : mIconViews) {
+                sbiv.mShowNotificationCount = showIconCount;
+                sbiv.set(sbiv.mIcon, true);
+            }
         }
     }
 }

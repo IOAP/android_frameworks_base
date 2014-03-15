@@ -125,7 +125,7 @@ public class UsbDeviceManager {
         @Override
         public void onChange(boolean selfChange) {
             boolean enable = (Settings.Global.getInt(mContentResolver,
-                    Settings.Global.ADB_ENABLED, 1) > 0);
+                    Settings.Global.ADB_ENABLED, 0) > 0);
             mHandler.sendMessage(MSG_ENABLE_ADB, enable);
         }
     }
@@ -604,19 +604,14 @@ public class UsbDeviceManager {
                 intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
                 intent.putExtra("state", (enabled ? 1 : 0));
                 if (enabled) {
-                    Scanner scanner = null;
                     try {
-                        scanner = new Scanner(new File(AUDIO_SOURCE_PCM_PATH));
+                        Scanner scanner = new Scanner(new File(AUDIO_SOURCE_PCM_PATH));
                         int card = scanner.nextInt();
                         int device = scanner.nextInt();
                         intent.putExtra("card", card);
                         intent.putExtra("device", device);
                     } catch (FileNotFoundException e) {
                         Slog.e(TAG, "could not open audio source PCM file", e);
-                    } finally {
-                        if (scanner != null) {
-                            scanner.close();
-                        }
                     }
                 }
                 mContext.sendStickyBroadcastAsUser(intent, UserHandle.ALL);

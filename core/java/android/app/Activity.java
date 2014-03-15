@@ -39,6 +39,7 @@ import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -51,13 +52,16 @@ import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.StrictMode;
 import android.os.UserHandle;
+import android.provider.Settings;
 import android.text.Selection;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.method.TextKeyListener;
 import android.util.AttributeSet;
 import android.util.EventLog;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.util.PrintWriterPrinter;
 import android.util.Slog;
 import android.util.SparseArray;
@@ -65,6 +69,9 @@ import android.view.ActionMode;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.ContextThemeWrapper;
+import android.view.Display;
+import android.view.Gravity;
+import android.view.IWindowManager;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -715,6 +722,7 @@ public class Activity extends ContextThemeWrapper
     /*package*/ boolean mVisibleFromServer = false;
     /*package*/ boolean mVisibleFromClient = true;
     /*package*/ ActionBarImpl mActionBar = null;
+    private boolean mActionBarShowHideAnimationEnabled;
     private boolean mEnableDefaultActionBarUp;
 
     private CharSequence mTitle;
@@ -763,6 +771,9 @@ public class Activity extends ContextThemeWrapper
 
     private Thread mUiThread;
     final Handler mHandler = new Handler();
+
+    private Rect mOriginalBounds;
+    private boolean mIsSplitView;
 
     /** Return the intent that started this activity. */
     public Intent getIntent() {
@@ -1113,7 +1124,8 @@ public class Activity extends ContextThemeWrapper
     protected void onPostResume() {
         final Window win = getWindow();
         if (win != null) win.makeActive();
-        if (mActionBar != null) mActionBar.setShowHideAnimationEnabled(true);
+        mActionBarShowHideAnimationEnabled = true;
+        updateActionBarShowHideAnimation();
         mCalled = true;
     }
 
@@ -1385,7 +1397,8 @@ public class Activity extends ContextThemeWrapper
      */
     protected void onStop() {
         if (DEBUG_LIFECYCLE) Slog.v(TAG, "onStop " + this);
-        if (mActionBar != null) mActionBar.setShowHideAnimationEnabled(false);
+        mActionBarShowHideAnimationEnabled = false;
+        updateActionBarShowHideAnimation();
         getApplication().dispatchActivityStopped(this);
         mTranslucentCallback = null;
         mCalled = true;
@@ -1503,6 +1516,9 @@ public class Activity extends ContextThemeWrapper
         if (mWindow != null) {
             // Pass the configuration changed event to the window
             mWindow.onConfigurationChanged(newConfig);
+            if (mWindow.mIsFloatingWindow) {
+                scaleFloatingWindow(null);
+            }
         }
 
         if (mActionBar != null) {
@@ -1914,8 +1930,15 @@ public class Activity extends ContextThemeWrapper
 
         mWindow.setDefaultIcon(mActivityInfo.getIconResource());
         mWindow.setDefaultLogo(mActivityInfo.getLogoResource());
+        updateActionBarShowHideAnimation();
     }
-    
+
+    private void updateActionBarShowHideAnimation() {
+        if (mActionBar != null) {
+            mActionBar.setShowHideAnimationEnabled(mActionBarShowHideAnimationEnabled);
+        }
+    }
+
     /**
      * Set the activity content from a layout resource.  The resource will be
      * inflated, adding all top-level views to the activity.
@@ -2454,6 +2477,17 @@ public class Activity extends ContextThemeWrapper
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
             onUserInteraction();
+        }
+
+	int mHaloEnabled = (Settings.System.getInt(getContentResolver(), Settings.System.HALO_ENABLED, 0));
+
+        if (mIsSplitView && mHaloEnabled != 1) {
+            IWindowManager wm = (IWindowManager) WindowManagerGlobal.getWindowManagerService();
+            try {
+                wm.notifyActivityTouched(mToken, false);
+            } catch (RemoteException e) {
+                Log.e(TAG, "Cannot notify activity touched", e);
+            }
         }
         if (getWindow().superDispatchTouchEvent(ev)) {
             return true;
@@ -4225,6 +4259,10 @@ public class Activity extends ContextThemeWrapper
         }
     }
 
+    public void finishFloating() {
+        mMainThread.performFinishFloating();
+    }
+
     /**
      * Finish this activity as well as all activities immediately below it
      * in the current task that have the same affinity.  This is typically
@@ -5187,7 +5225,10 @@ public class Activity extends ContextThemeWrapper
 
         mFragments.attachActivity(this, mContainer, null);
         
-        mWindow = PolicyManager.makeNewWindow(this);
+        if (makeNewWindow(context, intent, info)) {
+            parent = null;
+        }
+
         mWindow.setCallback(this);
         mWindow.getLayoutInflater().setPrivateFactory(this);
         if (info.softInputMode != WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED) {
@@ -5220,11 +5261,173 @@ public class Activity extends ContextThemeWrapper
         }
         mWindowManager = mWindow.getWindowManager();
         mCurrentConfig = config;
+
+	int mHaloEnabled = (Settings.System.getInt(getContentResolver(), Settings.System.HALO_ENABLED, 0));
+
+        if ((intent.getFlags() & Intent.FLAG_ACTIVITY_SPLIT_VIEW) != 0 && mHaloEnabled != 1) {
+            final IWindowManager wm = (IWindowManager) WindowManagerGlobal.getWindowManagerService();
+            updateSplitViewMetrics(true);
+        }
+    }
+
+    private boolean makeNewWindow(Context context, Intent intent, ActivityInfo info) {
+        boolean floating = (intent.getFlags() & Intent.FLAG_FLOATING_WINDOW) == Intent.FLAG_FLOATING_WINDOW;
+        boolean history = (intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY;
+        if (intent != null && floating && !history) {
+
+            TypedArray styleArray = context.obtainStyledAttributes(info.theme, com.android.internal.R.styleable.Window);
+            TypedValue backgroundValue = styleArray.peekValue(com.android.internal.R.styleable.Window_windowBackground);
+
+            // Apps that have no title don't need no title bar
+            TypedValue outValue = new TypedValue();
+            boolean result = styleArray.getValue(com.android.internal.R.styleable.Window_windowNoTitle, outValue);
+
+            if (backgroundValue != null && backgroundValue.toString().contains("light")) {
+                context.getTheme().applyStyle(com.android.internal.R.style.Theme_DeviceDefault_FloatingWindowLight, true);
+            } else {
+                context.getTheme().applyStyle(com.android.internal.R.style.Theme_DeviceDefault_FloatingWindow, true);
+            }
+
+            // Create our new window
+            mWindow = PolicyManager.makeNewWindow(this);
+            mWindow.mIsFloatingWindow = true;
+            mWindow.setCloseOnTouchOutsideIfNotSet(true);
+            mWindow.setGravity(Gravity.CENTER);
+
+            if (this instanceof LayerActivity || android.os.Process.myUid() == android.os.Process.SYSTEM_UID) {
+                mWindow.setFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND,
+                        WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+                WindowManager.LayoutParams params = mWindow.getAttributes();
+                params.alpha = 1f;
+                params.dimAmount = 0.25f;
+                mWindow.setAttributes((android.view.WindowManager.LayoutParams) params);
+            }
+
+            // Scale it
+            scaleFloatingWindow(context);
+
+            return true;
+        } else {
+            mWindow = PolicyManager.makeNewWindow(this);
+
+            return false;
+        }
+    }
+
+    private void scaleFloatingWindow(Context context) {
+        if (!mWindow.mIsFloatingWindow) {
+            return;
+        }
+        WindowManager wm = null;
+        if (context != null) {
+            wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        } else {
+            wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        }
+        Display display = wm.getDefaultDisplay();
+        DisplayMetrics metrics = new DisplayMetrics();
+        display.getMetrics(metrics);
+        if (metrics.heightPixels > metrics.widthPixels) {
+            mWindow.setLayout((int)(metrics.widthPixels * 0.9f), (int)(metrics.heightPixels * 0.7f));
+        } else {
+            mWindow.setLayout((int)(metrics.widthPixels * 0.7f), (int)(metrics.heightPixels * 0.8f));
+        }
     }
 
     /** @hide */
     public final IBinder getActivityToken() {
         return mParent != null ? mParent.getActivityToken() : mToken;
+    }
+    
+    /** @hide */
+    public final void setSplitViewRect(int l, int t, int r, int b) {
+        final IWindowManager wm = (IWindowManager) WindowManagerGlobal.getWindowManagerService();
+        /*try {
+            wm.setSplitViewRect(l,t,r,b);
+        } catch (RemoteException e) {
+            Log.e(TAG, "Could not update split view rect", e);
+        }*/
+        updateSplitViewMetrics(false);
+    }
+
+    /** @hide */
+    public final boolean isSplitView() {
+        return mIsSplitView;
+    }
+
+    /** @hide */
+    final void updateSplitViewMetrics(boolean shouldReset) {
+        if (mParent != null) {
+            // Also update the parent activities, don't let the windows hanging
+            mParent.updateSplitViewMetrics(shouldReset);
+        }
+        
+        final IWindowManager wm = (IWindowManager) WindowManagerGlobal.getWindowManagerService();
+
+        try {
+            mIsSplitView = false;
+
+            if (shouldReset) {
+                wm.getSplitViewRect(getTaskId(), true);
+            }
+
+            // Check for split view settings
+            if (wm.isTaskSplitView(getTaskId())) {
+                // This activity/task is tagged as being in split view
+                mIsSplitView = true;
+
+                wm.setTaskChildSplit(mToken, true);
+
+                // Then, we apply it the position and size
+                mWindow.setGravity(Gravity.LEFT | Gravity.TOP);
+
+                WindowManager.LayoutParams params = mWindow.getAttributes();
+
+                // We save the original window size, in case we want to restore it later
+                if (mOriginalBounds == null) {
+                    mOriginalBounds = new Rect();
+                    mOriginalBounds.left = params.x;
+                    mOriginalBounds.top = params.y;
+                    mOriginalBounds.right = params.x + params.width;
+                    mOriginalBounds.bottom = params.y + params.height;
+                }
+                
+                /*try {
+                    wm.setSplitViewRect(mOriginalBounds.left, mOriginalBounds.top, mOriginalBounds.right, mOriginalBounds.bottom);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "Could not update split view rect", e);
+                }*/
+
+                Rect windowBounds = wm.getSplitViewRect(getTaskId(), false);
+                mWindow.setLayout(windowBounds.right - windowBounds.left,
+                    windowBounds.bottom - windowBounds.top);
+
+                params.x = windowBounds.left;
+                params.y = windowBounds.top;
+                mWindow.setAttributes(params);
+
+                // Finally, we make the window non-modal to allow the second app to get input
+                mWindow.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+                mWindow.addFlags(WindowManager.LayoutParams.FLAG_SPLIT_TOUCH);
+
+                // We notify that we are touched -- but really it's just so that this activity
+                // which just opened has the focus without the need to touch it
+                wm.notifyActivityTouched(mToken, true);
+            } else if (mOriginalBounds != null) {
+                // Restore normal window bounds
+                Log.d(TAG, "Restore original bounds from split (TaskId=" + getTaskId() + ")");
+                WindowManager.LayoutParams params = mWindow.getAttributes();
+                params.x = mOriginalBounds.left;
+                params.y = mOriginalBounds.top;
+
+                mWindow.setLayout(mOriginalBounds.right - mOriginalBounds.left,
+                    mOriginalBounds.bottom - mOriginalBounds.top);
+
+                wm.setTaskChildSplit(mToken, false);
+            }
+        } catch (RemoteException e) {
+            Log.e(TAG, "Could not perform split view actions on restart", e);
+        }
     }
 
     final void performCreate(Bundle icicle) {
@@ -5261,6 +5464,7 @@ public class Activity extends ContextThemeWrapper
     
     final void performRestart() {
         mFragments.noteStateNotSaved();
+        updateSplitViewMetrics(false);
 
         if (mStopped) {
             mStopped = false;
@@ -5394,6 +5598,14 @@ public class Activity extends ContextThemeWrapper
             mStopped = true;
         }
         mResumed = false;
+
+        // Floatingwindows activities should be kept volatile to prevent new activities taking
+        // up front in a minimized space. Every stop call, for instance when pressing home,
+        // will terminate the activity. If the activity is already finishing we might just
+        // as well let it go.
+        if (!mChangingConfigurations && mWindow != null && mWindow.mIsFloatingWindow && !isFinishing()) {
+            finish();
+        }
     }
 
     final void performDestroy() {

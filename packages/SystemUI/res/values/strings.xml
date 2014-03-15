@@ -3,16 +3,16 @@
 /**
  * Copyright (c) 2009, The Android Open Source Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); 
+ * you may not use this file except in compliance with the License. 
+ * You may obtain a copy of the License at 
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0 
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an "AS IS" BASIS, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ * See the License for the specific language governing permissions and 
  * limitations under the License.
  */
 -->
@@ -32,7 +32,7 @@
 
     <!-- Message shown in the middle of the screen after clicking on the recent apps button
          when there are no recent apps to show. Also used for accessibility. [CHAR LIMIT=45]-->
-    <string name="status_bar_no_recent_apps">No recent apps</string>
+    <string name="status_bar_no_recent_apps">All caught up!</string>
 
     <!-- Content description for the button to dismiss Recent Apps (only present on large
          devices) -->
@@ -512,5 +512,13 @@
     <string name="quick_settings_quick_record_rec">Recording...</string>
     <string name="quick_settings_quick_record_save">Saved</string>
     <string name="quick_settings_quick_record_play">Playing...</string>
+
+    <!-- Battery Saver -->
+    <string name="network_4G">4G/LTE</string>
+    <string name="network_3G_only">3G Only</string>
+    <string name="network_3G_auto">2G/3G Auto</string>
+    <string name="network_3G">2G/3G Pref</string>
+    <string name="network_2G">2G Only</string>
+    <string name="quick_settings_network_unknown">Unknown</string>
 
 </resources>

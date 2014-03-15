@@ -39,15 +39,8 @@ import android.content.IntentSender;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.UserInfo;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.LightingColorFilter;
-import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.StateListDrawable;
 import android.media.RemoteControlClient;
 import android.os.Bundle;
 import android.os.Looper;
@@ -67,7 +60,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewStub;
 import android.view.WindowManager;
-import android.widget.ImageButton;
 import android.widget.RemoteViews.OnClickHandler;
 
 import java.io.File;
@@ -91,7 +83,7 @@ public class KeyguardHostView extends KeyguardViewBase {
     // Found in KeyguardAppWidgetPickActivity.java
     static final int APPWIDGET_HOST_ID = 0x4B455947;
 
-    private final int MAX_WIDGETS = 20;
+    private final int MAX_WIDGETS = 5;
 
     private AppWidgetHost mAppWidgetHost;
     private AppWidgetManager mAppWidgetManager;
@@ -164,6 +156,8 @@ public class KeyguardHostView extends KeyguardViewBase {
 
     public KeyguardHostView(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+        new UserManager(mContext);
 
         if (DEBUG) Log.e(TAG, "KeyguardHostView()");
 
@@ -405,8 +399,6 @@ public class KeyguardHostView extends KeyguardViewBase {
         mKeyguardSelectorView = (KeyguardSelectorView) findViewById(R.id.keyguard_selector_view);
         mViewStateManager.setSecurityViewContainer(mSecurityViewContainer);
 
-        setLockColor();
-
         setBackButtonEnabled(false);
 
         if (KeyguardUpdateMonitor.getInstance(mContext).hasBootCompleted()) {
@@ -471,38 +463,6 @@ public class KeyguardHostView extends KeyguardViewBase {
         }
     }
 
-    private void setLockColor() {
-        int color = Settings.Secure.getIntForUser(
-                mContext.getContentResolver(),
-                Settings.Secure.LOCKSCREEN_LOCK_COLOR, -2,
-                UserHandle.USER_CURRENT);
-
-        if (color != -2) {
-            ImageButton lock = (ImageButton) findViewById(R.id.expand_challenge_handle);
-            if (lock != null) {
-                StateListDrawable lockStates = new StateListDrawable();
-                Bitmap lockBitmap = BitmapFactory.decodeResource(
-                        getContext().getResources(), R.drawable.kg_security_lock_normal);
-                int height = lockBitmap.getHeight();
-                int width = lockBitmap.getWidth();
-                Bitmap overlayFocused = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                Bitmap overlayPressed = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                Canvas canvasFocused = new Canvas(overlayFocused);
-                Canvas canvasPressed = new Canvas(overlayPressed);
-                Paint paint = new Paint();
-                paint.setColorFilter(new LightingColorFilter(color, 1));
-                canvasFocused.drawBitmap(lockBitmap, 0, 0, paint);
-                paint.setAlpha(175);
-                canvasPressed.drawBitmap(lockBitmap, 0, 0, paint);
-                lockStates.addState(new int[] {android.R.attr.state_pressed},
-                        new BitmapDrawable(getResources(), overlayPressed));
-                lockStates.addState(new int[] {-android.R.attr.state_pressed},
-                        new BitmapDrawable(getResources(), overlayFocused));
-                lock.setImageDrawable(lockStates);
-            }
-        }
-    }
-
     private void setBackButtonEnabled(boolean enabled) {
         if (mContext instanceof Activity) return;  // always enabled in activity mode
         setSystemUiVisibility(enabled ?
@@ -531,10 +491,9 @@ public class KeyguardHostView extends KeyguardViewBase {
     }
 
     private boolean cameraDisabledByDpm() {
-        boolean disabledSecureKeyguard =
-                (mDisabledFeatures & DevicePolicyManager.KEYGUARD_DISABLE_SECURE_CAMERA) != 0
-                && mLockPatternUtils.isSecure();
-        return mCameraDisabled || disabledSecureKeyguard || !mLockPatternUtils.getCameraEnabled();
+        return mCameraDisabled
+                || (mDisabledFeatures & DevicePolicyManager.KEYGUARD_DISABLE_SECURE_CAMERA) != 0
+                || !mLockPatternUtils.getCameraEnabled();
     }
 
     private void updateSecurityViews() {
@@ -720,9 +679,6 @@ public class KeyguardHostView extends KeyguardViewBase {
             case Password:
                 messageId = R.string.kg_too_many_failed_password_attempts_dialog_message;
                 break;
-            case Gesture:
-                messageId = R.string.kg_too_many_failed_gesture_attempts_dialog_message;
-                break;
         }
 
         if (messageId != 0) {
@@ -879,7 +835,6 @@ public class KeyguardHostView extends KeyguardViewBase {
                 case PIN:
                 case Account:
                 case Biometric:
-                case Gesture:
                     finish = true;
                     break;
 
@@ -1221,7 +1176,6 @@ public class KeyguardHostView extends KeyguardViewBase {
             case Password: return R.id.keyguard_password_view;
             case Biometric: return R.id.keyguard_face_unlock_view;
             case Account: return R.id.keyguard_account_view;
-            case Gesture: return R.id.keyguard_gesture_view;
             case SimPin:
                 if (KeyguardUpdateMonitor.sIsMultiSimEnabled) {
                     return R.id.msim_keyguard_sim_pin_view;
@@ -1244,7 +1198,6 @@ public class KeyguardHostView extends KeyguardViewBase {
             case Password: return R.layout.keyguard_password_view;
             case Biometric: return R.layout.keyguard_face_unlock_view;
             case Account: return R.layout.keyguard_account_view;
-            case Gesture: return R.layout.keyguard_gesture_view;
             case SimPin:
                 if (KeyguardUpdateMonitor.sIsMultiSimEnabled) {
                     return R.layout.msim_keyguard_sim_pin_view;
@@ -1611,7 +1564,6 @@ public class KeyguardHostView extends KeyguardViewBase {
         final boolean transportAdded = ensureTransportPresentOrRemoved(state);
         final int pageToShow = getAppropriateWidgetPage(state);
         if (!transportAdded) {
-            KeyguardUpdateMonitor.getInstance(getContext()).dispatchSetBackground(null);
             mAppWidgetContainer.setCurrentPage(pageToShow);
         } else if (state == TRANSPORT_VISIBLE) {
             // If the transport was just added, we need to wait for layout to happen before
