@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2006 The Android Open Source Project
- * Copyright (C) 2014, IOAP Project && Gwon Hyeok
  * Credit castorflex (github.com/castorflex/SmoothProgressBar
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
