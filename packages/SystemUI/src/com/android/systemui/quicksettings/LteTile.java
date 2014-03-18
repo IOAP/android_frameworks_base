@@ -11,11 +11,11 @@ import android.view.View;
 import android.view.View.OnClickListener;
 
 import com.android.internal.telephony.Phone;
+import com.android.internal.telephony.PhoneConstants;
+import com.android.internal.telephony.RILConstants;
 import com.android.systemui.R;
 import com.android.systemui.statusbar.phone.QuickSettingsContainerView;
 import com.android.systemui.statusbar.phone.QuickSettingsController;
-
-import java.util.List;
 
 public class LteTile extends QuickSettingsTile {
 
@@ -89,26 +89,18 @@ public class LteTile extends QuickSettingsTile {
 
     private void toggleLteState() {
         TelephonyManager tm = (TelephonyManager)
-            mContext.getSystemService(Context.TELEPHONY_SERVICE);
-        int network = getCurrentPreferredNetworkMode(mContext);
-        switch(network) {
-            case Phone.NT_MODE_GLOBAL:
-            case Phone.NT_MODE_LTE_CDMA_AND_EVDO:
-            case Phone.NT_MODE_LTE_GSM_WCDMA:
-            case Phone.NT_MODE_LTE_CMDA_EVDO_GSM_WCDMA:
-            case Phone.NT_MODE_LTE_ONLY:
-            case Phone.NT_MODE_LTE_WCDMA:
-                tm.toggleLTE();
-                break;
-            default:
-                tm.toggleLTE();
-                break;
-        }
+                mContext.getSystemService(Context.TELEPHONY_SERVICE);
+        tm.toggleLTE();
     }
 
     private static int getCurrentPreferredNetworkMode(Context context) {
+        int preferredNetworkMode = RILConstants.PREFERRED_NETWORK_MODE;
+        if (TelephonyManager.getLteOnCdmaModeStatic() == PhoneConstants.LTE_ON_CDMA_TRUE) {
+            preferredNetworkMode = Phone.NT_MODE_GLOBAL;
+        }
         int network = Settings.Global.getInt(context.getContentResolver(),
-                    Settings.Global.PREFERRED_NETWORK_MODE, -1);
+                    Settings.Global.PREFERRED_NETWORK_MODE, preferredNetworkMode);
         return network;
     }
+
 }
