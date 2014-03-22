@@ -98,9 +98,9 @@ public class SettingsPanelView extends PanelView {
     public void setup(NetworkController networkController, BluetoothController bluetoothController,
             BatteryController batteryController, LocationController locationController,
             RotationLockController rotationLockController) {
-        if (mQS != null) {		
-            /*mQS.setup(networkController, bluetoothController, batteryController,		
-                    locationController, rotationLockController);*/		
+        if (mQS != null) {
+            /*mQS.setup(networkController, bluetoothController, batteryController,
+                    locationController, rotationLockController);*/
         }
     }
 
@@ -118,10 +118,10 @@ public class SettingsPanelView extends PanelView {
     public void fling(float vel, boolean always) {
         if (DEBUG_GESTURES) {
             GestureRecorder gr = ((PhoneStatusBarView) mBar).mBar.getGestureRecorder();
-            if (gr != null ) {
+            if (gr != null) {
                 gr.tag(
                     "fling " + ((vel > 0) ? "open" : "closed"),
-                    "notifications,v=" + vel);
+                    "settings,v=" + vel);
             }
         }
         super.fling(vel, always);

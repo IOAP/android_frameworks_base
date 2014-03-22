@@ -25,15 +25,14 @@ import android.content.Intent;
 import android.net.Uri;
 import android.provider.Settings;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 
 import com.android.internal.util.nameless.NamelessActions;
 import com.android.internal.util.nameless.NamelessUtils;
 import com.android.systemui.R;
 import com.android.systemui.nameless.onthego.OnTheGoDialog;
+import com.android.systemui.nameless.onthego.OnTheGoService;
 import com.android.systemui.statusbar.phone.QuickSettingsController;
-import com.android.systemui.statusbar.phone.QuickSettingsContainerView;
 
 public class OnTheGoTile extends QuickSettingsTile {
 
@@ -63,15 +62,15 @@ public class OnTheGoTile extends QuickSettingsTile {
     }
 
     @Override
-    void onPostCreate() {
-        updateTile();
-        super.onPostCreate();
+    public void onFlingRight() {
+        toggleCamera();
+        super.onFlingRight();
     }
 
     @Override
-    public void updateResources() {
-        updateTile();
-        super.updateResources();
+    public void onFlingLeft() {
+        toggleCamera();
+        super.onFlingLeft();
     }
 
     private void toggleCamera() {
@@ -92,6 +91,19 @@ public class OnTheGoTile extends QuickSettingsTile {
                 newValue);
 
         updateResources();
+        sendCameraBroadcast();
+    }
+
+    @Override
+    void onPostCreate() {
+        updateTile();
+        super.onPostCreate();
+    }
+
+    @Override
+    public void updateResources() {
+        updateTile();
+        super.updateResources();
     }
 
     @Override
@@ -100,7 +112,6 @@ public class OnTheGoTile extends QuickSettingsTile {
     }
 
     private synchronized void updateTile() {
-
         int cameraMode;
 
         if (NamelessUtils.hasFrontCamera(mContext)) {
@@ -125,5 +136,10 @@ public class OnTheGoTile extends QuickSettingsTile {
 
     }
 
-}
+    private void sendCameraBroadcast() {
+        final Intent cameraBroadcast = new Intent();
+        cameraBroadcast.setAction(OnTheGoService.ACTION_TOGGLE_CAMERA);
+        mContext.sendBroadcast(cameraBroadcast);
+    }
 
+}
