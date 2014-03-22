@@ -33,6 +33,7 @@ import android.content.res.Resources;
 import android.graphics.PixelFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
