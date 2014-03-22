@@ -36,6 +36,7 @@ import android.hardware.Camera;
 import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.TextureView;
@@ -44,11 +45,13 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import com.android.internal.util.nameless.NamelessUtils;
+import com.android.internal.util.nameless.constants.FlashLightConstants;
+import com.android.internal.util.nameless.listeners.ShakeDetector;
 import com.android.systemui.R;
 
 import java.io.IOException;
 
-public class OnTheGoService extends Service {
+public class OnTheGoService extends Service implements ShakeDetector.Listener {
 
     private static final String  TAG   = "OnTheGoService";
     private static final boolean DEBUG = false;
@@ -75,6 +78,8 @@ public class OnTheGoService extends Service {
     private FrameLayout         mOverlay;
     private Camera              mCamera;
     private NotificationManager mNotificationManager;
+    private SensorManager       mSensorManager;
+    private ShakeDetector       mShakeDetector;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -84,24 +89,47 @@ public class OnTheGoService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        unregisterReceivers();
+        unregisterReceivers(false);
         resetViews();
     }
 
-    private void registerReceivers() {
+    private void registerReceivers(boolean isScreenOn) {
         final IntentFilter alphaFilter = new IntentFilter(ACTION_TOGGLE_ALPHA);
         registerReceiver(mAlphaReceiver, alphaFilter);
         final IntentFilter cameraFilter = new IntentFilter(ACTION_TOGGLE_CAMERA);
         registerReceiver(mCameraReceiver, cameraFilter);
+
+        if (!isScreenOn) {
+            final IntentFilter screenFilter = new IntentFilter();
+            screenFilter.addAction(Intent.ACTION_SCREEN_OFF);
+            screenFilter.addAction(Intent.ACTION_SCREEN_ON);
+            registerReceiver(mScreenReceiver, screenFilter);
+        }
+
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mShakeDetector = new ShakeDetector(this);
+        mShakeDetector.start(mSensorManager);
     }
 
-    private void unregisterReceivers() {
+    private void unregisterReceivers(boolean isScreenOff) {
         try {
             unregisterReceiver(mAlphaReceiver);
         } catch (Exception ignored) { }
         try {
             unregisterReceiver(mCameraReceiver);
         } catch (Exception ignored) { }
+
+        if (!isScreenOff) {
+            try {
+                unregisterReceiver(mScreenReceiver);
+            } catch (Exception ignored) { }
+        }
+
+        if (mShakeDetector != null) {
+            mShakeDetector.stop();
+            mShakeDetector = null;
+            mSensorManager = null;
+        }
     }
 
     private final BroadcastReceiver mAlphaReceiver = new BroadcastReceiver() {
@@ -124,6 +152,29 @@ public class OnTheGoService extends Service {
                     restartOnTheGo();
                 } else {
                     stopOnTheGo(true);
+                }
+            }
+        }
+    };
+
+    private final BroadcastReceiver mScreenReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent == null) {
+                return;
+            }
+
+            synchronized (mRestartObject) {
+                final String action = intent.getAction();
+                if (action != null && !action.isEmpty()) {
+                    logDebug("mScreenReceiver: " + action);
+                    if (Intent.ACTION_SCREEN_ON.equals(action)) {
+                        setupViews(true);
+                        registerReceivers(true);
+                    } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
+                        unregisterReceivers(true);
+                        resetViews();
+                    }
                 }
             }
         }
@@ -165,14 +216,14 @@ public class OnTheGoService extends Service {
         }
 
         resetViews();
-        registerReceivers();
+        registerReceivers(false);
         setupViews(false);
 
         createNotification(NOTIFICATION_STARTED);
     }
 
     private void stopOnTheGo(boolean shouldRestart) {
-        unregisterReceivers();
+        unregisterReceivers(false);
         resetViews();
 
         // Cancel notification
@@ -392,5 +443,25 @@ public class OnTheGoService extends Service {
             Log.e(TAG, msg);
         }
     }
-}
 
+    private final        Object  mShakeLock     = new Object();
+    private final static int     SHAKE_TIMEOUT  = 1000;
+    private              boolean mIsShakeLocked = false;
+
+    @Override
+    public void hearShake() {
+        synchronized (mShakeLock) {
+            if (!mIsShakeLocked) {
+                final Intent intent = new Intent(FlashLightConstants.ACTION_TOGGLE_STATE);
+                sendBroadcastAsUser(intent, UserHandle.CURRENT);
+                mIsShakeLocked = true;
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        mIsShakeLocked = false;
+                    }
+                }, SHAKE_TIMEOUT);
+            }
+        }
+    }
+}
