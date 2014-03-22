@@ -1000,37 +1000,6 @@ public final class Settings {
         }
     }
 
-        /**
-         * If On-The-Go should be displayed at the power menu.
-         *
-         * @hide
-         */
-        public static final String POWER_MENU_ONTHEGO_ENABLED = "power_menu_onthego_enabled";
-
-        /**
-         * The alpha value of the On-The-Go overlay.
-         *
-         * @hide
-         */
-        public static final String ON_THE_GO_ALPHA = "on_the_go_alpha";
-
-        /**
-         * The camera instance to use.
-         * 0 = Rear Camera
-         * 1 = Front Camera
-         *
-         * @hide
-         */
-        public static final String ON_THE_GO_CAMERA = "on_the_go_camera";
-
-        /**
-         * Whether the service should restart itself or not.
-         *
-         * @hide
-         */
-        public static final String ON_THE_GO_SERVICE_RESTART = "on_the_go_service_restart";
-    }
-
     /**
      * System settings, containing miscellaneous system preferences.  This
      * table holds simple name/value pairs.  There are convenience
@@ -1052,6 +1021,7 @@ public final class Settings {
                 CALL_METHOD_PUT_SYSTEM);
 
         private static final HashSet<String> MOVED_TO_SECURE;
+
         static {
             MOVED_TO_SECURE = new HashSet<String>(30);
             MOVED_TO_SECURE.add(Secure.ANDROID_ID);
@@ -1061,8 +1031,8 @@ public final class Settings {
             MOVED_TO_SECURE.add(Secure.LOCK_PATTERN_ENABLED);
             MOVED_TO_SECURE.add(Secure.LOCK_PATTERN_VISIBLE);
             MOVED_TO_SECURE.add(Secure.LOCK_PATTERN_TACTILE_FEEDBACK_ENABLED);
-	    MOVED_TO_SECURE.add(Secure.LOCK_NUMPAD_RANDOM);
-	    MOVED_TO_SECURE.add(Secure.LOCK_BEFORE_UNLOCK);
+	        MOVED_TO_SECURE.add(Secure.LOCK_NUMPAD_RANDOM);
+	        MOVED_TO_SECURE.add(Secure.LOCK_BEFORE_UNLOCK);
             MOVED_TO_SECURE.add(Secure.LOCK_PATTERN_SIZE);
             MOVED_TO_SECURE.add(Secure.LOCK_DOTS_VISIBLE);
             MOVED_TO_SECURE.add(Secure.LOCK_SHOW_ERROR_PATH);
@@ -3578,34 +3548,34 @@ public final class Settings {
          */
         public static final String VOLUME_LINK_NOTIFICATION = "volume_link_notification";
 
-	/**
-	* If On-The-Go should be displayed at the power menu.
-	*
-	* @hide
-	*/
+    	/**
+	    * If On-The-Go should be displayed at the power menu.
+	    *
+	    * @hide
+        */
         public static final String POWER_MENU_ONTHEGO_ENABLED = "power_menu_onthego_enabled";
 
-	/**
-	* The alpha value of the On-The-Go overlay.
-	*
-	* @hide
-	*/
+    	/**
+    	* The alpha value of the On-The-Go overlay.
+    	*
+    	* @hide
+    	*/
         public static final String ON_THE_GO_ALPHA = "on_the_go_alpha";
 
-	/**
-	* The camera instance to use.
-	* 0 = Rear Camera
-	* 1 = Front Camera
-	*
-	* @hide
-	*/
+    	/**
+    	* The camera instance to use.
+    	* 0 = Rear Camera
+    	* 1 = Front Camera
+    	*
+    	* @hide
+    	*/
         public static final String ON_THE_GO_CAMERA = "on_the_go_camera";
 
-	/**
-	* Whether the service should restart itself or not.
-	*
-	* @hide
-	*/
+    	/**
+    	* Whether the service should restart itself or not.
+    	*
+    	* @hide
+    	*/
         public static final String ON_THE_GO_SERVICE_RESTART = "on_the_go_service_restart";
 
         /**
