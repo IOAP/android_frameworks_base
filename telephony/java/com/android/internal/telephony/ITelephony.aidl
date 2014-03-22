@@ -152,6 +152,11 @@ interface ITelephony {
     boolean supplyPin(String pin);
 
     /**
+     * Gets the number of attempts remaining for PIN1/PUK1 unlock.
+     */
+    int getIccPin1RetryCount();
+
+    /**
      * Supply puk to unlock the SIM and set SIM pin to new pin.
      *  Blocks until a result is determined.
      * @param puk The puk to check.
@@ -188,6 +193,13 @@ interface ITelephony {
      * @return true if MMI command is executed.
      */
     boolean handlePinMmi(String dialString);
+
+    /**
+     * Toggle between 3G and 2G
+     * @param networkState {RILConstants.NETWORK_MODE}
+     * {@hide}
+     */
+     void toggleMobileNetwork(int networkState);
 
     /**
      * Toggles the radio on or off.

@@ -20,12 +20,15 @@ import android.animation.LayoutTransition;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Point;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
+import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import com.android.systemui.R;
@@ -41,16 +44,22 @@ public class QuickSettingsContainerView extends FrameLayout {
 
     // Duplicate number of columns in the QuickSettings grid on landscape view
     private boolean mDuplicateColumnsLandscape;
-    private boolean mHasFlipSettingsPanel;
 
     // The gap between tiles in the QuickSettings grid
     private float mCellGap;
 
+    private boolean mSingleRow;
+
     private Context mContext;
     private Resources mResources;
 
+    private boolean mFirstStartUp = true;
+
     public QuickSettingsContainerView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.QuickSettingsContainer, 0, 0);
+        mSingleRow = a.getBoolean(R.styleable.QuickSettingsContainer_singleRow, false);
+        a.recycle();
 
         mContext = context;
         mResources = getContext().getResources();
@@ -70,14 +79,12 @@ public class QuickSettingsContainerView extends FrameLayout {
         mCellGap = mResources.getDimension(R.dimen.quick_settings_cell_gap);
         mNumColumns = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.QUICK_TILES_PER_ROW, 3, UserHandle.USER_CURRENT);
-
-        // do not allow duplication on tablets or any device which does not have
+        // do not allow duplication on tablets or any device which do not have
         // flipsettings
-        mHasFlipSettingsPanel = mResources.getBoolean(R.bool.config_hasFlipSettingsPanel);
         mDuplicateColumnsLandscape = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.QUICK_TILES_PER_ROW_DUPLICATE_LANDSCAPE,
                 1, UserHandle.USER_CURRENT) == 1
-                        && mHasFlipSettingsPanel;
+                        && mResources.getBoolean(R.bool.config_hasFlipSettingsPanel);
         requestLayout();
     }
 
@@ -90,14 +97,23 @@ public class QuickSettingsContainerView extends FrameLayout {
         }
         // Calculate the cell width dynamically
         int width = MeasureSpec.getSize(widthMeasureSpec);
-        int height = MeasureSpec.getSize(heightMeasureSpec);
         int availableWidth = (int) (width - getPaddingLeft() - getPaddingRight() -
                 (mNumFinalColumns - 1) * mCellGap);
         float cellWidth = (float) Math.ceil(((float) availableWidth) / mNumFinalColumns);
+        int cellHeight = 0;
+        float cellGap = mCellGap;
+
+        if (mSingleRow) {
+            cellWidth = MeasureSpec.getSize(heightMeasureSpec);
+            cellHeight = (int) cellWidth;
+            cellGap /= 2;
+        } else {
+            cellHeight = (int) getResources().getDimension(R.dimen.quick_settings_cell_height);
+        }
 
         // Update each of the children's widths accordingly to the cell width
         int N = getChildCount();
-        int cellHeight = 0;
+        int totalWidth = 0;
         int cursor = 0;
         for (int i = 0; i < N; ++i) {
             // Update the child's width
@@ -105,43 +121,48 @@ public class QuickSettingsContainerView extends FrameLayout {
             if (v.getVisibility() != View.GONE) {
                 ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
                 int colSpan = v.getColumnSpan();
-                lp.width = (int) ((colSpan * cellWidth) + (colSpan - 1) * mCellGap);
-
-                if (mNumFinalColumns > 3 && (!isLandscape() || !mHasFlipSettingsPanel)) {
-                    lp.height = (lp.width * mNumFinalColumns - 1) / mNumFinalColumns;
-                }
-
+                lp.width = (int) ((colSpan * cellWidth) + (colSpan - 1) * cellGap);
+                lp.height = cellHeight;
                 // Measure the child
                 int newWidthSpec = MeasureSpec.makeMeasureSpec(lp.width, MeasureSpec.EXACTLY);
                 int newHeightSpec = MeasureSpec.makeMeasureSpec(lp.height, MeasureSpec.EXACTLY);
                 v.measure(newWidthSpec, newHeightSpec);
 
-                // Save the cell height
-                if (cellHeight <= 0) {
-                    cellHeight = v.getMeasuredHeight();
-                }
                 cursor += colSpan;
+                totalWidth += v.getMeasuredWidth() + cellGap;
             }
         }
 
         // Set the measured dimensions.  We always fill the tray width, but wrap to the height of
         // all the tiles.
         int numRows = (int) Math.ceil((float) cursor / mNumFinalColumns);
-        int newHeight = (int) ((numRows * cellHeight) + ((numRows - 1) * mCellGap)) +
+        int newHeight = (int) ((numRows * cellHeight) + ((numRows - 1) * cellGap)) +
                 getPaddingTop() + getPaddingBottom();
-        setMeasuredDimension(width, newHeight);
+        if (mSingleRow) {
+            int totalHeight = cellHeight + getPaddingTop() + getPaddingBottom();
+            setMeasuredDimension(totalWidth, totalHeight);
+        } else {
+            setMeasuredDimension(width, newHeight);
+        }
     }
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         final int N = getChildCount();
+        final boolean isLayoutRtl = isLayoutRtl();
         final int width = getWidth();
 
         int x = getPaddingStart();
         int y = getPaddingTop();
         int cursor = 0;
 
-        if (mDuplicateColumnsLandscape && isLandscape()) {
+        float cellGap = mCellGap;
+
+        if (mSingleRow) {
+            cellGap /= 2;
+        }
+
+        if (mDuplicateColumnsLandscape && isLandscape() && !mSingleRow) {
             mNumFinalColumns = mNumColumns * 2;
         } else {
             mNumFinalColumns = mNumColumns;
@@ -160,13 +181,13 @@ public class QuickSettingsContainerView extends FrameLayout {
                 int row = (int) (cursor / mNumFinalColumns);
 
                 // Push the item to the next row if it can't fit on this one
-                if ((col + colSpan) > mNumFinalColumns) {
+                if ((col + colSpan) > mNumFinalColumns && !mSingleRow) {
                     x = getPaddingStart();
-                    y += childHeight + mCellGap;
+                    y += childHeight + cellGap;
                     row++;
                 }
 
-                final int childLeft = isLayoutRtl() ? width - x - childWidth : x;
+                final int childLeft = (isLayoutRtl) ? width - x - childWidth : x;
                 final int childRight = childLeft + childWidth;
 
                 final int childTop = y;
@@ -178,11 +199,11 @@ public class QuickSettingsContainerView extends FrameLayout {
                 // Offset the position by the cell gap or reset the position and cursor when we
                 // reach the end of the row
                 cursor += child.getColumnSpan();
-                if (cursor < (((row + 1) * mNumFinalColumns))) {
-                    x += childWidth + mCellGap;
-                } else {
+                if (cursor < (((row + 1) * mNumFinalColumns)) || mSingleRow) {
+                    x += childWidth + cellGap;
+                } else if (!mSingleRow) {
                     x = getPaddingStart();
-                    y += childHeight + mCellGap;
+                    y += childHeight + cellGap;
                 }
             }
         }
@@ -217,12 +238,6 @@ public class QuickSettingsContainerView extends FrameLayout {
             default:
                 return mResources.getDimensionPixelSize(R.dimen.qs_tile_margin_below_icon);
         }
-    }
-
-    public int getTileTextColor() {
-        int tileTextColor = Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.QUICK_TILES_TEXT_COLOR, -2, UserHandle.USER_CURRENT);
-        return tileTextColor;
     }
 
 }

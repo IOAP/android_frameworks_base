@@ -37,12 +37,11 @@ public class PanelBar extends FrameLayout {
     public static final int STATE_OPENING = 1;
     public static final int STATE_OPEN = 2;
 
-    PanelHolder mPanelHolder;
+    private PanelHolder mPanelHolder;
     ArrayList<PanelView> mPanels = new ArrayList<PanelView>();
-    PanelView mTouchingPanel;
+    private PanelView mTouchingPanel;
     private int mState = STATE_CLOSED;
     private boolean mTracking;
-    PanelView mFullyOpenedPanel;
 
     float mPanelExpandedFractionSum;
 
@@ -184,12 +183,11 @@ public class PanelBar extends FrameLayout {
 
         if (DEBUG) LOG("panelExpansionChanged: end state=%d [%s%s ]", mState,
                 (fullyOpenedPanel!=null)?" fullyOpened":"", fullyClosed?" fullyClosed":"");
-
-        mFullyOpenedPanel = fullyOpenedPanel;
     }
 
     public void collapseAllPanels(boolean animate) {
         boolean waiting = false;
+
         for (PanelView pv : mPanels) {
             if (animate && !pv.isFullyCollapsed()) {
                 pv.collapse();

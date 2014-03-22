@@ -51,7 +51,7 @@
     <bool name="def_networks_available_notification_on">true</bool>
 
     <bool name="def_backup_enabled">false</bool>
-    <string name="def_backup_transport" translatable="false">com.google.android.backup/.BackupTransportService</string>
+    <string name="def_backup_transport" translatable="false">android/com.android.internal.backup.LocalTransport</string>
 
     <!-- Default value for whether or not to pulse the notification LED when there is a
          pending notification -->
@@ -185,7 +185,9 @@
     <integer name="def_wifi_suspend_optimizations_enabled">1</integer>
 
     <!-- Default for Settings.System.STATUS_BAR_BATTERY -->
-    <integer name="def_battery_style">0</integer>
+    <integer name="def_battery_style">3</integer>
+    <!-- Default for Settings.System.STATUS_BAR_BATTERY_SHOW_PERCENT -->
+    <integer name="def_battery_show_percent">1</integer>
 
     <!-- Default for Settings.System.STATUS_BAR_NOTIF_COUNT. -->
    <integer name="def_notif_count">0</integer>
@@ -195,4 +197,8 @@
     1. Right
     2. Left -->
     <integer name="def_qs_quick_pulldown">0</integer>
+
+    <!-- Defaults for Settings.System.LOCKSCREEN_TARGETS. -->
+    <string name="def_lockscreen_targets" translatable="false"></string>
+    <string name="def_lockscreen_targets_no_telephony" translatable="false"></string>
 </resources>

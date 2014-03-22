@@ -502,29 +502,11 @@ public class IWindowManagerImpl implements IWindowManager {
     @Override
     public boolean hasMenuKeyEnabled() {
         return true;
-
-    /* @hide */
-    @Override
-    public void showCustomIntentOnKeyguard(Intent intent) {
     }
 
     /* @hide */
     @Override
-    public boolean expandedDesktopHidesNavigationBar() {
-    }
-
-    /* @hide */
-    @Override
-    public boolean expandedDesktopHidesStatusBar() {
-    }
-
-    /* @hide */
-    @Override
-    public int getCurrentNavigationBarSize() {
-    }
-
-    /* @hide */
-    @Override
-    public void toggleGlobalMenu() {
+    public int getSystemUIVisibility() {
+        return 0;
     }
 }

@@ -492,7 +492,7 @@ static sp<JDrm> setDrm(
     if (old != NULL) {
         old->decStrong(thiz);
     }
-    env->SetIntField(thiz, gFields.context, (int)drm.get());
+    env->SetLongField(thiz, gFields.context, reinterpret_cast<jlong>(drm.get()));
 
     return old;
 }

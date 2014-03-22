@@ -145,9 +145,6 @@ public abstract class KeyguardAbsKeyInputView extends LinearLayout
             }
         });
 
-        mQuickUnlock = (Settings.System.getInt(mContext.getContentResolver(),
-            Settings.System.LOCKSCREEN_QUICK_UNLOCK_CONTROL, 0) == 1);
-
         mPasswordEntry.addTextChangedListener(new TextWatcher() {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
             }
@@ -161,8 +158,8 @@ public abstract class KeyguardAbsKeyInputView extends LinearLayout
                 }
                 if (mQuickUnlock) {
                     String entry = mPasswordEntry.getText().toString();
-                    if (entry.length() > MINIMUM_PASSWORD_LENGTH_BEFORE_REPORT &&
-                            mLockPatternUtils.checkPassword(entry)) {
+                    if (entry.length() > MINIMUM_PASSWORD_LENGTH_BEFORE_REPORT
+                            && mLockPatternUtils.checkPassword(entry)) {
                         mCallback.reportSuccessfulUnlockAttempt();
                         mCallback.dismiss(true);
                     }
@@ -173,9 +170,7 @@ public abstract class KeyguardAbsKeyInputView extends LinearLayout
         mEcaView = findViewById(R.id.keyguard_selector_fade_container);
         View bouncerFrameView = findViewById(R.id.keyguard_bouncer_frame);
         if (bouncerFrameView != null) {
-            mBouncerFrame =
-                    KeyguardSecurityViewHelper.colorizeFrame(mContext,
-                    bouncerFrameView.getBackground());
+            mBouncerFrame = bouncerFrameView.getBackground();
         }
     }
 

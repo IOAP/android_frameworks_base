@@ -677,6 +677,7 @@ public class ConnectivityService extends IConnectivityManager.Stub {
 
         // start network sampling ..
         Intent intent = new Intent(ACTION_PKT_CNT_SAMPLE_INTERVAL_ELAPSED, null);
+        intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
         mSampleIntervalElapsedIntent = PendingIntent.getBroadcast(mContext,
                 SAMPLE_INTERVAL_ELAPSED_REQUEST_CODE, intent, 0);
 
@@ -1566,12 +1567,9 @@ public class ConnectivityService extends IConnectivityManager.Stub {
             return false;
         }
         NetworkStateTracker tracker = mNetTrackers[networkType];
-        DetailedState netState = DetailedState.DISCONNECTED;
-        if (tracker != null) {
-            netState = tracker.getNetworkInfo().getDetailedState();
-        }
+        DetailedState netState = tracker.getNetworkInfo().getDetailedState();
 
-        if ((netState != DetailedState.CONNECTED &&
+        if (tracker == null || (netState != DetailedState.CONNECTED &&
                 netState != DetailedState.CAPTIVE_PORTAL_CHECK) ||
                 tracker.isTeardownRequested()) {
             if (VDBG) {

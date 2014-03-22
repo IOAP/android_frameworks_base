@@ -903,7 +903,7 @@
         @hide -->
     <permission android:name="android.permission.PREVENT_POWER_KEY"
         android:permissionGroup="android.permission-group.HARDWARE_CONTROLS"
-        android:protectionLevel="signatureOrSystem"
+        android:protectionLevel="dangerous"
         android:label="@string/permlab_preventpower"
         android:description="@string/permdesc_preventpower" />
 
@@ -1726,13 +1726,6 @@
         android:label="@string/permlab_manageCaCertificates"
         android:description="@string/permdesc_manageCaCertificates" />
 
-    <!-- Allows an application to access Superuser binary. This is a hack to avoid
-         Android Issue #25906 {@link https://code.google.com/p/android/issues/detail?id=25906 } -->
-    <permission android:name="android.permission.ACCESS_SUPERUSER"
-        android:protectionLevel="normal"
-        android:label="@string/permlab_accessSuperuser"
-        android:description="@string/permdesc_accessSuperuser" />
-
     <!-- ========================================= -->
     <!-- Permissions for special development tools -->
     <!-- ========================================= -->
@@ -2298,6 +2291,13 @@
         android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
         android:label="@string/permlab_batteryStats"
         android:description="@string/permdesc_batteryStats"
+        android:protectionLevel="signature|system" />
+
+    <!-- @hide Allows an application to reset the device battery statistics -->
+    <permission android:name="android.permission.RESET_BATTERY_STATS"
+        android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
+        android:label="@string/permlab_resetBatteryStats"
+        android:description="@string/permdesc_resetBatteryStats"
         android:protectionLevel="signature|system" />
 
     <!-- Allows an application to control the backup and restore process.

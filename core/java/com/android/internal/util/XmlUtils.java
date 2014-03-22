@@ -482,13 +482,12 @@ public class XmlUtils {
      * @see #readThisMapXml
      * #see #writeMapXml
      */
-    @SuppressWarnings("unchecked")
-    public static final HashMap<String, ?> readMapXml(InputStream in)
+    public static final HashMap readMapXml(InputStream in)
     throws XmlPullParserException, java.io.IOException
     {
         XmlPullParser   parser = Xml.newPullParser();
         parser.setInput(in, null);
-        return (HashMap<String, ?>) readValueXml(parser, new String[1]);
+        return (HashMap)readValueXml(parser, new String[1]);
     }
 
     /**
@@ -549,16 +548,22 @@ public class XmlUtils {
      *
      * @see #readMapXml
      */
-    public static final HashMap<String, ?> readThisMapXml(XmlPullParser parser, String endTag,
-            String[] name) throws XmlPullParserException, java.io.IOException
+    public static final HashMap readThisMapXml(XmlPullParser parser, String endTag, String[] name)
+    throws XmlPullParserException, java.io.IOException
     {
-        HashMap<String, Object> map = new HashMap<String, Object>();
+        HashMap map = new HashMap();
 
         int eventType = parser.getEventType();
         do {
             if (eventType == parser.START_TAG) {
                 Object val = readThisValueXml(parser, name);
-                map.put(name[0], val);
+                if (name[0] != null) {
+                    //System.out.println("Adding to map: " + name + " -> " + val);
+                    map.put(name[0], val);
+                } else {
+                    throw new XmlPullParserException(
+                        "Map value without name attribute: " + parser.getName());
+                }
             } else if (eventType == parser.END_TAG) {
                 if (parser.getName().equals(endTag)) {
                     return map;

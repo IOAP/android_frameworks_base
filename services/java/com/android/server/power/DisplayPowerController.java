@@ -25,8 +25,8 @@ import com.android.server.display.DisplayManagerService;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
-import android.content.ContentResolver;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -44,6 +44,8 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.text.format.DateUtils;
@@ -194,6 +196,7 @@ final class DisplayPowerController {
     private final DisplayBlanker mDisplayBlanker;
 
     // Our context
+    // Used also in lockscreen blur
     private final Context mContext;
 
     // Our handler.
@@ -250,7 +253,7 @@ final class DisplayPowerController {
     // a stylish electron beam animation instead.
     private boolean mElectronBeamFadesConfig;
 
-    // Override config for ElectronBeam
+    // Slim settings - override config for ElectronBeam
     private int mElectronBeamMode;
 
     // The pending power request.
@@ -404,14 +407,14 @@ final class DisplayPowerController {
             DisplayManagerService displayManager,
             SuspendBlocker displaySuspendBlocker, DisplayBlanker displayBlanker,
             Callbacks callbacks, Handler callbackHandler) {
+        mContext = context;
         mHandler = new DisplayControllerHandler(looper);
         mNotifier = notifier;
         mDisplaySuspendBlocker = displaySuspendBlocker;
         mDisplayBlanker = displayBlanker;
         mCallbacks = callbacks;
         mCallbackHandler = callbackHandler;
-        mContext = context;
-
+	
         mLights = lights;
         mTwilight = twilight;
         mSensorManager = sensorManager;
@@ -480,14 +483,10 @@ final class DisplayPowerController {
             mTwilight.registerListener(mTwilightListener, mHandler);
         }
 
-        Intent intent = new Intent();
+	Intent intent = new Intent();
         intent.setClassName("com.android.keyguard", "com.android.keyguard.KeyguardService");
-        if (!context.bindServiceAsUser(intent, mKeyguardConnection,
-                Context.BIND_AUTO_CREATE, UserHandle.OWNER)) {
-            Log.e(TAG, "*** Keyguard: can't bind to keyguard");
-        } else {
-            Log.e(TAG, "*** Keyguard started");
-        }
+        context.bindServiceAsUser(intent, mKeyguardConnection,
+                Context.BIND_AUTO_CREATE, UserHandle.OWNER);
     }
 
     private void updateAutomaticBrightnessSettings() {
@@ -609,7 +608,8 @@ final class DisplayPowerController {
     public boolean requestPowerState(DisplayPowerRequest request,
             boolean waitForNegativeProximity) {
 
-        final int MAX_BLUR_WIDTH = 900;
+	// Lockscreen blur
+	final int MAX_BLUR_WIDTH = 900;
         final int MAX_BLUR_HEIGHT = 1600;
 
         if (DEBUG) {
@@ -638,12 +638,12 @@ final class DisplayPowerController {
                 mDisplayReadyLocked = false;
             }
 
-            boolean seeThrough = Settings.System.getInt(mContext.getContentResolver(),
+	    boolean seeThrough = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.LOCKSCREEN_SEE_THROUGH, 0) == 1;
             int blurRadius = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.LOCKSCREEN_BLUR_RADIUS, 12);
             if (changed && !mPendingRequestChangedLocked) {
-                if ((mKeyguardService == null || !mKeyguardService.isShowing()) &&
+		if ((mKeyguardService == null || !mKeyguardService.isShowing()) &&
                             request.screenState == DisplayPowerRequest.SCREEN_STATE_OFF &&
                             seeThrough && blurRadius > 0) {
                     DisplayInfo di = mDisplayManager
@@ -762,7 +762,7 @@ final class DisplayPowerController {
             mustNotify = !mDisplayReadyLocked;
         }
 
-	// update crt mode settings and force initialize if value changed
+        // update crt mode settings and force initialize if value changed
         if (mElectronBeamMode != mPowerRequest.electronBeamMode) {
             mElectronBeamMode = mPowerRequest.electronBeamMode;
             mustInitialize = true;
@@ -888,14 +888,13 @@ final class DisplayPowerController {
                             setScreenOn(false);
                             unblockScreenOn();
                         } else if (mPowerState.prepareElectronBeam(
-                                //mElectronBeamFadesConfig ?
-				mElectronBeamMode == 0 ?
+                                mElectronBeamMode == 0 ?
                                         ElectronBeam.MODE_FADE :
-                                        (mElectronBeamMode == 4
+                                            (mElectronBeamMode == 4
                                             ? ElectronBeam.MODE_SCALE_DOWN
                                             : ElectronBeam.MODE_COOL_DOWN))
                                 && mPowerState.isScreenOn()
-                                /*&& useScreenOffAnimation()*/) {
+                                && useScreenOffAnimation()) {
                             mElectronBeamOffAnimator.start();
                         } else {
                             mElectronBeamOffAnimator.end();
@@ -1594,8 +1593,8 @@ final class DisplayPowerController {
         }
     };
 
-    //private boolean useScreenOffAnimation() {
-    //    return Settings.System.getInt(mContext.getContentResolver(),
-    //            Settings.System.SCREEN_OFF_ANIMATION, 1) == 1;
-    //}
+    private boolean useScreenOffAnimation() {
+        return Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SCREEN_OFF_ANIMATION, 1) == 1;
+    }
 }

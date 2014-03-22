@@ -19,7 +19,6 @@ package android.view;
 import com.android.internal.view.IInputContext;
 import com.android.internal.view.IInputMethodClient;
 
-import android.content.Intent;
 import android.content.res.CompatibilityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -121,13 +120,6 @@ interface IWindowManager
     boolean isKeyguardSecure();
     boolean inKeyguardRestrictedInputMode();
     void dismissKeyguard();
-
-    /**
-     * Tell keyguard to show a custom intent after asking for the user's
-     * credentials.
-     * @hide
-     */
-    void showCustomIntentOnKeyguard(inout Intent intent);
 
     void closeSystemDialogs(String reason);
 
@@ -239,6 +231,11 @@ interface IWindowManager
     boolean hasMenuKeyEnabled();
 
     /**
+     * Device wants a navigation bar (becuase it has hardware keys)
+     */
+    boolean wantsNavigationBar();
+
+    /**
      * Lock the device immediately with the specified options (can be null).
      */
     void lockNow(in Bundle options);
@@ -296,32 +293,20 @@ interface IWindowManager
      */
     void setTouchExplorationEnabled(boolean enabled);
 
-    /**
-     * Get the current navigation bar state when expanded desktop is enabled.
-     *
-     * @hide
-     */
-    boolean expandedDesktopHidesNavigationBar();
+    /** SPLIT VIEW **/
+    boolean isTaskSplitView(int taskId);
+    void setTaskSplitView(int taskId, boolean split);
+    void setTaskChildSplit(IBinder token, boolean split);
+    Rect getSplitViewRect(int taskId, boolean resetLocation);
+    void notifyActivityTouched(IBinder token, boolean force);
+    void setSplitViewRect(int l, int t, int r, int b);
+
+    /** SPLIT VIEW END **/
 
     /**
-     * Get the current statusbar state when expanded desktop is enabled.
+     * Get current system ui visibility mode.
      *
      * @hide
      */
-    boolean expandedDesktopHidesStatusBar();
-
-    /**
-     * Get the current navbar size depended on the user value
-     * and orientation.
-     *
-     * @hide
-     */
-    int getCurrentNavigationBarSize();
-
-    /**
-     * Toggle global menu
-     *
-     * @hide
-     */
-    void toggleGlobalMenu();
+    int getSystemUIVisibility();
 }

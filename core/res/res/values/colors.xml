@@ -125,8 +125,8 @@
     <color name="facelock_spotlight_mask">#CC000000</color>
 
     <!-- For holo theme -->
-    <drawable name="screen_background_holo_light">#fff3f3f3</drawable>
-    <drawable name="screen_background_holo_dark">#ff000000</drawable>
+      <drawable name="screen_background_holo_light">#fff3f3f3</drawable>
+      <drawable name="screen_background_holo_dark">#ff000000</drawable>
     <color name="background_holo_dark">#ff000000</color>
     <color name="background_holo_light">#fff3f3f3</color>
     <color name="bright_foreground_holo_dark">@android:color/background_holo_light</color>
@@ -145,8 +145,8 @@
     <color name="dim_foreground_inverse_holo_light">#bebebe</color>
     <color name="dim_foreground_inverse_disabled_holo_light">#80bebebe</color>
     <color name="hint_foreground_holo_light">#808080</color>
-    <color name="highlighted_text_holo_dark">#6633b5e5</color>
-    <color name="highlighted_text_holo_light">#6633b5e5</color>
+    <color name="highlighted_text_holo_dark">#66ffffff</color>
+    <color name="highlighted_text_holo_light">#66000000</color>
     <color name="link_text_holo_dark">#5c5cff</color>
     <color name="link_text_holo_light">#0000ee</color>
     <color name="default_dialog_text_holo_dark">@android:color/background_holo_light</color>
@@ -200,7 +200,6 @@
     <drawable name="notification_template_icon_low_bg">#0cffffff</drawable>
 
     <!-- iokp rom colors -->
-    
     <color name="iokp_yellow">#ffebee00</color>
     <color name="iokp_red">#ffe61010</color>
     <color name="iokp_orange">#ffff890b</color>
@@ -215,5 +214,28 @@
     <color name="keyguard_avatar_frame_pressed_color">#ff35b5e5</color>
 
     <color name="accessibility_focus_highlight">#80ffff00</color>
-</resources>
 
+    <!-- progress bar color -->
+    <integer-array name="pgcolors">
+        <item>@color/holo_blue_dark</item>
+        <item>@color/holo_yellow_dark</item>
+        <item>@color/holo_green_dark</item>
+        <item>@color/holo_purple_dark</item>
+        <item>@color/holo_red_dark</item>
+    </integer-array>
+
+    <integer-array name="gplus_colors">
+        <item>@color/gplus_color_1</item>
+        <item>@color/gplus_color_2</item>
+        <item>@color/gplus_color_3</item>
+        <item>@color/gplus_color_4</item>
+    </integer-array>
+
+    <color name="gplus_color_1">#3e802f</color>
+    <color name="gplus_color_2">#427fed</color>
+    <color name="gplus_color_3">#b23424</color>
+    <color name="gplus_color_4">#f4b400</color>
+
+    <color name="holo_yellow_dark">#ff8800</color>
+    <color name="holo_purple_dark">#9933cc</color>
+</resources>

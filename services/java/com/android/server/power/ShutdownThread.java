@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ * Not a Contribution.
  * Copyright (C) 2008 The Android Open Source Project
  * Copyright (C) 2013 The CyanogenMod Project
  *
@@ -19,7 +21,6 @@ package com.android.server.power;
 
 import android.app.ActivityManagerNative;
 import android.app.AlertDialog;
-import android.app.PacBusyDialog;
 import android.app.Dialog;
 import android.app.IActivityManager;
 import android.app.KeyguardManager;
@@ -34,8 +35,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
-import android.os.IBinder;
-import android.os.IPowerManager;
 import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.ServiceManager;
@@ -47,8 +46,10 @@ import android.os.SystemVibrator;
 import android.os.storage.IMountService;
 import android.os.storage.IMountShutdownObserver;
 import android.provider.Settings;
+import android.telephony.MSimTelephonyManager;
 
 import com.android.internal.telephony.ITelephony;
+import com.android.internal.telephony.msim.ITelephonyMSim;
 
 import android.util.Log;
 import android.view.WindowManager;
@@ -82,7 +83,7 @@ public final class ShutdownThread extends Thread {
 
     // static instance of this thread
     private static final ShutdownThread sInstance = new ShutdownThread();
-
+    
     private final Object mActionDoneSync = new Object();
     private boolean mActionDone;
     private Context mContext;
@@ -152,60 +153,66 @@ public final class ShutdownThread extends Thread {
                 sConfirmDialog.dismiss();
                 sConfirmDialog = null;
             }
-            if (mReboot && !mRebootSafeMode){
-                sConfirmDialog = new AlertDialog.Builder(context)
-                        .setTitle(com.android.internal.R.string.reboot_system)
-                        .setSingleChoiceItems(com.android.internal.R.array.shutdown_reboot_options,
-                                0, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                if (which < 0)
-                                    return;
+            if (mReboot && !mRebootSafeMode) {
+                // Determine if primary user is logged in
+                boolean isPrimary = UserHandle.getCallingUserId() == UserHandle.USER_OWNER;
 
-                                String actions[] = context.getResources().getStringArray(
-                                        com.android.internal.R.array.shutdown_reboot_actions);
+                // See if the advanced reboot menu is enabled (only if primary user) and check the keyguard state
+                boolean advancedReboot = isPrimary ? advancedRebootEnabled(context) : false;
+                KeyguardManager km = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+                boolean locked = km.inKeyguardRestrictedInputMode() && km.isKeyguardSecure();
 
-                                if (actions != null && which < actions.length)
-                                    mRebootReason = actions[which];
-                            }
-                        })
-                        .setPositiveButton(com.android.internal.R.string.yes,
-                                new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                mReboot = true;
-                                beginShutdownSequence(context);
-                            }
-                        })
-                        .setNegativeButton(com.android.internal.R.string.no,
-                                new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                mReboot = false;
-                                dialog.cancel();
-                            }
-                        })
-                        .create();
-                        sConfirmDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
-                            public boolean onKey (DialogInterface dialog,
-                                    int keyCode, KeyEvent event) {
-                                if (keyCode == KeyEvent.KEYCODE_BACK) {
+                if (advancedReboot && !locked) {
+                    // Include options in power menu for rebooting into recovery or bootloader
+                    sConfirmDialog = new AlertDialog.Builder(context)
+                            .setTitle(titleResourceId)
+                            .setSingleChoiceItems(com.android.internal.R.array.shutdown_reboot_options, 0, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (which < 0)
+                                        return;
+
+                                    String actions[] = context.getResources().getStringArray(com.android.internal.R.array.shutdown_reboot_actions);
+
+                                    if (actions != null && which < actions.length)
+                                        mRebootReason = actions[which];
+                                }
+                            })
+                            .setPositiveButton(com.android.internal.R.string.yes, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    mReboot = true;
+                                    beginShutdownSequence(context);
+                                }
+                            })
+                            .setNegativeButton(com.android.internal.R.string.no, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
                                     mReboot = false;
                                     dialog.cancel();
                                 }
-                                return true;
-                            }
-                        });
-            } else {
+                            })
+                            .create();
+                            sConfirmDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
+                                public boolean onKey (DialogInterface dialog, int keyCode, KeyEvent event) {
+                                    if (keyCode == KeyEvent.KEYCODE_BACK) {
+                                        mReboot = false;
+                                        dialog.cancel();
+                                    }
+                                    return true;
+                                }
+                            });
+                }
+            }
+
+            if (sConfirmDialog == null) {
                 sConfirmDialog = new AlertDialog.Builder(context)
-                    .setTitle(mRebootSafeMode
-                            ? com.android.internal.R.string.reboot_safemode_title
-                            : com.android.internal.R.string.power_off)
-                    .setMessage(resourceId)
-                    .setPositiveButton(com.android.internal.R.string.yes, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            beginShutdownSequence(context);
-                        }
-                    })
-                    .setNegativeButton(com.android.internal.R.string.no, null)
-                    .create();
+                        .setTitle(titleResourceId)
+                        .setMessage(resourceId)
+                        .setPositiveButton(com.android.internal.R.string.yes, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                beginShutdownSequence(context);
+                            }
+                        })
+                        .setNegativeButton(com.android.internal.R.string.no, null)
+                        .create();
             }
 
             closer.dialog = sConfirmDialog;
@@ -282,22 +289,19 @@ public final class ShutdownThread extends Thread {
             sIsStarted = true;
         }
 
-        final int shutdownMessageId = mRebootReason == null
-                ? com.android.internal.R.string.shutdown_progress
-                : com.android.internal.R.string.reboot_progress;
-
         // throw up an indeterminate system dialog to indicate radio is
         // shutting down.
-        PacBusyDialog pd = new PacBusyDialog(context, android.R.style.Theme_Translucent_NoTitleBar);
-        //pd.setTitle(context.getText(com.android.internal.R.string.power_off));
-        pd.setMessage(context.getText(shutdownMessageId));
-        //pd.setIndeterminate(true);
-        pd.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
-	pd.getWindow().addFlags(
-                 WindowManager.LayoutParams.FLAG_DIM_BEHIND
-                 | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN);
-        pd.getWindow().setDimAmount(1);
+        ProgressDialog pd = new ProgressDialog(context);
+        if (mReboot) {
+            pd.setTitle(context.getText(com.android.internal.R.string.reboot_system));
+            pd.setMessage(context.getText(com.android.internal.R.string.reboot_progress));
+        } else {
+            pd.setTitle(context.getText(com.android.internal.R.string.power_off));
+            pd.setMessage(context.getText(com.android.internal.R.string.shutdown_progress));
+        }
+        pd.setIndeterminate(true);
         pd.setCancelable(false);
+        pd.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
 
         pd.show();
 
@@ -381,7 +385,7 @@ public final class ShutdownThread extends Thread {
         intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         mContext.sendOrderedBroadcastAsUser(intent,
                 UserHandle.ALL, null, br, mHandler, 0, null, null);
-
+        
         final long endTime = SystemClock.elapsedRealtime() + MAX_BROADCAST_TIME;
         synchronized (mActionDoneSync) {
             while (!mActionDone) {
@@ -495,10 +499,28 @@ public final class ShutdownThread extends Thread {
                 }
 
                 try {
-                    radioOff = phone == null || !phone.isRadioOn();
-                    if (!radioOff) {
-                        Log.w(TAG, "Turning off radio...");
-                        phone.setRadio(false);
+                    radioOff = true;
+                    if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
+                        final ITelephonyMSim mphone = ITelephonyMSim.Stub.asInterface(
+                                ServiceManager.checkService("phone_msim"));
+                        if (mphone != null) {
+                            //radio off indication should be sent for both subscriptions
+                            //in case of DSDS.
+                            for (int i = 0; i < MSimTelephonyManager.getDefault().
+                                    getPhoneCount(); i++) {
+                                radioOff = radioOff && !mphone.isRadioOn(i);
+                                if (mphone.isRadioOn(i)) {
+                                    Log.w(TAG, "Turning off radio on Subscription :" + i);
+                                    mphone.setRadio(false, i);
+                                }
+                            }
+                        }
+                    } else {
+                        radioOff = phone == null || !phone.isRadioOn();
+                        if (!radioOff) {
+                            Log.w(TAG, "Turning off radio...");
+                            phone.setRadio(false);
+                        }
                     }
                 } catch (RemoteException ex) {
                     Log.e(TAG, "RemoteException during radio shutdown", ex);
@@ -521,7 +543,18 @@ public final class ShutdownThread extends Thread {
                     }
                     if (!radioOff) {
                         try {
-                            radioOff = !phone.isRadioOn();
+                            boolean subRadioOff = true;
+                            if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
+                                final ITelephonyMSim mphone = ITelephonyMSim.Stub.asInterface(
+                                        ServiceManager.checkService("phone_msim"));
+                                for (int i = 0; i < MSimTelephonyManager.getDefault().
+                                        getPhoneCount(); i++) {
+                                    subRadioOff = subRadioOff && !mphone.isRadioOn(i);
+                                }
+                                radioOff = subRadioOff;
+                            } else {
+                                radioOff = !phone.isRadioOn();
+                            }
                         } catch (RemoteException ex) {
                             Log.e(TAG, "RemoteException during radio shutdown", ex);
                             radioOff = true;

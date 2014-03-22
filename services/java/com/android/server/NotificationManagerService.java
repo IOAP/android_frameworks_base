@@ -80,8 +80,8 @@ import android.widget.Toast;
 import com.android.internal.R;
 
 import com.android.internal.notification.NotificationScorer;
-import com.android.internal.util.FastXmlSerializer;
 import com.android.internal.util.cm.QuietHoursUtils;
+import com.android.internal.util.FastXmlSerializer;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
@@ -792,14 +792,11 @@ public class NotificationManagerService extends INotificationManager.Stub
         for (NotificationListenerInfo info : toRemove) {
             final ComponentName component = info.component;
             final int oldUser = info.userid;
-            
-	    if (!info.isSystem) {
+            if (!info.isSystem) {
                 Slog.v(TAG, "disabling notification listener for user " + oldUser + ": " + component);
-                // Do not un-register HALO, we un-register only when HALO is closed
-                if (!component.getPackageName().equals("HaloComponent")) 
-			unregisterListenerService(component, info.userid);
-            }        
-	}
+                if (!component.getPackageName().equals("HaloComponent")) unregisterListenerService(component, info.userid);
+            }
+        }
 
         final int N = toAdd.size();
         for (int i=0; i<N; i++) {
@@ -819,14 +816,11 @@ public class NotificationManagerService extends INotificationManager.Stub
     @Override
     public void registerListener(final INotificationListener listener,
             final ComponentName component, final int userid) {
-	
-	final int permission = mContext.checkCallingPermission(
+        final int permission = mContext.checkCallingPermission(
                 android.Manifest.permission.SYSTEM_NOTIFICATION_LISTENER);
-        if (permission == PackageManager.PERMISSION_DENIED) {
-            if (!component.getPackageName().equals("HaloComponent")) 
-			checkCallerIsSystem();
-	}
-        
+        if (permission == PackageManager.PERMISSION_DENIED)
+            if (!component.getPackageName().equals("HaloComponent")) checkCallerIsSystem();
+
         synchronized (mNotificationList) {
             try {
                 NotificationListenerInfo info
@@ -1367,9 +1361,9 @@ public class NotificationManagerService extends INotificationManager.Stub
             boolean packageChanged = false;
             boolean cancelNotifications = true;
 
-	    boolean ScreenOnNotificationLed = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.SCREEN_ON_NOTIFICATION_LED, 1) == 1; 
-            
+            boolean ScreenOnNotificationLed = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SCREEN_ON_NOTIFICATION_LED, 1) == 1;
+
             if (action.equals(Intent.ACTION_PACKAGE_ADDED)
                     || (queryRemove=action.equals(Intent.ACTION_PACKAGE_REMOVED))
                     || action.equals(Intent.ACTION_PACKAGE_RESTARTED)
@@ -1461,8 +1455,7 @@ public class NotificationManagerService extends INotificationManager.Stub
                 }
             } else if (action.equals(Intent.ACTION_USER_PRESENT)) {
                 // turn off LED when user passes through lock screen
-                if (!mDreaming && !ScreenOnNotificationLed) { 
-                    mNotificationLight.turnOff();
+                if (!ScreenOnNotificationLed && !mDreaming) {
                     if (mLedNotification == null || !isLedNotificationForcedOn(mLedNotification)) {
                         mNotificationLight.turnOff();
                     }
@@ -1946,7 +1939,7 @@ public class NotificationManagerService extends INotificationManager.Stub
         enqueueNotificationInternal(pkg, basePkg, Binder.getCallingUid(), Binder.getCallingPid(),
                 tag, id, notification, idOut, userId);
     }
-    
+
     private final static int clamp(int x, int low, int high) {
         return (x < low) ? low : ((x > high) ? high : x);
     }
@@ -2101,12 +2094,13 @@ public class NotificationManagerService extends INotificationManager.Stub
 
                     final int currentUser;
                     final long token = Binder.clearCallingIdentity();
+
                     try {
                         currentUser = ActivityManager.getCurrentUser();
                     } finally {
                         Binder.restoreCallingIdentity(token);
                     }
-
+                    
                     if (notification.icon != 0) {
                         if (old != null && old.statusBarKey != null) {
                             r.statusBarKey = old.statusBarKey;
@@ -2134,10 +2128,8 @@ public class NotificationManagerService extends INotificationManager.Stub
                         if (currentUser == userId) {
                             sendAccessibilityEvent(notification, pkg);
                         }
-
                         notifyPostedLocked(r);
                     } else {
-                        Slog.e(TAG, "Not posting notification with icon==0: " + notification);
                         if (old != null && old.statusBarKey != null) {
                             long identity = Binder.clearCallingIdentity();
                             try {
@@ -2146,26 +2138,16 @@ public class NotificationManagerService extends INotificationManager.Stub
                             finally {
                                 Binder.restoreCallingIdentity(identity);
                             }
-
                             notifyRemovedLocked(r);
                         }
-                        // ATTENTION: in a future release we will bail out here
-                        // so that we do not play sounds, show lights, etc. for invalid notifications
-                        Slog.e(TAG, "WARNING: In a future release this will crash the app: "
-                                + n.getPackageName());
                     }
 
-                    try {
-                        final ProfileManager profileManager =
-                            (ProfileManager) mContext.getSystemService(Context.PROFILE_SERVICE);
+                    final ProfileManager profileManager =
+                        (ProfileManager) mContext.getSystemService(Context.PROFILE_SERVICE);
 
-                        ProfileGroup group = profileManager.getActiveProfileGroup(pkg);
-                        if (group != null) {
-                            // FIXME: local variable notification is accessed from within inner class; needs to be declared final
-                            //notification = group.processNotification(notification);
-                        }
-                    } catch(Throwable th) {
-                        Log.e(TAG, "An error occurred profiling the notification.", th);
+                    ProfileGroup group = profileManager.getActiveProfileGroup(pkg);
+                    if (group != null) {
+                        group.applyOverridesToNotification(notification);
                     }
 
                     final boolean alertsDisabled =
@@ -2600,6 +2582,7 @@ public class NotificationManagerService extends INotificationManager.Stub
     private void updateLightsLocked() {
         boolean ScreenOnNotificationLed = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.SCREEN_ON_NOTIFICATION_LED, 1) == 1;
+
         // handle notification lights
         if (mLedNotification == null) {
             // use most recent light with highest score
@@ -2620,7 +2603,7 @@ public class NotificationManagerService extends INotificationManager.Stub
             enableLed = false;
         } else if (isLedNotificationForcedOn(mLedNotification)) {
             enableLed = true;
-        } else if (mInCall || (mScreenOn && !ScreenOnNotificationLed && !mDreaming)) {
+        } else if (mInCall || (mScreenOn && (!mDreaming || !ScreenOnNotificationLed))) {
             enableLed = false;
         } else if (QuietHoursUtils.inQuietHours(mContext, Settings.System.QUIET_HOURS_DIM)) {
             enableLed = false;

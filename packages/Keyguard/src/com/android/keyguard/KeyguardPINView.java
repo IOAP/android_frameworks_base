@@ -73,8 +73,7 @@ public class KeyguardPINView extends KeyguardAbsKeyInputView
             ok.setOnHoverListener(new LiftToActivateListener(getContext()));
         }
 
-
-        final int randomDigitMode = Settings.Secure.getIntForUser(
+	final int randomDigitMode = Settings.Secure.getIntForUser(
             mContext.getContentResolver(), Settings.Secure.LOCK_NUMPAD_RANDOM,
             0, UserHandle.USER_CURRENT);
 
@@ -130,7 +129,6 @@ public class KeyguardPINView extends KeyguardAbsKeyInputView
 
         mPasswordEntry.requestFocus();
     }
-
 
     private void buildRandomNumPadKey() {
         NumPadKey button;

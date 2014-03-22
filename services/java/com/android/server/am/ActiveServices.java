@@ -203,6 +203,7 @@ public final class ActiveServices {
                     Slog.i(TAG, "Waited long enough for: " + r);
                     mStartingBackground.remove(i);
                     N--;
+                    i--;
                 }
             }
             while (mDelayedStartList.size() > 0
@@ -2034,7 +2035,7 @@ public final class ActiveServices {
             synchronized (sr.stats.getBatteryStats()) {
                 sr.stats.stopLaunchedLocked();
             }
-            if (sr.app != null && !sr.app.persistent) {
+            if (sr.app != null && !sr.app.persistent && sr.stopIfKilled) {
                 sr.app.services.remove(sr);
             }
             sr.app = null;

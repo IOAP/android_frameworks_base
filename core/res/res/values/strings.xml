@@ -2,6 +2,9 @@
 <!--
 /* //device/apps/common/assets/res/any/strings.xml
 **
+** Copyright (c) 2013, The Linux Foundation. All rights reserved.
+** Not a Contribution.
+**
 ** Copyright 2006, The Android Open Source Project
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -394,6 +397,9 @@
     <!-- status message in phone options dialog for when airplane mode is off -->
     <string name="global_actions_airplane_mode_off_status">Airplane mode is OFF</string>
 
+    <!-- label for screen record item in phone options dialog -->
+    <string name="global_action_screen_record">Screen record</string>
+
     <!-- Text to use when the number in a notification info is too large
          (greater than status_bar_notification_info_maxnum, defined in
          values/config.xml) and must be truncated. May need to be localized
@@ -590,10 +596,6 @@
         card numbers and passwords.</string>
 
     <!--  Permissions -->
-
-    <!-- Superuser application permission, allows applications to call the superuser binary (su) -->
-    <string name="permlab_accessSuperuser">full permissions to all device features and storage</string>
-    <string name="permdesc_accessSuperuser">Superuser grants full access to all device features and storage, including the secure and sensitive hardware elements of your device. This permission is potentially dangerous.</string>
 
     <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permlab_statusBar">disable or modify status bar</string>
@@ -2279,6 +2281,9 @@
          to unlock the keyguard.  Displayed in one line in a large font.  -->
     <string name="keyguard_password_wrong_pin_code">Incorrect PIN code.</string>
 
+    <!-- Displayed when a SIM PIN/PUK is entered incorrectly. -->
+    <string name="pinpuk_attempts">\nAttempts Remaining :</string>
+
     <!-- Instructions telling the user how to unlock the phone. -->
     <string name="keyguard_label_text">To unlock, press Menu then 0.</string>
 
@@ -2358,6 +2363,8 @@
 
     <!-- Shown in the lock screen when there is emergency calls only mode. -->
     <string name="emergency_calls_only" msgid="2485604591272668370">Emergency calls only</string>
+    <!-- Shown in the lock screen when there is SIM card IO error. -->
+    <string name="lockscreen_sim_error_message_short">Invalid Card.</string>
 
     <!-- When the user inserts a sim card from an unsupported network, it becomes network
          locked -->
@@ -2368,15 +2375,18 @@
          PUK locked (Pin Unlock Kode) -->
     <string name="lockscreen_sim_puk_locked_message">SIM card is PUK-locked.</string>
     <!-- Shown in the lock screen when the SIM has become PUK locked and the user must call customer care to unlock it. -->
-    <string name="lockscreen_sim_puk_locked_instructions">See the User Guide or contact Customer Care.</string>
+    <string name="lockscreen_sim_puk_locked_instructions">PIN1 Blocked. Enter PUK1\nor\nPlease see the User Guide or contact Customer Care.</string>
 
-    <!-- Shown in the lock screen to tell the user that their SIM is locked and they must unlock it. -->
-    <string name="lockscreen_sim_locked_message">SIM card is locked.</string>
+    <!-- Shown in the lock screen to tell the user that their SIM/RUIM is locked and they must unlock it. -->
+    <string name="lockscreen_sim_locked_message">SIM/RUIM card is locked.</string>
 
     <!-- For the unlock screen, When the user enters a sim unlock code, it takes a little while to check
          whether it is valid, and to unlock the sim if it is valid.  we display a
          progress dialog in the meantime.  this is the emssage. -->
     <string name="lockscreen_sim_unlock_progress_dialog_message">Unlocking SIM card\u2026</string>
+
+    <!-- Shown in the lock screen to tell the user that phone is in airplane mode-->
+    <string name="lockscreen_airplane_mode_on">Airplane Mode</string>
 
     <!-- For the unlock screen, Information message shown in dialog when user has too many failed attempts at
          drawing the unlock pattern -->
@@ -3506,8 +3516,8 @@
     <string name="usb_mtp_notification_title">Connected as a media device</string>
     <!-- USB_PREFERENCES: Notification for when the user connects the phone to a computer via USB in PTP mode.  This is the title -->
     <string name="usb_ptp_notification_title">Connected as a camera</string>
-    <!-- USB_PREFERENCES: Notification for when the user connects the phone to a computer via USB in mass storage mode.  This is the title -->
-    <string name="usb_mass_storage_notification_title">Connected as a mass storage device</string>
+    <!-- USB_PREFERENCES: Notification for when the user connects the phone to a computer via USB in mass storage mode (for installer CD image).  This is the title -->
+    <string name="usb_cd_installer_notification_title">Connected as an installer</string>
     <!-- USB_PREFERENCES: Notification for when a USB accessory is attached.  This is the title -->
     <string name="usb_accessory_notification_title">Connected to a USB accessory</string>
     <!-- See USB_PREFERENCES. This is the message. -->
@@ -4530,4 +4540,17 @@
     <!-- Longer version of toast bar message when hiding the transient navigation bar (if room) -->
     <string name="transient_navigation_confirmation_long">Swipe from edge of screen to reveal system bar</string>
     <add-resource type="bool" name="config_hotswapCapable"></add-resource>
+
+    <!-- Displayed when the USSD/SS request is modified by STK CC to a
+    different request. This will be displayed in a toast. -->
+    <string name="stk_cc_ussd_to_dial">USSD request is modified to DIAL request.</string>
+    <string name="stk_cc_ussd_to_ss">USSD request is modified to SS request.</string>
+    <string name="stk_cc_ussd_to_ussd">USSD request is modified to new USSD request.</string>
+    <string name="stk_cc_ss_to_dial">SS request is modified to DIAL request.</string>
+    <string name="stk_cc_ss_to_ussd">SS request is modified to USSD request.</string>
+    <string name="stk_cc_ss_to_ss">SS request is modified to new SS request.</string>
+
+    <!-- In WiFi notification -->
+    <string name="notify_turn_wifi_off_title">Turn Wi-Fi off</string>
+
 </resources>

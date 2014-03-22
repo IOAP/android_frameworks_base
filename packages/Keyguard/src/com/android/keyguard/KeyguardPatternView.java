@@ -137,6 +137,9 @@ public class KeyguardPatternView extends LinearLayout implements KeyguardSecurit
         mLockPatternView.setOnPatternListener(new UnlockPatternListener());
         mLockPatternView.setLockPatternUtils(mLockPatternUtils);
 
+        mLockPatternView.setVisibleDots(mLockPatternUtils.isVisibleDotsEnabled());
+        mLockPatternView.setShowErrorPath(mLockPatternUtils.isShowErrorPath());
+
         // stealth mode will be the same for the life of this screen
         mLockPatternView.setInStealthMode(!mLockPatternUtils.isVisiblePatternEnabled());
 
@@ -173,9 +176,7 @@ public class KeyguardPatternView extends LinearLayout implements KeyguardSecurit
         mEcaView = findViewById(R.id.keyguard_selector_fade_container);
         View bouncerFrameView = findViewById(R.id.keyguard_bouncer_frame);
         if (bouncerFrameView != null) {
-            mBouncerFrame =
-                    KeyguardSecurityViewHelper.colorizeFrame(mContext,
-                    bouncerFrameView.getBackground());
+            mBouncerFrame = bouncerFrameView.getBackground();
         }
     }
 

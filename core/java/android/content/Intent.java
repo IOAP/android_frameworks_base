@@ -673,6 +673,12 @@ public class Intent implements Parcelable, Cloneable {
     public static final String ACTION_PICK = "android.intent.action.PICK";
 
     /**
+     * Global Action: Battery services start/stop	683
+     * @hide
+     */
+    public static final String ACTION_BATTERY_SERVICES = "android.intent.action.BATTERY_SERVICES";
+
+    /**
      * Activity Action: Creates a shortcut.
      * <p>Input: Nothing.</p>
      * <p>Output: An Intent representing the shortcut. The intent must contain three
@@ -3657,6 +3663,15 @@ public class Intent implements Parcelable, Cloneable {
      * in mutil window scenarios.
      */
     public static final int FLAG_FLOATING_WINDOW = 0x00002000;
+
+     /**
+     * set in an Intent passed to {@link Context#startActivity Context.startActivity()},
+     * this flag will cause a newly launching task to be resized according to the split
+     * view metrics, making it running alongside another app.
+     * @hide
+     */
+    public static final int FLAG_ACTIVITY_SPLIT_VIEW = 0x00002000;
+
     /**
      * If set, when sending a broadcast only registered receivers will be
      * called -- no BroadcastReceiver components will be launched.

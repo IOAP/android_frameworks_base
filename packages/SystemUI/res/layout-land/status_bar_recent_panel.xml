@@ -18,17 +18,17 @@
 */
 -->
 
-<com.android.systemui.recent.RecentsPanelView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:systemui="http://schemas.android.com/apk/res/com.android.systemui"
-    android:id="@+id/recents_root"
-    android:layout_height="match_parent"
-    android:layout_width="match_parent"
-    android:layout_marginTop="-25dp"
-    android:foreground="@drawable/bg_protect"
-    systemui:recentItemLayout="@layout/status_bar_recent_item"
-    android:fitsSystemWindows="true"
-    >
+	<com.android.systemui.recent.RecentsPanelView
+	    xmlns:android="http://schemas.android.com/apk/res/android"
+	    xmlns:systemui="http://schemas.android.com/apk/res/com.android.systemui"
+	    android:id="@+id/recents_root"
+	    android:layout_height="match_parent"
+	    android:layout_width="match_parent"
+	    android:foreground="@drawable/bg_protect"
+	    android:layout_marginTop="-25dp"
+	    systemui:recentItemLayout="@layout/status_bar_recent_item"
+	    android:fitsSystemWindows="true"
+	    >
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -121,8 +121,17 @@
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:scaleType="center"
-                    android:layout_gravity="top|right"
-                    android:src="@drawable/ic_notify_clear" />
+                    android:layout_gravity="bottom|left"
+                    android:src="@drawable/ic_recents_clear" />
+
+                <ImageView
+                    android:id="@+id/recents_jingles"
+                    android:clickable="true"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:gravity="center_horizontal"
+                    android:layout_gravity="center"
+                    android:visibility="invisible" />
 
             </FrameLayout>
 

@@ -1,21 +1,3 @@
-/*
- * Copyright (C) 2012 The Android Open Source Project
- * Copyright (C) 2013 CyanogenMod Project
- * Copyright (C) 2013 The SlimRoms Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.android.systemui.quicksettings;
 
 import android.content.ContentResolver;
@@ -63,6 +45,9 @@ public class RingerModeTile extends QuickSettingsTile {
             public void onClick(View v) {
                 toggleState();
                 updateResources();
+                if (isFlipTilesEnabled()) {
+                    flipTile(0);
+                }
             }
         };
 
@@ -114,16 +99,18 @@ public class RingerModeTile extends QuickSettingsTile {
 
         // The icon will change depending on index
         findCurrentState();
-        mDrawable = mRingers.get(mRingerIndex).mDrawable;
+        mDrawable = RINGERS[mRingerIndex].mDrawable;
     }
 
     protected void toggleState() {
-        mRingerIndex++;
-        if (mRingerIndex >= mRingers.size()) {
-            mRingerIndex = 0;
-        }
-
-        Ringer r = mRingers.get(mRingerIndex);
+        Ringer r;
+        do {
+            mRingerIndex++;
+            if (mRingerIndex >= RINGERS.length) {
+                mRingerIndex = 0;
+            }
+            r = RINGERS[mRingerIndex];
+        }  while(!mRingers.contains(r));
 
         // If we are setting a vibrating state, vibrate to indicate it
         if (r.mVibrateWhenRinging) {
@@ -178,11 +165,12 @@ public class RingerModeTile extends QuickSettingsTile {
         boolean vibrateWhenRinging = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.VIBRATE_WHEN_RINGING, 0, UserHandle.USER_CURRENT) == 1;
         int ringerMode = mAudioManager.getRingerMode();
+        vibrateWhenRinging |= ringerMode == AudioManager.RINGER_MODE_VIBRATE;
 
         mRingerIndex = 0;
 
-        for (int i = 0; i < mRingers.size(); i++) {
-            Ringer r = mRingers.get(i);
+        for (int i = 0; i < RINGERS.length; i++) {
+            Ringer r = RINGERS[i];
             if (ringerMode == r.mRingerMode && vibrateWhenRinging == r.mVibrateWhenRinging) {
                 mRingerIndex = i;
                 break;

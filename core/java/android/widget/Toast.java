@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2007 The Android Open Source Project
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,8 +22,10 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.PixelFormat;
 import android.os.Handler;
+import android.os.Message;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -95,7 +96,7 @@ public class Toast {
         mTN.mGravity = context.getResources().getInteger(
                 com.android.internal.R.integer.config_toastDefaultGravity);
     }
-    
+
     /**
      * Show the view for the specified duration.
      */
@@ -122,7 +123,7 @@ public class Toast {
      * after the appropriate duration.
      */
     public void cancel() {
-        mTN.hide();
+        mTN.cancel();
 
         try {
             getService().cancelToast(mContext.getPackageName(), mTN);
@@ -130,7 +131,7 @@ public class Toast {
             // Empty
         }
     }
-    
+
     /**
      * Set the view to show.
      * @see #getView
@@ -163,7 +164,7 @@ public class Toast {
     public int getDuration() {
         return mDuration;
     }
-    
+
     /**
      * Set the margins of the view.
      *
@@ -219,14 +220,14 @@ public class Toast {
     public int getXOffset() {
         return mTN.mX;
     }
-    
+
     /**
      * Return the Y offset in pixels to apply to the gravity's location.
      */
     public int getYOffset() {
         return mTN.mY;
     }
-    
+
     /**
      * Make a standard toast that just contains a text view.
      *
@@ -245,7 +246,7 @@ public class Toast {
         View v = inflate.inflate(com.android.internal.R.layout.transient_notification, null);
         TextView tv = (TextView)v.findViewById(com.android.internal.R.id.message);
         tv.setText(text);
-        
+
         result.mNextView = v;
         result.mDuration = duration;
 
@@ -275,7 +276,7 @@ public class Toast {
     public void setText(int resId) {
         setText(mContext.getText(resId));
     }
-    
+
     /**
      * Update the text in a Toast that was previously created using one of the makeText() methods.
      * @param s The new text for the Toast.
@@ -307,26 +308,26 @@ public class Toast {
     }
 
     private static class TN extends ITransientNotification.Stub {
-        final Runnable mShow = new Runnable() {
-            @Override
-            public void run() {
-                handleShow();
-            }
-        };
-
-        final Runnable mHide = new Runnable() {
-            @Override
-            public void run() {
-                handleHide();
-                // Don't do this in handleHide() because it is also invoked by handleShow()
-                mNextView = null;
-            }
-        };
+        protected static final int MSG_SHOW = 1;
+        protected static final int MSG_HIDE = 0;
 
         private final WindowManager.LayoutParams mParams = new WindowManager.LayoutParams();
-        final Handler mHandler = new Handler();    
 
-        int mGravity;
+        Handler mHandler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                switch (msg.what) {
+                case MSG_SHOW:
+                    handleShow();
+                    break;
+                case MSG_HIDE:
+                    handleHide();
+                    break;
+                }
+            }
+        };
+
+        int mGravity = Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM;
         int mX, mY;
         float mHorizontalMargin;
         float mVerticalMargin;
@@ -344,7 +345,7 @@ public class Toast {
             params.height = WindowManager.LayoutParams.WRAP_CONTENT;
             params.width = WindowManager.LayoutParams.WRAP_CONTENT;
             params.format = PixelFormat.TRANSLUCENT;
-            params.windowAnimations = com.android.internal.R.style.Animation_Toast;
+	        params.windowAnimations = com.android.internal.R.style.Animation_Toast;
             params.type = WindowManager.LayoutParams.TYPE_TOAST;
             params.setTitle("Toast");
             params.flags = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
@@ -358,7 +359,7 @@ public class Toast {
         @Override
         public void show() {
             if (localLOGV) Log.v(TAG, "SHOW: " + this);
-            mHandler.post(mShow);
+            mHandler.sendEmptyMessage(MSG_SHOW);
         }
 
         /**
@@ -367,7 +368,11 @@ public class Toast {
         @Override
         public void hide() {
             if (localLOGV) Log.v(TAG, "HIDE: " + this);
-            mHandler.post(mHide);
+            mHandler.sendEmptyMessage(MSG_HIDE);
+        }
+
+        public void cancel() {
+            mHandler.removeMessages(MSG_SHOW);
         }
 
         public void handleShow() {
@@ -377,15 +382,67 @@ public class Toast {
                 // remove the old view if necessary
                 handleHide();
                 mView = mNextView;
-                Context context = mView.getContext().getApplicationContext();
-                if (context == null) {
-                    context = mView.getContext();
+                Context context = mView.getContext();
+                if (context.getApplicationContext() != null) {
+                    // Use application context, except when called from system
+                    // service where there is no application context.
+                    context = context.getApplicationContext();
                 }
                 mWM = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
                 // We can resolve the Gravity here by using the Locale for getting
                 // the layout direction
                 final Configuration config = mView.getContext().getResources().getConfiguration();
                 final int gravity = Gravity.getAbsoluteGravity(mGravity, config.getLayoutDirection());
+                switch(Settings.System.getInt(context.getContentResolver(), Settings.System.ACTIVITY_ANIMATION_CONTROLS[10], 1)) {
+                case 0:
+	                mParams.windowAnimations = -1;
+	                break;
+                case 1:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast;
+	                break;
+                case 2:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_Fade;
+	                break;
+                case 3:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_SlideRight;
+	                break;
+                case 4:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_SlideLeft;
+	                break;
+                case 5:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_Xylon;
+	                break;
+                case 6:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_Toko;
+	                break;
+                case 7:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_Tn;
+	                break;
+                case 8:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_Honami;
+	                break;
+                case 9:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_FastFade;
+	                break;
+                case 10:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_GrowFade;
+	                break;
+                case 11:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_GrowFadeCenter;
+	                break;
+                case 12:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_GrowFadeBottom;
+	                break;
+                case 13:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_Translucent;
+	                break;
+                case 14:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_SlideLeftRight;
+	                break;
+                case 15:
+	                mParams.windowAnimations = com.android.internal.R.style.Animation_Toast_SlideRightLeft;
+	                break;
+                }
                 mParams.gravity = gravity;
                 if ((gravity & Gravity.HORIZONTAL_GRAVITY_MASK) == Gravity.FILL_HORIZONTAL) {
                     mParams.horizontalWeight = 1.0f;
@@ -421,7 +478,7 @@ public class Toast {
             event.setPackageName(mView.getContext().getPackageName());
             mView.dispatchPopulateAccessibilityEvent(event);
             accessibilityManager.sendAccessibilityEvent(event);
-        }        
+        }
 
         public void handleHide() {
             if (localLOGV) Log.v(TAG, "HANDLE HIDE: " + this + " mView=" + mView);

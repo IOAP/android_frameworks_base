@@ -118,7 +118,6 @@ void JNIMediaPlayerListener::notify(int msg, int ext1, int ext2, const Parcel *o
             nativeParcel->setData(obj->data(), obj->dataSize());
             env->CallStaticVoidMethod(mClass, fields.post_event, mObject,
                     msg, ext1, ext2, jParcel);
-            env->DeleteLocalRef(jParcel);
         }
     } else {
         env->CallStaticVoidMethod(mClass, fields.post_event, mObject,
@@ -813,6 +812,38 @@ android_media_MediaPlayer_setNextMediaPlayer(JNIEnv *env, jobject thiz, jobject 
     ;
 }
 
+static jboolean
+android_media_MediaPlayer_suspend(JNIEnv *env, jobject thiz)
+{
+    sp<MediaPlayer> mp = getMediaPlayer(env, thiz);
+    if (mp == NULL) {
+        jniThrowException(env, "java/lang/IllegalStateException", NULL);
+        return false;
+    }
+
+    if (mp->suspend() != OK) {
+        return false;
+    }
+
+    return true;
+}
+
+static jboolean
+android_media_MediaPlayer_resume(JNIEnv *env, jobject thiz)
+{
+    sp<MediaPlayer> mp = getMediaPlayer(env, thiz);
+    if (mp == NULL) {
+        jniThrowException(env, "java/lang/IllegalStateException", NULL);
+        return false;
+    }
+
+    if (mp->resume() != OK) {
+        return false;
+    }
+
+    return true;
+}
+
 static void
 android_media_MediaPlayer_updateProxyConfig(
         JNIEnv *env, jobject thiz, jobject proxyProps)
@@ -901,6 +932,8 @@ static JNINativeMethod gMethods[] = {
     {"native_setRetransmitEndpoint", "(Ljava/lang/String;I)I",  (void *)android_media_MediaPlayer_setRetransmitEndpoint},
     {"setNextMediaPlayer",  "(Landroid/media/MediaPlayer;)V",   (void *)android_media_MediaPlayer_setNextMediaPlayer},
     {"updateProxyConfig", "(Landroid/net/ProxyProperties;)V", (void *)android_media_MediaPlayer_updateProxyConfig},
+    {"_suspend",             "()Z",                             (void *)android_media_MediaPlayer_suspend},
+    {"_resume",              "()Z",                             (void *)android_media_MediaPlayer_resume},
 };
 
 static const char* const kClassPathName = "android/media/MediaPlayer";

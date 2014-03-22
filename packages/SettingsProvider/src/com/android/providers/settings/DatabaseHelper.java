@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2013 The Linux Foundation. All rights reserved.
+ * Not a Contribution.
  * Copyright (C) 2007 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +27,7 @@ import android.content.pm.IPackageManager;
 import android.content.pm.PackageManager;
 import android.content.res.XmlResourceParser;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
@@ -39,6 +42,7 @@ import android.os.UserHandle;
 import android.provider.Settings;
 import android.provider.Settings.Global;
 import android.provider.Settings.Secure;
+import android.telephony.MSimTelephonyManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -59,6 +63,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+
+import static com.android.internal.telephony.MSimConstants.MAX_PHONE_COUNT_TRI_SIM;
 
 /**
  * Database helper class for {@link SettingsProvider}.
@@ -189,6 +195,47 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         // Load inital settings values
         loadSettings(db);
+    }
+
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+        if (!db.isReadOnly()) {
+            // We do special conversion of some CM properties to avoid version conflict
+
+            // Settings.System.STATUS_BAR_BATTERY && Settings.System.STATUS_BAR_BATTERY_SHOW_PERCENT
+            //
+            // The old settings (pre cm-11,0) has these value.
+            // to meter mode
+            //   BATTERY_STYLE_NORMAL = 0
+            //   BATTERY_STYLE_NORMAL_PERCENT = 1
+            //   BATTERY_STYLE_CIRCLE = 2
+            //   BATTERY_STYLE_CIRCLE_PERCENT = 3
+            //   BATTERY_STYLE_GONE = 4
+            //
+            // Now the system supports
+            //   BATTERY_STYLE_NORMAL = 0 or BATTERY_STYLE_NORMAL_PERCENT = 1  ==> ICON PORTRAIT
+            //   BATTERY_STYLE_NORMAL = 5                                      ==> ICON LANDSCAPE
+            //   BATTERY_STYLE_CIRCLE = 2 or BATTERY_STYLE_CIRCLE_PERCENT = 3  ==> CIRCLE
+            //   BATTERY_STYLE_GONE = 4                                        ==> GONE
+            //
+            try {
+                // Update the show percent value to 1 if the old style has percent (1,3)
+                db.execSQL("update " + TABLE_SYSTEM + " set value = 1 where name = " +
+                        "'" + Settings.System.STATUS_BAR_BATTERY_SHOW_PERCENT + "' and " +
+                        "exists (select 'x' from " + TABLE_SYSTEM + " where name = '" +
+                        Settings.System.STATUS_BAR_BATTERY + "' and value in (1,3))");
+
+                // Convert old style ids to new style ids
+                db.execSQL("update " + TABLE_SYSTEM + " set value = 0 where " +
+                        "name = '" + Settings.System.STATUS_BAR_BATTERY + "' and value = 1");
+                db.execSQL("update " + TABLE_SYSTEM + " set value = 2 where " +
+                        "name = '" + Settings.System.STATUS_BAR_BATTERY + "' and value = 3");
+            } catch (SQLException sqlEx) {
+                // Fall-back to defaults values
+                Log.e(TAG, "Failed to convert STATUS_BAR_BATTERY and " +
+                        "STATUS_BAR_BATTERY_SHOW_PERCENT properties", sqlEx);
+            }
+        }
     }
 
     @Override
@@ -679,6 +726,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                    Secure.LOCK_PATTERN_ENABLED,
                    Secure.LOCK_PATTERN_VISIBLE,
                    Secure.LOCK_PATTERN_TACTILE_FEEDBACK_ENABLED,
+                   Secure.LOCK_PATTERN_SIZE,
+                   Secure.LOCK_DOTS_VISIBLE,
+                   Secure.LOCK_SHOW_ERROR_PATH,
                    "lockscreen.password_type",
                    "lockscreen.lockoutattemptdeadline",
                    "lockscreen.patterneverchosen",
@@ -2020,11 +2070,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             loadIntegerSetting(stmt, Settings.System.STATUS_BAR_BATTERY,
                     R.integer.def_battery_style);
 
+            loadIntegerSetting(stmt, Settings.System.STATUS_BAR_BATTERY_SHOW_PERCENT,
+                    R.integer.def_battery_show_percent);
+
             loadIntegerSetting(stmt, Settings.System.STATUS_BAR_NOTIF_COUNT,
                     R.integer.def_notif_count);
 
             loadIntegerSetting(stmt, Settings.System.QS_QUICK_PULLDOWN,
                     R.integer.def_qs_quick_pulldown);
+
+            if (mContext.getResources()
+                    .getBoolean(com.android.internal.R.bool.config_voice_capable)) {
+                loadStringSetting(stmt, Settings.System.LOCKSCREEN_TARGETS,
+                        R.string.def_lockscreen_targets);
+            } else {
+                loadStringSetting(stmt, Settings.System.LOCKSCREEN_TARGETS,
+                        R.string.def_lockscreen_targets_no_telephony);
+            }
         } finally {
             if (stmt != null) stmt.close();
         }
@@ -2232,6 +2294,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                             SystemProperties.get("ro.com.android.mobiledata",
                                     "true")) ? 1 : 0);
 
+            // SUB specific flags for Multisim devices
+            for (int i = 0; i < MAX_PHONE_COUNT_TRI_SIM; i++) {
+                // Mobile Data default, based on build
+                loadSetting(stmt, Settings.Global.MOBILE_DATA + i,
+                        "true".equalsIgnoreCase(
+                        SystemProperties.get("ro.com.android.mobiledata", "true")) ? 1 : 0);
+
+                // Data roaming default, based on build
+                loadSetting(stmt, Settings.Global.DATA_ROAMING + i,
+                        "true".equalsIgnoreCase(
+                        SystemProperties.get("ro.com.android.dataroaming", "true")) ? 1 : 0);
+            }
+
             loadBooleanSetting(stmt, Settings.Global.NETSTATS_ENABLED,
                     R.bool.def_netstats_enabled);
 
@@ -2292,7 +2367,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             int type;
             type = SystemProperties.getInt("ro.telephony.default_network",
                         RILConstants.PREFERRED_NETWORK_MODE);
-            loadSetting(stmt, Settings.Global.PREFERRED_NETWORK_MODE, type);
+            String val = Integer.toString(type);
+            if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
+                val = type + "," + type;
+            }
+            loadSetting(stmt, Settings.Global.PREFERRED_NETWORK_MODE, val);
 
             // Set the preferred cdma subscription source to target desired value or default
             // value defined in CdmaSubscriptionSourceManager

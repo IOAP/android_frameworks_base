@@ -36,7 +36,7 @@ import com.android.systemui.R;
 public class PhoneStatusBarView extends PanelBar {
     private static final String TAG = "PhoneStatusBarView";
     private static final boolean DEBUG = PhoneStatusBar.DEBUG;
-    private static final boolean DEBUG_GESTURES = true;
+    private static final boolean DEBUG_GESTURES = false;
 
     PhoneStatusBar mBar;
     int mScrimColor;
@@ -269,7 +269,7 @@ public class PhoneStatusBarView extends PanelBar {
         }
 
         mBar.animateHeadsUp(mNotificationPanel == panel, mPanelExpandedFractionSum);
-        mBar.panelIsAnimating(mFullyOpenedPanel == null);
 
+        mBar.updateCarrierLabelVisibility(false);
     }
 }

@@ -304,7 +304,6 @@ public class LockSettingsService extends ILockSettings.Stub {
 
         final byte[] hash = mLockPatternUtils.patternToHash(
                 mLockPatternUtils.stringToPattern(pattern));
-
         boolean defaultSize = isDefaultSize(userId);
         writeFile(getLockPatternFilename(userId,  defaultSize), hash);
         writeFile(getLockPatternFilename(userId, !defaultSize), null);
@@ -546,6 +545,9 @@ public class LockSettingsService extends ILockSettings.Stub {
         Secure.LOCK_BIOMETRIC_WEAK_FLAGS,
         Secure.LOCK_PATTERN_VISIBLE,
         Secure.LOCK_PATTERN_TACTILE_FEEDBACK_ENABLED,
+        Secure.LOCK_PATTERN_SIZE,
+        Secure.LOCK_DOTS_VISIBLE,
+        Secure.LOCK_SHOW_ERROR_PATH,
     };
 
     // These are protected with a read permission

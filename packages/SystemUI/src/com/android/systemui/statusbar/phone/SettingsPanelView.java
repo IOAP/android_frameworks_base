@@ -47,7 +47,7 @@ import com.android.systemui.statusbar.policy.RotationLockController;
 import java.io.File;
 
 public class SettingsPanelView extends PanelView {
-    public static final boolean DEBUG_GESTURES = true;
+    public static final boolean DEBUG_GESTURES = false;
 
     private QuickSettingsController mQS;
     private QuickSettingsContainerView mQSContainer;
@@ -98,6 +98,10 @@ public class SettingsPanelView extends PanelView {
     public void setup(NetworkController networkController, BluetoothController bluetoothController,
             BatteryController batteryController, LocationController locationController,
             RotationLockController rotationLockController) {
+        if (mQS != null) {		
+            /*mQS.setup(networkController, bluetoothController, batteryController,		
+                    locationController, rotationLockController);*/		
+        }
     }
 
     void updateResources() {
@@ -112,11 +116,13 @@ public class SettingsPanelView extends PanelView {
 
     @Override
     public void fling(float vel, boolean always) {
-        GestureRecorder gr = ((PhoneStatusBarView) mBar).mBar.getGestureRecorder();
-        if (gr != null) {
-            gr.tag(
-                "fling " + ((vel > 0) ? "open" : "closed"),
-                "settings,v=" + vel);
+        if (DEBUG_GESTURES) {
+            GestureRecorder gr = ((PhoneStatusBarView) mBar).mBar.getGestureRecorder();
+            if (gr != null ) {
+                gr.tag(
+                    "fling " + ((vel > 0) ? "open" : "closed"),
+                    "notifications,v=" + vel);
+            }
         }
         super.fling(vel, always);
     }
@@ -161,9 +167,6 @@ public class SettingsPanelView extends PanelView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (mQS == null) {
-            return false;
-        }
         if (DEBUG_GESTURES) {
             if (event.getActionMasked() != MotionEvent.ACTION_MOVE) {
                 EventLog.writeEvent(EventLogTags.SYSUI_QUICKPANEL_TOUCH,
