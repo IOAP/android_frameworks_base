@@ -110,7 +110,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public class QuickSettingsController {
-    private static final String TAG = "QuickSettingsController";
+    private static String TAG = "QuickSettingsController";
 
     // Stores the broadcast receivers and content observers
     // quick tiles register for.

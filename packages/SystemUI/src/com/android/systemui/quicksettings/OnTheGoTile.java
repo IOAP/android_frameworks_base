@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.provider.Settings;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 
 import com.android.internal.util.nameless.NamelessActions;
@@ -33,6 +34,7 @@ import com.android.systemui.R;
 import com.android.systemui.nameless.onthego.OnTheGoDialog;
 import com.android.systemui.nameless.onthego.OnTheGoService;
 import com.android.systemui.statusbar.phone.QuickSettingsController;
+import com.android.systemui.statusbar.phone.QuickSettingsContainerView;
 
 public class OnTheGoTile extends QuickSettingsTile {
 
@@ -62,15 +64,15 @@ public class OnTheGoTile extends QuickSettingsTile {
     }
 
     @Override
-    public void onFlingRight() {
-        toggleCamera();
-        super.onFlingRight();
+    void onPostCreate() {
+        updateTile();
+        super.onPostCreate();
     }
 
     @Override
-    public void onFlingLeft() {
-        toggleCamera();
-        super.onFlingLeft();
+    public void updateResources() {
+        updateTile();
+        super.updateResources();
     }
 
     private void toggleCamera() {
@@ -91,19 +93,6 @@ public class OnTheGoTile extends QuickSettingsTile {
                 newValue);
 
         updateResources();
-        sendCameraBroadcast();
-    }
-
-    @Override
-    void onPostCreate() {
-        updateTile();
-        super.onPostCreate();
-    }
-
-    @Override
-    public void updateResources() {
-        updateTile();
-        super.updateResources();
     }
 
     @Override

@@ -1021,7 +1021,6 @@ public final class Settings {
                 CALL_METHOD_PUT_SYSTEM);
 
         private static final HashSet<String> MOVED_TO_SECURE;
-
         static {
             MOVED_TO_SECURE = new HashSet<String>(30);
             MOVED_TO_SECURE.add(Secure.ANDROID_ID);
@@ -2789,14 +2788,17 @@ public final class Settings {
         public static final String ACTIVE_DISPLAY_SUNLIGHT_MODE = "active_display_sunlight_mode";
 
         /**
+         * Timeout of the display when there is no user interaction
+         * @hide
+         */
+        public static final String ACTIVE_DISPLAY_TIMEOUT = "active_display_timeout";
+
+        /**
          * A list of packages to exclude from being displayed in active display.
          * This should be a string of packages separated by |
          * @hide
          */
         public static final String ACTIVE_DISPLAY_EXCLUDED_APPS = "active_display_excluded_apps";
-
-
-       	public static final String ACTIVE_DISPLAY_TIMEOUT = "active_display_timeout";
 
 	/**
 	* Whether to turn off the device when gets pocketed again and was waked up by active display
@@ -2999,13 +3001,6 @@ public final class Settings {
          * @hide
          */
         public static final String QUICK_SETTINGS_TILES_FLIP = "quick_settings_tiles_flip";
-
-        /**
-         * Let Quick Settings Panel Tiles vibrate on click
-         *
-         * @hide
-         */
-        public static final String QUICK_SETTINGS_TILES_VIBRATE = "quick_settings_tiles_vibrate";
 
         /**
          * Allows to show the background activity back the lockscreen

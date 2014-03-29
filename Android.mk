@@ -257,8 +257,8 @@ LOCAL_SRC_FILES += \
 	location/java/android/location/IFusedProvider.aidl \
 	location/java/android/location/IGeocodeProvider.aidl \
 	location/java/android/location/IGeofenceProvider.aidl \
-        location/java/android/location/IGeoFencer.aidl \
-        location/java/android/location/IGeoFenceListener.aidl \
+	location/java/android/location/IGeoFencer.aidl \
+	location/java/android/location/IGeoFenceListener.aidl \
 	location/java/android/location/IGpsStatusListener.aidl \
 	location/java/android/location/IGpsStatusProvider.aidl \
 	location/java/android/location/ILocationListener.aidl \
@@ -410,7 +410,7 @@ aidl_files := \
 	frameworks/base/core/java/com/android/internal/view/IInputMethodClient.aidl \
 	frameworks/base/core/java/com/android/internal/view/IInputMethodManager.aidl \
 	frameworks/base/core/java/com/android/internal/view/IInputMethodSession.aidl \
-        frameworks/base/core/java/android/bluetooth/BluetoothLEServiceUuid.aidl  \
+    frameworks/base/core/java/android/bluetooth/BluetoothLEServiceUuid.aidl  \
 	frameworks/base/graphics/java/android/graphics/Bitmap.aidl \
 	frameworks/base/graphics/java/android/graphics/Rect.aidl \
 	frameworks/base/graphics/java/android/graphics/Region.aidl \
