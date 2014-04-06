@@ -80,4 +80,6 @@ wn on the screen). [CHAR LIMIT=NONE] -->
     <string name="quick_settings_onthego_back">Rear Camera</string>
     <string name="quick_settings_onthego_front">Front Camera</string>
 
+    <!-- Active Display -->
+    <string name="active_display_privacy_content">Content message not showing because privacy mode enabled</string>
 </resources>
