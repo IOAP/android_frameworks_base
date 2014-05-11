@@ -41,8 +41,10 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.Shader.TileMode;
+import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.PorterDuff.Mode;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -110,6 +112,9 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     private boolean mFitThumbnailToXY;
     private int mRecentItemLayoutId;
     private boolean mHighEndGfx;
+
+    private ImageView mRJingles;
+    private AnimationDrawable frameJingles;
 
     private ImageView mClearRecents;
     private LinearColorBar mRamUsageBar;
@@ -372,11 +377,14 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             boolean noApps = mRecentTaskDescriptions != null
                     && (mRecentTaskDescriptions.size() == 0);
             mRecentsNoApps.setAlpha(1f);
+            mRJingles.setVisibility(noApps ? View.VISIBLE : View.INVISIBLE);
             mRecentsNoApps.setVisibility(noApps ? View.VISIBLE : View.INVISIBLE);
 	    mClearRecents.setVisibility(noApps ? View.GONE : View.VISIBLE);
 
             boolean showClearAllButton = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.SHOW_CLEAR_RECENTS_BUTTON, 1) == 1;
+
+            mClearRecents.setColorFilter(getResources().getColor(R.color.status_bar_recents_app_label_color), Mode.SRC_ATOP);
             if (showClearAllButton) {
                 mClearRecents.setVisibility(noApps ? View.GONE : View.VISIBLE);
                 int clearAllButtonLocation = Settings.System.getInt(mContext.getContentResolver(),
@@ -508,6 +516,18 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
         mRecentsScrim = findViewById(R.id.recents_bg_protect);
         mRecentsNoApps = findViewById(R.id.recents_no_apps);
 	//mRecentsRamBar = findViewById(R.id.recents_ram_bar);
+
+        mRJingles = (ImageView) findViewById(R.id.recents_jingles);
+        mRJingles.setBackgroundResource(R.drawable.recents_jingles_animation);
+        frameJingles = (AnimationDrawable) mRJingles.getBackground();
+        if (mRJingles != null) {
+            mRJingles.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    frameJingles.start();
+                }
+            });
+        }
 
         mClearRecents = (ImageView) findViewById(R.id.recents_clear);
         if (mClearRecents != null){
@@ -770,19 +790,26 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                         holder.thumbnailViewImage, bm, 0, 0, null).toBundle();
 
         show(false);
-        if (ad.taskId >= 0) {
+        Intent intent = ad.intent;
+        boolean floating = (intent.getFlags() & Intent.FLAG_FLOATING_WINDOW) == Intent.FLAG_FLOATING_WINDOW;
+        if (ad.taskId >= 0 && !floating) {
             // This is an active task; it should just go to the foreground.
             am.moveTaskToFront(ad.taskId, ActivityManager.MOVE_TASK_WITH_HOME,
                     opts);
         } else {
-            Intent intent = ad.intent;
-            intent.addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
-                    | Intent.FLAG_ACTIVITY_TASK_ON_HOME
-                    | Intent.FLAG_ACTIVITY_NEW_TASK);
+            boolean backPressed = ((RecentsActivity) mContext) != null && ((RecentsActivity) mContext).mBackPressed;
+            if (!floating || !backPressed) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
+                        | Intent.FLAG_ACTIVITY_TASK_ON_HOME
+                        | Intent.FLAG_ACTIVITY_NEW_TASK);
+            }
             if (DEBUG) Log.v(TAG, "Starting activity " + intent);
             try {
                 context.startActivityAsUser(intent, opts,
                         new UserHandle(UserHandle.USER_CURRENT));
+                if (floating && ((RecentsActivity) mContext) != null) {
+                    ((RecentsActivity) mContext).finish();
+                }
             } catch (SecurityException e) {
                 Log.e(TAG, "Recents does not have the permission to launch " + intent, e);
             } catch (ActivityNotFoundException e) {
@@ -833,9 +860,11 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     }
 
     private void startApplicationDetailsActivity(String packageName) {
+        dismissAndGoBack();
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                 Uri.fromParts("package", packageName, null));
         intent.setComponent(intent.resolveActivity(mContext.getPackageManager()));
+        intent.setFlags(intent.getFlags() & ~Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
         TaskStackBuilder.create(getContext())
                 .addNextIntentWithParentStack(intent).startActivities();
     }
@@ -919,6 +948,16 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                         ((ViewGroup) mRecentsContainer).removeViewInLayout(selectedView);
                     } else {
                         throw new IllegalStateException("Oops, no tag on view " + selectedView);
+                    }
+                } else if (item.getItemId() == R.id.recent_launch_floating) {
+                    ViewHolder viewHolder = (ViewHolder) selectedView.getTag();
+                    if (viewHolder != null) {
+                        final TaskDescription ad = viewHolder.taskDescription;
+                        dismissAndGoBack();
+                        Intent intent = ad.intent;
+                        intent.setFlags(Intent.FLAG_FLOATING_WINDOW
+                                | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        getContext().startActivity(intent);
                     }
                 } else {
                     return false;

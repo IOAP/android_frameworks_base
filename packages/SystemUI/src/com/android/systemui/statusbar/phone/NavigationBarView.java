@@ -26,9 +26,13 @@ import android.app.KeyguardManager;
 import android.app.StatusBarManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.ContentObserver;
@@ -36,9 +40,11 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -123,6 +129,9 @@ public class NavigationBarView extends LinearLayout {
     private DelegateViewHelper mDelegateHelper;
     private DeadZone mDeadZone;
     private final NavigationBarTransitions mBarTransitions;
+
+    private boolean mModLockDisabled = true;
+    private SettingsObserver mObserver;
 
     // workaround for LayoutTransitions leaving the nav buttons in a weird state (bug 5549288)
     final static boolean WORKAROUND_INVALID_LAYOUT = true;
@@ -270,6 +279,8 @@ public class NavigationBarView extends LinearLayout {
         watchForDevicePolicyChanges();
 
         mLockUtils = new LockPatternUtils(context);
+
+        mObserver = new SettingsObserver(new Handler());
     }
 
     private void watchForDevicePolicyChanges() {
@@ -545,7 +556,7 @@ public class NavigationBarView extends LinearLayout {
                         Settings.System.LOCKSCREEN_NOTIFICATIONS, 1) == 1 &&
                 Settings.System.getInt(mContext.getContentResolver(),
                         Settings.System.LOCKSCREEN_NOTIFICATIONS_PRIVACY_MODE, 0) == 0;
-        setVisibleOrGone(getSearchLight(), showSearch);
+        setVisibleOrGone(getSearchLight(), showSearch && mModLockDisabled);
         setVisibleOrGone(getCameraButton(), showCamera);
         setVisibleOrGone(getNotifsButton(), showNotifs && mWasNotifsButtonVisible);
 
@@ -663,6 +674,15 @@ public class NavigationBarView extends LinearLayout {
                 false, mSettingsObserver);
         mContext.getContentResolver().registerContentObserver(Settings.System.getUriFor(Settings.System.NAVIGATION_MENU_FORCE),
                 false, mSettingsObserver);
+
+        final String keyguardPackage = mContext.getString(
+                com.android.internal.R.string.config_keyguardPackage);
+        final Bundle keyguard_metadata = NavigationBarView
+                .getApplicationMetadata(mContext, keyguardPackage);
+        if (null != keyguard_metadata &&
+                keyguard_metadata.getBoolean("com.cyanogenmod.keyguard", false)) {
+            mObserver.observe();
+        }
     }
 
     @Override
@@ -670,6 +690,8 @@ public class NavigationBarView extends LinearLayout {
         super.onDetachedFromWindow();
 
         mContext.getContentResolver().unregisterContentObserver(mSettingsObserver);
+
+        mObserver.unobserve();
     }
 
     private void readUserConfig() {
@@ -1119,4 +1141,50 @@ public class NavigationBarView extends LinearLayout {
         return tablet;
     }
 
+    private static Bundle getApplicationMetadata(Context context, String pkg) {
+        if (pkg != null) {
+            try {
+                ApplicationInfo ai = context.getPackageManager().
+                    getApplicationInfo(pkg, PackageManager.GET_META_DATA);
+                return ai.metaData;
+            } catch (NameNotFoundException e) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    private class SettingsObserver extends ContentObserver {
+        private boolean mObserving = false;
+
+        SettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            mObserving = true;
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.LOCKSCREEN_MODLOCK_ENABLED),
+                false, this);
+
+            // intialize mModlockDisabled
+            onChange(false);
+        }
+
+        void unobserve() {
+            if (mObserving) {
+                mContext.getContentResolver().unregisterContentObserver(this);
+                mObserving = false;
+            }
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            mModLockDisabled = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.LOCKSCREEN_MODLOCK_ENABLED, 1) == 0;
+            setDisabledFlags(mDisabledFlags, true /* force */);
+        }
+    }
 }

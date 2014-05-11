@@ -1778,6 +1778,13 @@ public class Intent implements Parcelable, Cloneable {
         "android.intent.action.EXTERNAL_APPLICATIONS_UNAVAILABLE";
 
     /**
+     * Broadcast Action: The current keyguard wallpaper configuration
+     * has changed and should be re-read.
+     * {@hide}
+     */
+    public static final String ACTION_KEYGUARD_WALLPAPER_CHANGED =
+            "android.intent.action.KEYGUARD_WALLPAPER_CHANGED";
+    /**
      * Broadcast Action:  The current system wallpaper has changed.  See
      * {@link android.app.WallpaperManager} for retrieving the new wallpaper.
      * This should <em>only</em> be used to determine when the wallpaper
@@ -3652,6 +3659,13 @@ public class Intent implements Parcelable, Cloneable {
      * saw.   This can only be used in conjunction with {@link #FLAG_ACTIVITY_NEW_TASK}.
      */
     public static final int FLAG_ACTIVITY_TASK_ON_HOME = 0X00004000;
+    /**
+     * If set, this intent will always match start up as a floating window
+     * in multi window scenarios.
+     *
+     * @hide
+     */
+    public static final int FLAG_FLOATING_WINDOW = 0x00002000;
     /**
      * If set, when sending a broadcast only registered receivers will be
      * called -- no BroadcastReceiver components will be launched.

@@ -99,6 +99,8 @@ import com.android.systemui.statusbar.policy.activedisplay.ActiveDisplayView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.HashMap;
 
 public abstract class BaseStatusBar extends SystemUI implements
         CommandQueue.Callbacks {
@@ -205,8 +207,6 @@ public abstract class BaseStatusBar extends SystemUI implements
     @ChaosLab(name="GestureAnywhere", classification=Classification.NEW_FIELD)
     protected GestureAnywhereView mGestureAnywhereView;
 
-    private boolean mOmniSwitchEnabled;
-    private boolean mOmniSwitchStarted;
     private boolean mSlimRecentsEnabled;
 
     public IStatusBarService getStatusBarService() {
@@ -234,9 +234,6 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.EXPANDED_DESKTOP_STATE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.EXPANDED_DESKTOP_STYLE), false, this);
-            mOmniSwitchEnabled = Settings.System.getIntForUser(
-                    mContext.getContentResolver(), Settings.System.RECENTS_USE_OMNISWITCH,
-                    0, UserHandle.USER_CURRENT) == 1;
             mSlimRecentsEnabled = Settings.System.getIntForUser(
                     mContext.getContentResolver(), Settings.System.RECENTS_USE_SLIM,
                     0, UserHandle.USER_CURRENT) == 1;
@@ -297,12 +294,6 @@ public abstract class BaseStatusBar extends SystemUI implements
                 mCurrentUserId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, -1);
                 if (true) Log.v(TAG, "userId " + mCurrentUserId + " is in the house");
                 userSwitched(mCurrentUserId);
-            } else if (OmniSwitchConstants.ACTION_SERVICE_START.equals(action)) {
-                Log.v(TAG, "OmniSwitch service started");
-                mOmniSwitchStarted = true;
-            } else if (OmniSwitchConstants.ACTION_SERVICE_STOP.equals(action)) {
-                Log.v(TAG, "OmniSwitch service stoped");
-                mOmniSwitchStarted = false;
             }
         }
     };
@@ -320,9 +311,6 @@ public abstract class BaseStatusBar extends SystemUI implements
         mContext.getContentResolver().registerContentObserver(
                 Settings.Global.getUriFor(Settings.Global.DEVICE_PROVISIONED), true,
                 mSettingsObserver);
-        mContext.getContentResolver().registerContentObserver(
-                Settings.System.getUriFor(Settings.System.RECENTS_USE_OMNISWITCH), true,
-                mSettingsObserver, UserHandle.USER_ALL);
 
         mContext.getContentResolver().registerContentObserver(
                 Settings.System.getUriFor(Settings.System.RECENTS_USE_SLIM), true,
@@ -408,8 +396,6 @@ public abstract class BaseStatusBar extends SystemUI implements
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_USER_SWITCHED);
-        filter.addAction(OmniSwitchConstants.ACTION_SERVICE_START);
-        filter.addAction(OmniSwitchConstants.ACTION_SERVICE_STOP);
         mContext.registerReceiver(mBroadcastReceiver, filter);
         SidebarObserver observer = new SidebarObserver(mHandler);
         observer.observe();
@@ -501,13 +487,35 @@ public abstract class BaseStatusBar extends SystemUI implements
                 null, UserHandle.CURRENT);
     }
 
+    private void launchFloating(PendingIntent pIntent) {
+        Intent overlay = new Intent();
+        overlay.addFlags(Intent.FLAG_FLOATING_WINDOW | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        try {
+            ActivityManagerNative.getDefault().resumeAppSwitches();
+            ActivityManagerNative.getDefault().dismissKeyguardOnNextActivity();
+        } catch (RemoteException e) {
+        }
+        try {
+            pIntent.send(mContext, 0, overlay);
+        } catch (PendingIntent.CanceledException e) {
+            // the stack trace isn't very helpful here.  Just log the exception message.
+            Slog.w(TAG, "Sending contentIntent failed: " + e);
+        }
+    }
+
     protected View.OnLongClickListener getNotificationLongClicker() {
         return new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                final String packageNameF = (String) v.getTag();
+                NotificationData.Entry  entry = (NotificationData.Entry) v.getTag();
+                StatusBarNotification sbn = entry.notification;
+
+                final String packageNameF = sbn.getPackageName();
+                final PendingIntent contentIntent = sbn.getNotification().contentIntent;
+
                 if (packageNameF == null) return false;
                 if (v.getWindowToken() == null) return false;
+
                 mNotificationBlamePopup = new PopupMenu(mContext, v);
                 mNotificationBlamePopup.getMenuInflater().inflate(
                         R.menu.notification_popup_menu,
@@ -553,6 +561,9 @@ public abstract class BaseStatusBar extends SystemUI implements
                                     .getSystemService(Context.ACTIVITY_SERVICE);
                             am.clearApplicationUserData(packageNameF,
                                     new FakeClearUserDataObserver());
+                        } else if (item.getItemId() == R.id.notification_floating_item) {
+                            launchFloating(contentIntent);
+                            animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_NONE);
                         } else {
                             return false;
                         }
@@ -711,12 +722,17 @@ public abstract class BaseStatusBar extends SystemUI implements
         }
     };
 
-    protected void toggleRecentsActivity() {
-        if (mOmniSwitchEnabled && mOmniSwitchStarted) {
-            Intent showIntent = new Intent(OmniSwitchConstants.ACTION_TOGGLE_OVERLAY);
-            mContext.sendBroadcast(showIntent);
-        } else {
+    private boolean isOmniSwitchEnabled() {
+        int settingsValue = Settings.System.getInt(
+                mContext.getContentResolver(), Settings.System.RECENTS_USE_OMNISWITCH, 0);
+        return (settingsValue == 1);
+    }
 
+    protected void toggleRecentsActivity() {
+        if (isOmniSwitchEnabled()){
+            Intent showIntent = new Intent(OmniSwitchConstants.ACTION_TOGGLE_OVERLAY);
+            mContext.sendBroadcastAsUser(showIntent, UserHandle.CURRENT);
+        } else {
             if (mRecents != null || mSlimRecents != null) {
                 if (mSlimRecentsEnabled) {
                     mSlimRecents.toggleRecents(mDisplay, mLayoutDirection, getStatusBarView());
@@ -729,7 +745,7 @@ public abstract class BaseStatusBar extends SystemUI implements
     }
 
     protected void preloadRecentTasksList() {
-        if (!mOmniSwitchEnabled) {
+        if (!isOmniSwitchEnabled()) {
             if (mRecents != null || mSlimRecents != null) {
                 if (mSlimRecentsEnabled) {
                     mSlimRecents.preloadRecentTasksList();
@@ -741,7 +757,7 @@ public abstract class BaseStatusBar extends SystemUI implements
     }
 
     protected void cancelPreloadingRecentTasksList() {
-        if (!mOmniSwitchEnabled) {
+        if (!isOmniSwitchEnabled()) {
             if (mRecents != null || mSlimRecents != null) {
                 if (mSlimRecentsEnabled) {
                     mSlimRecents.cancelPreloadingRecentTasksList();
@@ -753,9 +769,9 @@ public abstract class BaseStatusBar extends SystemUI implements
     }
 
     protected void closeRecents() {
-        if (mOmniSwitchEnabled && mOmniSwitchStarted) {
+        if (isOmniSwitchEnabled()) {
             Intent hideIntent = new Intent(OmniSwitchConstants.ACTION_HIDE_OVERLAY);
-            mContext.sendBroadcast(hideIntent);
+            mContext.sendBroadcastAsUser(hideIntent, UserHandle.CURRENT);
         } else {
             if (mRecents != null || mSlimRecents != null) {
                 if (mSlimRecentsEnabled) {
@@ -871,7 +887,7 @@ public abstract class BaseStatusBar extends SystemUI implements
                 R.layout.status_bar_notification_row, parent, false);
 
         // for blaming (see SwipeHelper.setLongPressListener)
-        row.setTag(sbn.getPackageName());
+        row.setTag(entry);
 
         workAroundBadLayerDrawableOpacity(row);
         View vetoButton = updateNotificationVetoButton(row, sbn);

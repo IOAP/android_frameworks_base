@@ -2976,6 +2976,12 @@ public final class Settings {
         public static final String DOUBLE_TAP_GLOWPAD_GESTURE = "double_tap_glowpad_gesture";
 
         /**
+         * Whether to enable the modlock keyguard
+         * @hide
+         */
+        public static final String LOCKSCREEN_MODLOCK_ENABLED = "lockscreen_modlock_enabled";
+
+        /**
          * @deprecated Use {@link android.provider.Settings.Global#LOW_BATTERY_SOUND}
          * instead
          * @hide
@@ -3084,6 +3090,12 @@ public final class Settings {
          * @hide
          */
         public static final String EGG_MODE = "egg_mode";
+
+        /**
+         * Display second in the Clock
+         * @hide
+         */
+        public static final String CLOCK_USE_SECOND = "clock_use_second";
 
        /**
          * Animate-flip Quick Settings Panel Tiles on click
@@ -4236,18 +4248,6 @@ public final class Settings {
         public static final String NOTIFICATION_ALPHA = "notification_alpha";
 
         /**
-         * Sets the lockscreen background style
-         * @hide
-         */
-        public static final String LOCKSCREEN_BACKGROUND_STYLE = "lockscreen_background_style";
-
-        /**
-         * Color for lockscreen background when set to color fill
-         * @hide
-         */
-        public static final String LOCKSCREEN_BACKGROUND_COLOR = "lockscreen_background_color";
-
-        /**
          * Volume key controls ringtone or media sound stream
          *
          * @hide
@@ -4887,6 +4887,7 @@ public final class Settings {
             POWER_MENU_SOUND_ENABLED,
             POWER_MENU_USER_ENABLED,
             LOCKSCREEN_BATTERY_VISIBILITY,
+            LOCKSCREEN_MODLOCK_ENABLED,
             PHONE_BLACKLIST_ENABLED,
             PHONE_BLACKLIST_NOTIFY_ENABLED,
             PHONE_BLACKLIST_PRIVATE_NUMBER_MODE,
