@@ -29,10 +29,8 @@ import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 
 import com.android.internal.util.nameless.NamelessActions;
-import com.android.internal.util.nameless.NamelessUtils;
 import com.android.systemui.R;
 import com.android.systemui.nameless.onthego.OnTheGoDialog;
-import com.android.systemui.nameless.onthego.OnTheGoService;
 import com.android.systemui.statusbar.phone.QuickSettingsController;
 import com.android.systemui.statusbar.phone.QuickSettingsContainerView;
 
@@ -79,13 +77,13 @@ public class OnTheGoTile extends QuickSettingsTile {
         final ContentResolver resolver = mContext.getContentResolver();
         final int camera = Settings.System.getInt(resolver,
                 Settings.System.ON_THE_GO_CAMERA,
-                CAMERA_BACK);
+                0);
 
         int newValue;
-        if (camera == CAMERA_BACK) {
-            newValue = CAMERA_FRONT;
+        if (camera == 0) {
+            newValue = 1;
         } else {
-            newValue = CAMERA_BACK;
+            newValue = 0;
         }
 
         Settings.System.putInt(resolver,
@@ -101,15 +99,9 @@ public class OnTheGoTile extends QuickSettingsTile {
     }
 
     private synchronized void updateTile() {
-        int cameraMode;
-
-        if (NamelessUtils.hasFrontCamera(mContext)) {
-            cameraMode = Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.ON_THE_GO_CAMERA,
-                    CAMERA_BACK);
-        } else {
-            cameraMode = CAMERA_BACK;
-        }
+        final int cameraMode = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.ON_THE_GO_CAMERA,
+                0);
 
         switch (cameraMode) {
             default:
@@ -125,10 +117,5 @@ public class OnTheGoTile extends QuickSettingsTile {
 
     }
 
-    private void sendCameraBroadcast() {
-        final Intent cameraBroadcast = new Intent();
-        cameraBroadcast.setAction(OnTheGoService.ACTION_TOGGLE_CAMERA);
-        mContext.sendBroadcast(cameraBroadcast);
-    }
-
 }
+

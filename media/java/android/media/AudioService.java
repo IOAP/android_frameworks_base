@@ -42,6 +42,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.pm.ThemeUtils;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
@@ -77,7 +78,6 @@ import android.view.Surface;
 import android.view.VolumePanel;
 import android.view.WindowManager;
 
-import com.android.internal.app.ThemeUtils;
 import com.android.internal.telephony.ITelephony;
 import com.android.internal.util.XmlUtils;
 
@@ -221,7 +221,7 @@ public class AudioService extends IAudioService.Stub {
         7,  // STREAM_ALARM
         7,  // STREAM_NOTIFICATION
         15, // STREAM_BLUETOOTH_SCO
-        7,  // STREAM_SYSTEM_ENFORCED
+        15, // STREAM_SYSTEM_ENFORCED
         15, // STREAM_DTMF
         15  // STREAM_TTS
     };
@@ -618,46 +618,46 @@ public class AudioService extends IAudioService.Stub {
         //15, // STREAM_DTMF
         //15  // STREAM_TTS
 
-                MAX_STREAM_VOLUME[AudioSystem.STREAM_VOICE_CALL] =
-                        Settings.System.getInt(mContentResolver, "volume_steps_voice_call",
-                                MAX_STREAM_VOLUME[AudioSystem.STREAM_VOICE_CALL]);
+        MAX_STREAM_VOLUME[AudioSystem.STREAM_VOICE_CALL] =
+                Settings.System.getInt(mContentResolver, "volume_steps_voice_call",
+                        MAX_STREAM_VOLUME[AudioSystem.STREAM_VOICE_CALL]);
 
-                MAX_STREAM_VOLUME[AudioSystem.STREAM_SYSTEM] =
-                        Settings.System.getInt(mContentResolver, "volume_steps_system",
-                                MAX_STREAM_VOLUME[AudioSystem.STREAM_SYSTEM]);
+        MAX_STREAM_VOLUME[AudioSystem.STREAM_SYSTEM] =
+                Settings.System.getInt(mContentResolver, "volume_steps_system",
+                        MAX_STREAM_VOLUME[AudioSystem.STREAM_SYSTEM]);
 
-                MAX_STREAM_VOLUME[AudioSystem.STREAM_RING] =
-                        Settings.System.getInt(mContentResolver, "volume_steps_ring",
-                                MAX_STREAM_VOLUME[AudioSystem.STREAM_RING]);
+        MAX_STREAM_VOLUME[AudioSystem.STREAM_RING] =
+                Settings.System.getInt(mContentResolver, "volume_steps_ring",
+                        MAX_STREAM_VOLUME[AudioSystem.STREAM_RING]);
 
-                MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] =
-                        Settings.System.getInt(mContentResolver, "volume_steps_music",
-                                MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC]);
+        MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] =
+                Settings.System.getInt(mContentResolver, "volume_steps_music",
+                         MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC]);
 
-                MAX_STREAM_VOLUME[AudioSystem.STREAM_ALARM] =
-                        Settings.System.getInt(mContentResolver, "volume_steps_alarm",
-                                MAX_STREAM_VOLUME[AudioSystem.STREAM_ALARM]);
+        MAX_STREAM_VOLUME[AudioSystem.STREAM_ALARM] =
+                Settings.System.getInt(mContentResolver, "volume_steps_alarm",
+                         MAX_STREAM_VOLUME[AudioSystem.STREAM_ALARM]);
 
-                MAX_STREAM_VOLUME[AudioSystem.STREAM_NOTIFICATION] =
-                        Settings.System.getInt(mContentResolver, "volume_steps_notification",
-                                MAX_STREAM_VOLUME[AudioSystem.STREAM_NOTIFICATION]);
+        MAX_STREAM_VOLUME[AudioSystem.STREAM_NOTIFICATION] =
+                Settings.System.getInt(mContentResolver, "volume_steps_notification",
+                         MAX_STREAM_VOLUME[AudioSystem.STREAM_NOTIFICATION]);
 
-                MAX_STREAM_VOLUME[AudioSystem.STREAM_BLUETOOTH_SCO] =
-                        Settings.System.getInt(mContentResolver, "volume_steps_bluetooth_sco",
-                                MAX_STREAM_VOLUME[AudioSystem.STREAM_BLUETOOTH_SCO]);
+        MAX_STREAM_VOLUME[AudioSystem.STREAM_BLUETOOTH_SCO] =
+                Settings.System.getInt(mContentResolver, "volume_steps_bluetooth_sco",
+                         MAX_STREAM_VOLUME[AudioSystem.STREAM_BLUETOOTH_SCO]);
 
-                MAX_STREAM_VOLUME[AudioSystem.STREAM_SYSTEM_ENFORCED] =
-                        Settings.System.getInt(mContentResolver, "volume_steps_system_enforced",
-                                MAX_STREAM_VOLUME[AudioSystem.STREAM_SYSTEM_ENFORCED]);
+        MAX_STREAM_VOLUME[AudioSystem.STREAM_SYSTEM_ENFORCED] =
+                Settings.System.getInt(mContentResolver, "volume_steps_system_enforced",
+                        MAX_STREAM_VOLUME[AudioSystem.STREAM_SYSTEM_ENFORCED]);
 
-                MAX_STREAM_VOLUME[AudioSystem.STREAM_DTMF] =
-                        Settings.System.getInt(mContentResolver, "volume_steps_dtmf",
-                                MAX_STREAM_VOLUME[AudioSystem.STREAM_DTMF]);
+        MAX_STREAM_VOLUME[AudioSystem.STREAM_DTMF] =
+                Settings.System.getInt(mContentResolver, "volume_steps_dtmf",
+                        MAX_STREAM_VOLUME[AudioSystem.STREAM_DTMF]);
 
-                MAX_STREAM_VOLUME[AudioSystem.STREAM_TTS] =
-                        Settings.System.getInt(mContentResolver, "volume_steps_tts",
-                                MAX_STREAM_VOLUME[AudioSystem.STREAM_TTS]);
-       }
+        MAX_STREAM_VOLUME[AudioSystem.STREAM_TTS] =
+                Settings.System.getInt(mContentResolver, "volume_steps_tts",
+                        MAX_STREAM_VOLUME[AudioSystem.STREAM_TTS]);
+        }
 
     private void createAudioSystemThread() {
         mAudioSystemThread = new AudioSystemThread();
@@ -1403,7 +1403,7 @@ public class AudioService extends IAudioService.Stub {
     }
 
     protected static void setMaxStreamVolume(int streamType, int maxVol) {
-                MAX_STREAM_VOLUME[streamType] = maxVol;
+        MAX_STREAM_VOLUME[streamType] = maxVol;
     }
 
     /** @see AudioManager#getStreamVolume(int) */
@@ -1867,7 +1867,7 @@ public class AudioService extends IAudioService.Stub {
                 CUSTOM_AUDIO_SYMLINK_PATH + "VideoRecord_start.ogg");
         symlink("/system/media/audio/ui/VideoRecord.ogg",
                 CUSTOM_AUDIO_SYMLINK_PATH + "VideoRecord_stop.ogg");
-
+        
         // Reset lock/unlock sounds
         Settings.Global.putString(mContentResolver,
                 Settings.Global.LOCK_SOUND,
@@ -2683,14 +2683,25 @@ public class AudioService extends IAudioService.Stub {
             }
         }
         public void onServiceDisconnected(int profile) {
+            Log.d(TAG, "onServiceDisconnected: Bluetooth profile: " + profile);
             switch(profile) {
             case BluetoothProfile.A2DP:
                 synchronized (mA2dpAvrcpLock) {
                     mA2dp = null;
                     synchronized (mConnectedDevices) {
                         if (mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP)) {
-                            makeA2dpDeviceUnavailableNow(
-                                    mConnectedDevices.get(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP));
+                            Log.d(TAG, "A2dp service disconnects, pause music player");
+                            BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+                            BluetoothDevice btDevice = adapter.getRemoteDevice
+                                    (mConnectedDevices.get(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP));
+                            int delay = checkSendBecomingNoisyIntent(
+                                                AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP, 0);
+                            queueMsgUnderWakeLock(mAudioHandler,
+                                                MSG_SET_A2DP_CONNECTION_STATE,
+                                                BluetoothA2dp.STATE_DISCONNECTED,
+                                                0,
+                                                btDevice,
+                                                delay);
                         }
                     }
                 }
@@ -3314,9 +3325,10 @@ public class AudioService extends IAudioService.Stub {
         public int getMaxIndex() {
             return mIndexMax;
         }
+
         public void setMaxIndex(int maxVol) {
-                         mIndexMax = maxVol;
-                         AudioSystem.initStreamVolume(mStreamType, 0, mIndexMax);
+             mIndexMax = maxVol;
+             AudioSystem.initStreamVolume(mStreamType, 0, mIndexMax);
              mIndexMax = maxVol;
              mIndexMax *= 10;
         }
@@ -4090,9 +4102,8 @@ public class AudioService extends IAudioService.Stub {
                 } else if (uri.equals(Settings.System.getUriFor(Settings.System.VOLUME_KEYS_CONTROL_RING_STREAM))) {
                     mVolumeKeysControlRingStream = Settings.System.getIntForUser(mContentResolver,
                             Settings.System.VOLUME_KEYS_CONTROL_RING_STREAM, 1, UserHandle.USER_CURRENT) == 1;
-
-                reloadTouchSoundAssets();
                 }
+                reloadTouchSoundAssets();
             }
         }
     }

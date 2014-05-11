@@ -27,7 +27,6 @@ import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.SparseArray;
-import android.provider.Settings;
 
 /**
  * Contains methods to standard constants used in the UI for timeouts, sizes, and distances.
@@ -183,13 +182,12 @@ public class ViewConfiguration {
     /**
      * Maximum velocity to initiate a fling, as measured in dips per second
      */
-    private static int MAXIMUM_FLING_VELOCITY = 8000;
+    private static int MAXIMUM_FLING_VELOCITY = 15000;
 
-    /**	
-     * Maximum velocity to initiate a fling, as measured in dips per second	
-     * @hide	
+    /**
+     * Default Maximum velocity to initiate a fling, as measured in dips per second
      */
-    public static final int DEFAULT_MAXIMUM_FLING_VELOCITY = 8000;
+    public static final int DEFAULT_MAXIMUM_FLING_VELOCITY = 15000;
 
     /**
      * Delay before dispatching a recurring accessibility event in milliseconds.
@@ -209,13 +207,12 @@ public class ViewConfiguration {
     /**
      * The coefficient of friction applied to flings/scrolls.
      */
-    private static float SCROLL_FRICTION = 0.015f;
+    private static float SCROLL_FRICTION = 0.011f;
 
     /**
-     * The coefficient of friction applied to flings/scrolls.	
-     * @hide
-     */	
-    public static final float DEFAULT_SCROLL_FRICTION = 0.015f;
+     * The default coefficient of friction applied to flings/scrolls.
+     */
+    public static final float DEFAULT_SCROLL_FRICTION = 0.011f;
 
     /**
      * Max distance in dips to overscroll for edge effects
@@ -223,8 +220,7 @@ public class ViewConfiguration {
     private static int OVERSCROLL_DISTANCE = 0;
 
     /**
-     * Max distance in dips to overscroll for edge effects
-     * @hide	
+     * Default Max distance in dips to overscroll for edge effects
      */
     public static final int DEFAULT_OVERSCROLL_DISTANCE = 0;
 
@@ -234,8 +230,7 @@ public class ViewConfiguration {
     private static int OVERFLING_DISTANCE = 6;
 
     /**
-     * Max distance in dips to overfling for edge effects
-     * @hide
+     * Default Max distance in dips to overfling for edge effects
      */
     public static final int DEFAULT_OVERFLING_DISTANCE = 6;
 

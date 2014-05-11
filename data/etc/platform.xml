@@ -77,6 +77,7 @@
         <group gid="sdcard_r" />
         <group gid="sdcard_rw" />
         <group gid="sdcard_all" />
+        <group gid="media_rw" />
     </permission>
 
     <permission name="android.permission.WRITE_MEDIA_STORAGE" >
@@ -117,11 +118,6 @@
 
     <permission name="android.permission.LOOP_RADIO" >
         <group gid="loop_radio" />
-    </permission>
-
-    <!-- Permissions to read DRM-protected theme resources. -->
-    <permission name="com.tmobile.permission.ACCESS_DRM_THEME" >
-        <group gid="theme_man" />
     </permission>
 
     <!-- ================================================================== -->

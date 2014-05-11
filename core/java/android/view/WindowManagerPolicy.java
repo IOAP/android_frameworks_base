@@ -17,6 +17,7 @@
 package android.view;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.CompatibilityInfo;
 import android.content.res.Configuration;
 import android.graphics.Rect;
@@ -127,6 +128,17 @@ public interface WindowManagerPolicy {
      * Do not return this and {@link #ACTION_WAKE_UP} or {@link #ACTION_PASS_TO_USER}.
      */
     public final static int ACTION_GO_TO_SLEEP = 0x00000004;
+
+    /**
+     * Sticky broadcast of the current lid state
+     */
+    public final static String ACTION_LID_STATE_CHANGED = "android.intent.action.LID_STATE_CHANGED";
+
+    /**
+     * Extra in {@link #ACTION_LID_STATE_CHANGED} indicating the state:
+     * See {@link #LID_ABSENT}, {@link #LID_CLOSED}, and {@link #LID_OPEN}.
+     */
+    public final static String EXTRA_LID_STATE = "state";
 
     /**
      * Interface to the Window Manager state associated with a particular
@@ -1002,6 +1014,12 @@ public interface WindowManagerPolicy {
     public boolean isKeyguardSecure();
 
     /**
+     * Ask keyguard to invoke a custom intent after dismissing keyguard
+     * @hide
+     */
+    public void showCustomIntentOnKeyguard(Intent intent);
+
+    /**
      * inKeyguardRestrictedKeyInputMode
      *
      * if keyguard screen is showing or in restricted key input mode (i.e. in
@@ -1066,6 +1084,11 @@ public interface WindowManagerPolicy {
      * user can start interacting with it.
      */
     public void systemBooted();
+
+    /**
+     * name of package being worked on during boot time message
+     */
+    public void setPackageName(String pkgName);
 
     /**
      * Show boot time message to the user.

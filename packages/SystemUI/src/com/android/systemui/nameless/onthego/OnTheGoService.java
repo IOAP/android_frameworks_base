@@ -465,3 +465,4 @@ public class OnTheGoService extends Service implements ShakeDetector.Listener {
         }
     }
 }
+

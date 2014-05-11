@@ -60,9 +60,10 @@ public class DockBatteryMeterView extends BatteryMeterView {
                     voltage = intent.getIntExtra(BatteryManager.EXTRA_DOCK_VOLTAGE, 0);
                     temperature = intent.getIntExtra(BatteryManager.EXTRA_DOCK_TEMPERATURE, 0);
 
-                    if (present && mMeterMode != BatteryMeterMode.BATTERY_METER_GONE) {
-                        setContentDescription(context.getString(
-                                R.string.accessibility_dock_battery_level, level));
+                    if (present) {
+                        setContentDescription(
+                                context.getString(R.string.accessibility_dock_battery_level, level));
+
                         invalidateIfVisible();
                         setVisibility(View.VISIBLE);
                     } else {
@@ -74,7 +75,7 @@ public class DockBatteryMeterView extends BatteryMeterView {
                     setVisibility(View.GONE);
 
                     // If dock is not supported then we don't need this receiver anymore
-                    // getContext().unregisterReceiver(this);
+                    getContext().unregisterReceiver(this);
                 }
             } else if (action.equals(ACTION_LEVEL_TEST)) {
                 testmode = true;
@@ -153,7 +154,7 @@ public class DockBatteryMeterView extends BatteryMeterView {
                 return new DockCircleBatteryMeterDrawable(res);
 
             case BATTERY_METER_TEXT:
-                return new DockTextBatteryMeterDrawable(res);
+                return new DockTextBatteryMeterDrawable(mContext);
 
             case BATTERY_METER_ICON_LANDSCAPE:
                 return new DockNormalBatteryMeterDrawable(res, true);
@@ -189,8 +190,8 @@ public class DockBatteryMeterView extends BatteryMeterView {
     }
 
     protected class DockTextBatteryMeterDrawable extends TextBatteryMeterDrawable {
-        public DockTextBatteryMeterDrawable(Resources res) {
-            super(res);
+        public DockTextBatteryMeterDrawable(Context ctx) {
+            super(ctx);
         }
     }
 }

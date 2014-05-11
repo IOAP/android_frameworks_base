@@ -23,7 +23,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Debug;
@@ -134,6 +133,10 @@ public class KeyguardService extends Service {
             checkPermission();
             mKeyguardViewMediator.showAssistant();
         }
+        public void showCustomIntent(Intent intent) {
+            checkPermission();
+            mKeyguardViewMediator.showCustomIntent(intent);
+        }
         public void dispatch(MotionEvent event) {
             checkPermission();
             mKeyguardViewMediator.dispatch(event);
@@ -150,7 +153,7 @@ public class KeyguardService extends Service {
             checkPermission();
             mKeyguardViewMediator.onBootCompleted();
         }
-	public void setBackgroundBitmap(Bitmap bmp) {
+        public void setBackgroundBitmap(Bitmap bmp) {
             mKeyguardViewMediator.setBackgroundBitmap(bmp);
         }
     };

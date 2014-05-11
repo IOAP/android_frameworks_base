@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
- * Not a Contribution.
  * Copyright (C) 2008 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +28,6 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.os.ServiceManager;
-import android.telephony.MSimTelephonyManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
@@ -39,8 +36,6 @@ import android.util.Slog;
 
 import com.android.internal.telephony.DctConstants;
 import com.android.internal.telephony.ITelephony;
-import com.android.internal.telephony.msim.ITelephonyMSim;
-import com.android.internal.telephony.MSimConstants;
 import com.android.internal.telephony.PhoneConstants;
 import com.android.internal.telephony.TelephonyIntents;
 import com.android.internal.util.AsyncChannel;
@@ -64,7 +59,6 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
 
     private PhoneConstants.DataState mMobileDataState;
     private ITelephony mPhoneService;
-    private ITelephonyMSim mMSimPhoneService;
 
     private String mApnType;
     private NetworkInfo mNetworkInfo;
@@ -204,8 +198,10 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
             loge("CONNECTED event did not supply link properties.");
             mLinkProperties = new LinkProperties();
         }
-        mLinkProperties.setMtu(mContext.getResources().getInteger(
+        if (mLinkProperties.getMtu() <= 0) {
+            mLinkProperties.setMtu(mContext.getResources().getInteger(
                 com.android.internal.R.integer.config_mobile_mtu));
+        }
         mLinkCapabilities = intent.getParcelableExtra(
                 PhoneConstants.DATA_LINK_CAPABILITIES_KEY);
         if (mLinkCapabilities == null) {
@@ -252,37 +248,6 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
                 mNetworkInfo.setIsConnectedToProvisioningNetwork(false);
                 if (DBG) {
                     log("Broadcast received: " + intent.getAction() + " apnType=" + apnType);
-                }
-
-                if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
-                    int dds = 0;
-                    final int subscription = intent.getIntExtra(MSimConstants.SUBSCRIPTION_KEY,
-                            MSimConstants.DEFAULT_SUBSCRIPTION);
-                    getPhoneService(false);
-
-                   /*
-                    * If the phone process has crashed in the past, we'll get a
-                    * RemoteException and need to re-reference the service.
-                    */
-                    for (int retry = 0; retry < 2; retry++) {
-                        if (mMSimPhoneService == null) {
-                            loge("Ignoring get dds request because "
-                                    + "MSim Phone Service is not available");
-                            break;
-                        }
-
-                        try {
-                            dds = mMSimPhoneService.getPreferredDataSubscription();
-                        } catch (RemoteException e) {
-                            if (retry == 0) getPhoneService(true);
-                        }
-                    }
-                    log(String.format("subscription=%s, dds=%s", subscription, dds));
-                    if (subscription != dds) {
-                        log("ignore data connection state as sub:" + subscription +
-                                " is not current dds: " + dds);
-                        return;
-                    }
                 }
 
                 int oldSubtype = mNetworkInfo.getSubtype();
@@ -407,13 +372,6 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
     }
 
     private void getPhoneService(boolean forceRefresh) {
-        if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
-            if (mMSimPhoneService == null || forceRefresh) {
-                mMSimPhoneService = ITelephonyMSim.Stub.asInterface(
-                        ServiceManager.getService("phone_msim"));
-            }
-            return;
-        }
         if ((mPhoneService == null) || forceRefresh) {
             mPhoneService = ITelephony.Stub.asInterface(ServiceManager.getService("phone"));
         }
@@ -457,6 +415,9 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
         case TelephonyManager.NETWORK_TYPE_HSPAP:
             networkTypeStr = "hspap";
             break;
+        case TelephonyManager.NETWORK_TYPE_DCHSPAP:
+            networkTypeStr = "dchspap";
+            break;
         case TelephonyManager.NETWORK_TYPE_CDMA:
             networkTypeStr = "cdma";
             break;
@@ -476,7 +437,6 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
             networkTypeStr = "iden";
             break;
         case TelephonyManager.NETWORK_TYPE_LTE:
-        case TelephonyManager.NETWORK_TYPE_IWLAN:
             networkTypeStr = "lte";
             break;
         case TelephonyManager.NETWORK_TYPE_EHRPD:
@@ -486,6 +446,48 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
             loge("unknown network type: " + tm.getNetworkType());
         }
         return "net.tcp.buffersize." + networkTypeStr;
+    }
+
+    /**
+     * Return the system properties name associated with the tcp delayed ack settings
+     * for this network.
+     */
+    @Override
+    public String getTcpDelayedAckPropName() {
+        String networkTypeStr = "default";
+        TelephonyManager tm = (TelephonyManager) mContext.getSystemService(
+                         Context.TELEPHONY_SERVICE);
+        if (tm != null) {
+            switch(tm.getNetworkType()) {
+                case TelephonyManager.NETWORK_TYPE_LTE:
+                    networkTypeStr = "lte";
+                    break;
+                default:
+                    break;
+            }
+        }
+        return "net.tcp.delack." + networkTypeStr;
+    }
+
+    /**
+     * Return the system properties name associated with the tcp user config flag
+     * for this network.
+     */
+    @Override
+    public String getTcpUserConfigPropName() {
+        String networkTypeStr = "default";
+        TelephonyManager tm = (TelephonyManager) mContext.getSystemService(
+                         Context.TELEPHONY_SERVICE);
+        if (tm != null) {
+            switch(tm.getNetworkType()) {
+                case TelephonyManager.NETWORK_TYPE_LTE:
+                    networkTypeStr = "lte";
+                    break;
+                default:
+                    break;
+            }
+        }
+        return "net.tcp.usercfg." + networkTypeStr;
     }
 
     /**
@@ -596,33 +598,15 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
          * RemoteException and need to re-reference the service.
          */
         for (int retry = 0; retry < 2; retry++) {
-            if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
-                if (mMSimPhoneService == null) {
-                    loge("Ignoring mobile radio request because "
-                            + "could not acquire MSim Phone Service");
-                    break;
-                }
+            if (mPhoneService == null) {
+                loge("Ignoring mobile radio request because could not acquire PhoneService");
+                break;
+            }
 
-                try {
-                    boolean result = true;
-                    for (int i = 0; i < MSimTelephonyManager.getDefault().getPhoneCount(); i++) {
-                        result = result && mMSimPhoneService.setRadio(turnOn, i);
-                    }
-                    return result;
-                } catch (RemoteException e) {
-                    if (retry == 0) getPhoneService(true);
-                }
-            } else {
-                if (mPhoneService == null) {
-                    loge("Ignoring mobile radio request because could not acquire PhoneService");
-                    break;
-                }
-
-                try {
-                    return mPhoneService.setRadio(turnOn);
-                } catch (RemoteException e) {
-                    if (retry == 0) getPhoneService(true);
-                }
+            try {
+                return mPhoneService.setRadio(turnOn);
+            } catch (RemoteException e) {
+                if (retry == 0) getPhoneService(true);
             }
         }
 
@@ -753,36 +737,19 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
          * RemoteException and need to re-reference the service.
          */
         for (int retry = 0; retry < 2; retry++) {
-            if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
-                if (mMSimPhoneService == null) {
-                    loge("Ignoring feature request because could not acquire MSim Phone Service");
-                    break;
-                }
+            if (mPhoneService == null) {
+                loge("Ignoring feature request because could not acquire PhoneService");
+                break;
+            }
 
-                try {
-                    if (enable) {
-                        return mMSimPhoneService.enableApnType(apnType);
-                    } else {
-                        return mMSimPhoneService.disableApnType(apnType);
-                    }
-                } catch (RemoteException e) {
-                    if (retry == 0) getPhoneService(true);
+            try {
+                if (enable) {
+                    return mPhoneService.enableApnType(apnType);
+                } else {
+                    return mPhoneService.disableApnType(apnType);
                 }
-            } else {
-                if (mPhoneService == null) {
-                    loge("Ignoring feature request because could not acquire PhoneService");
-                    break;
-                }
-
-                try {
-                    if (enable) {
-                        return mPhoneService.enableApnType(apnType);
-                    } else {
-                        return mPhoneService.disableApnType(apnType);
-                    }
-                } catch (RemoteException e) {
-                    if (retry == 0) getPhoneService(true);
-                }
+            } catch (RemoteException e) {
+                if (retry == 0) getPhoneService(true);
             }
         }
 
@@ -932,6 +899,7 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
             new NetworkDataEntry(TelephonyManager.NETWORK_TYPE_HSUPA,   14400,    5760, UNKNOWN),
             new NetworkDataEntry(TelephonyManager.NETWORK_TYPE_HSPA,    14400,    5760, UNKNOWN),
             new NetworkDataEntry(TelephonyManager.NETWORK_TYPE_HSPAP,   21000,    5760, UNKNOWN),
+            new NetworkDataEntry(TelephonyManager.NETWORK_TYPE_DCHSPAP, 42000,    5760, UNKNOWN),
             new NetworkDataEntry(TelephonyManager.NETWORK_TYPE_CDMA,  UNKNOWN, UNKNOWN, UNKNOWN),
             new NetworkDataEntry(TelephonyManager.NETWORK_TYPE_1xRTT, UNKNOWN, UNKNOWN, UNKNOWN),
             new NetworkDataEntry(TelephonyManager.NETWORK_TYPE_EVDO_0,   2468,     153, UNKNOWN),
@@ -965,6 +933,7 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
             case TelephonyManager.NETWORK_TYPE_HSUPA:
             case TelephonyManager.NETWORK_TYPE_HSPA:
             case TelephonyManager.NETWORK_TYPE_HSPAP:
+            case TelephonyManager.NETWORK_TYPE_DCHSPAP:
                 level = ss.getGsmLevel();
                 break;
             case TelephonyManager.NETWORK_TYPE_CDMA:

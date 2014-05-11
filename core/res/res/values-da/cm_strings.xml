@@ -66,7 +66,6 @@
     <string name="permlab_resetBatteryStats">nulstil batteristatistik</string>
     <string name="permdesc_resetBatteryStats">Tillader en app at nulstille den aktuelle statistik over batteriforbruget.</string>
     <string name="immersive_mode_confirmation_bottom">Swipe up from the bottom to exit full screen.</string>
-    <string name="transient_navigation_confirmation_long">Stryg fra kanten af skærmen for at vise systemlinjen</string>
     <string name="progress_nomediapresent" product="default">Ingen flytbare medier til stede\u2026</string>
     <string name="app_ops_access_camera">tilgå kameraet</string>
     <string name="app_ops_access_location">tilgå din placering</string>

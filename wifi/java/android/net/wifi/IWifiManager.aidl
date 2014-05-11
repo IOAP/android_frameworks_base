@@ -60,8 +60,6 @@ interface IWifiManager
 
     boolean setWifiEnabled(boolean enable);
 
-    boolean setWifiEnabledInternal(String callingPackage, boolean enable);
-
     int getWifiEnabledState();
 
     void setCountryCode(String country, boolean persist);

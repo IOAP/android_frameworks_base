@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2013 The Linux Foundation. All rights reserved.
- * Not a Contribution.
  * Copyright (C) 2007 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +41,6 @@ import android.os.UserHandle;
 import android.provider.Settings;
 import android.provider.Settings.Global;
 import android.provider.Settings.Secure;
-import android.telephony.MSimTelephonyManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -65,8 +62,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 
-import static com.android.internal.telephony.MSimConstants.MAX_PHONE_COUNT_TRI_SIM;
-
 /**
  * Database helper class for {@link SettingsProvider}.
  * Mostly just has a bit {@link #onCreate} to initialize the database.
@@ -79,7 +74,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // database gets upgraded properly. At a minimum, please confirm that 'upgradeVersion'
     // is properly propagated through your change.  Not doing so will result in a loss of user
     // settings.
-    private static final int DATABASE_VERSION = 99;
+    private static final int DATABASE_VERSION = 101;
 
     private Context mContext;
     private int mUserHandle;
@@ -1617,6 +1612,28 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             upgradeVersion = 99;
         }
 
+        if (upgradeVersion == 99) {
+            if (mUserHandle == UserHandle.USER_OWNER) {
+                loadScreenAnimationStyle(db);
+            }
+            upgradeVersion = 100;
+        }
+
+        if (upgradeVersion == 100) {
+            // We're setting some new defaults on these for certain devices, and adding
+            // a default for animator duration. Load them if the user hasn't set them.
+            db.beginTransaction();
+            SQLiteStatement stmt = null;
+            try {
+                stmt = db.compileStatement("INSERT OR IGNORE INTO system(name,value) VALUES(?,?);");
+                loadDefaultAnimationSettings(stmt);
+                    db.setTransactionSuccessful();
+            } finally {
+                db.endTransaction();
+            }
+            upgradeVersion = 101;
+        }
+
         // *** Remember to update DATABASE_VERSION above!
 
         if (upgradeVersion != currentVersion) {
@@ -2023,19 +2040,27 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private void loadQuickBootSetting(SQLiteDatabase db) {
-        boolean qbEnabled = true;
-        final PackageManager pm = mContext.getPackageManager();
-        try {
-            pm.getPackageInfo("com.qapp.quickboot", PackageManager.GET_META_DATA);
-        } catch (NameNotFoundException e) {
-            qbEnabled = false;
-        }
         db.beginTransaction();
         SQLiteStatement stmt = null;
         try {
             stmt = db.compileStatement("INSERT OR REPLACE INTO global(name,value)"
                     + " VALUES(?,?);");
-            loadSetting(stmt, Settings.Global.ENABLE_QUICKBOOT, qbEnabled ? 1 : 0);
+            loadSetting(stmt, Settings.Global.ENABLE_QUICKBOOT, 0);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            if (stmt != null) stmt.close();
+        }
+    }
+
+    private void loadScreenAnimationStyle(SQLiteDatabase db) {
+        db.beginTransaction();
+        SQLiteStatement stmt = null;
+        try {
+            stmt = db.compileStatement("INSERT OR REPLACE INTO system(name,value)"
+                    + " VALUES(?,?);");
+            loadIntegerSetting(stmt, Settings.System.SYSTEM_POWER_CRT_MODE,
+                    R.integer.def_screen_power_crt_mode);
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
@@ -2073,7 +2098,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             loadSetting(stmt, Settings.System.TTY_MODE, 0);
 
             // Set default noise suppression value
-            loadSetting(stmt, Settings.System.NOISE_SUPPRESSION, 0);
+            loadSetting(stmt, Settings.System.NOISE_SUPPRESSION,
+                    R.bool.def_noise_suppression);
 
             loadIntegerSetting(stmt, Settings.System.SCREEN_BRIGHTNESS,
                     R.integer.def_screen_brightness);
@@ -2137,6 +2163,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 R.fraction.def_window_animation_scale, 1);
         loadFractionSetting(stmt, Settings.System.TRANSITION_ANIMATION_SCALE,
                 R.fraction.def_window_transition_scale, 1);
+        loadFractionSetting(stmt, Settings.System.ANIMATOR_DURATION_SCALE,
+                R.fraction.def_animator_duration_scale, 1);
     }
 
     private void loadDefaultHapticSettings(SQLiteStatement stmt) {
@@ -2323,19 +2351,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                             SystemProperties.get("ro.com.android.mobiledata",
                                     "true")) ? 1 : 0);
 
-            // SUB specific flags for Multisim devices
-            for (int i = 0; i < MAX_PHONE_COUNT_TRI_SIM; i++) {
-                // Mobile Data default, based on build
-                loadSetting(stmt, Settings.Global.MOBILE_DATA + i,
-                        "true".equalsIgnoreCase(
-                        SystemProperties.get("ro.com.android.mobiledata", "true")) ? 1 : 0);
-
-                // Data roaming default, based on build
-                loadSetting(stmt, Settings.Global.DATA_ROAMING + i,
-                        "true".equalsIgnoreCase(
-                        SystemProperties.get("ro.com.android.dataroaming", "true")) ? 1 : 0);
-            }
-
             loadBooleanSetting(stmt, Settings.Global.NETSTATS_ENABLED,
                     R.bool.def_netstats_enabled);
 
@@ -2396,11 +2411,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             int type;
             type = SystemProperties.getInt("ro.telephony.default_network",
                         RILConstants.PREFERRED_NETWORK_MODE);
-            String val = Integer.toString(type);
-            if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
-                val = type + "," + type;
-            }
-            loadSetting(stmt, Settings.Global.PREFERRED_NETWORK_MODE, val);
+            loadSetting(stmt, Settings.Global.PREFERRED_NETWORK_MODE, type);
 
             // Set the preferred cdma subscription source to target desired value or default
             // value defined in CdmaSubscriptionSourceManager

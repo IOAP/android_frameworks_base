@@ -634,8 +634,6 @@ public class GpsLocationProvider implements LocationProviderInterface {
                 if (DEBUG) Log.d(TAG, "call native_agps_data_conn_failed");
                 mAGpsApn = null;
                 mAGpsDataConnectionState = AGPS_DATA_CONNECTION_CLOSED;
-                mConnMgr.stopUsingNetworkFeature(
-                        ConnectivityManager.TYPE_MOBILE, Phone.FEATURE_ENABLE_SUPL);
                 native_agps_data_conn_failed();
             }
         }
@@ -1749,7 +1747,8 @@ public class GpsLocationProvider implements LocationProviderInterface {
                     || networkType == TelephonyManager.NETWORK_TYPE_HSDPA
                     || networkType == TelephonyManager.NETWORK_TYPE_HSUPA
                     || networkType == TelephonyManager.NETWORK_TYPE_HSPA
-                    || networkType == TelephonyManager.NETWORK_TYPE_HSPAP) {
+                    || networkType == TelephonyManager.NETWORK_TYPE_HSPAP
+                    || networkType == TelephonyManager.NETWORK_TYPE_DCHSPAP) {
                     type = AGPS_REF_LOCATION_TYPE_UMTS_CELLID;
                 } else {
                     type = AGPS_REF_LOCATION_TYPE_GSM_CELLID;
@@ -1840,20 +1839,15 @@ public class GpsLocationProvider implements LocationProviderInterface {
         Uri uri = Uri.parse("content://telephony/carriers/preferapn");
         String apn = null;
 
-		Cursor cursor = null; 
-		
-		try {
-		    cursor = mContext.getContentResolver().query(uri, new String[] {"apn"},
-                    null, null, Carriers.DEFAULT_SORT_ORDER);
+        Cursor cursor = mContext.getContentResolver().query(uri, new String[] {"apn"},
+                null, null, Carriers.DEFAULT_SORT_ORDER);
 
-            if (cursor != null) {
+        if (null != cursor) {
+            try {
                 if (cursor.moveToFirst()) {
                     apn = cursor.getString(0);
                 }
-            }
-
-        } finally {
-			if (cursor !=null) {
+            } finally {
                 cursor.close();
             }
         }

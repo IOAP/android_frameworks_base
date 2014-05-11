@@ -23,7 +23,10 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.UserHandle;
 import android.provider.Settings;
@@ -70,8 +73,16 @@ public class Recents extends SystemUI implements RecentsComponent {
                     mContext.startActivityAsUser(intent, new UserHandle(
                             UserHandle.USER_CURRENT));
                 }
+
             } else {
-                Bitmap first = firstTask.getThumbnail();
+                Bitmap first = null;
+                if (firstTask.getThumbnail() instanceof BitmapDrawable) {
+                    first = ((BitmapDrawable) firstTask.getThumbnail()).getBitmap();
+                } else {
+                    first = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+                    Drawable d = RecentTasksLoader.getInstance(mContext).getDefaultThumbnail();
+                    d.draw(new Canvas(first));
+                }
                 final Resources res = mContext.getResources();
 
                 float thumbWidth = res
@@ -167,9 +178,20 @@ public class Recents extends SystemUI implements RecentsComponent {
                     y = (int) ((dm.heightPixels - statusBarHeight - height) / 2f + thumbTopMargin
                             + recentsItemTopPadding + thumbBgPadding + statusBarHeight);
                 }
-                ActivityOptions opts = ActivityOptions.makeCustomAnimation(mContext,
-                        R.anim.recents_launch_from_launcher_enter,
-                        R.anim.recents_launch_from_launcher_exit);
+
+                ActivityOptions opts = ActivityOptions.makeThumbnailScaleDownAnimation(
+                        statusBarView,
+                        first, x, y,
+                        new ActivityOptions.OnAnimationStartedListener() {
+                            public void onAnimationStarted() {
+                                Intent intent =
+                                        new Intent(RecentsActivity.WINDOW_ANIMATION_START_INTENT);
+                                intent.setPackage("com.android.systemui");
+                                mContext.sendBroadcastAsUser(intent,
+                                        new UserHandle(UserHandle.USER_CURRENT));
+                            }
+                        });
+                intent.putExtra(RecentsActivity.WAITING_FOR_WINDOW_ANIMATION_PARAM, true);
                 mContext.startActivityAsUser(intent, opts.toBundle(), new UserHandle(
                         UserHandle.USER_CURRENT));
             }

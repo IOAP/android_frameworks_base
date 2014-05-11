@@ -20,9 +20,11 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
+import android.os.PowerManager;
 import android.util.AttributeSet;
 import android.util.EventLog;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
@@ -36,7 +38,7 @@ import com.android.systemui.R;
 public class PhoneStatusBarView extends PanelBar {
     private static final String TAG = "PhoneStatusBarView";
     private static final boolean DEBUG = PhoneStatusBar.DEBUG;
-    private static final boolean DEBUG_GESTURES = false;
+    private static final boolean DEBUG_GESTURES = true;
 
     PhoneStatusBar mBar;
     int mScrimColor;
@@ -58,7 +60,8 @@ public class PhoneStatusBarView extends PanelBar {
         mScrimColor = res.getColor(R.color.notification_panel_scrim_color);
         mSettingsPanelDragzoneMin = res.getDimension(R.dimen.settings_panel_dragzone_min);
         try {
-            mSettingsPanelDragzoneFrac = res.getFraction(R.dimen.settings_panel_dragzone_fraction, 1, 1);
+            mSettingsPanelDragzoneFrac = res.getFraction(
+                    R.dimen.settings_panel_dragzone_fraction, 1, 1);
         } catch (NotFoundException ex) {
             mSettingsPanelDragzoneFrac = 0f;
         }
@@ -109,6 +112,12 @@ public class PhoneStatusBarView extends PanelBar {
             mSettingsPanel = pv;
         }
         pv.setRubberbandingEnabled(!mFullWidthNotifications);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        mBar.onBarViewDetached();
     }
 
     @Override
@@ -178,6 +187,7 @@ public class PhoneStatusBarView extends PanelBar {
         if (DEBUG) {
             Log.v(TAG, "start opening: " + panel + " shouldfade=" + mShouldFade);
         }
+        mBar.toggleReminderFlipper(true);
         mFadingPanel = panel;
     }
 
@@ -270,6 +280,31 @@ public class PhoneStatusBarView extends PanelBar {
 
         mBar.animateHeadsUp(mNotificationPanel == panel, mPanelExpandedFractionSum);
 
-        mBar.updateCarrierLabelVisibility(false);
+        updateShortcutsVisibility();
     }
+
+
+    public void updateShortcutsVisibility() {
+        // Notification Shortcuts check for fully expanded panel
+        if (mBar.mSettingsButton == null || mBar.mNotificationButton == null) {
+            // Tablet
+            if (mFullyOpenedPanel != null) {
+                mBar.updateNotificationShortcutsVisibility(true);
+            } else {
+                mBar.updateNotificationShortcutsVisibility(false);
+            }
+        } else {
+            // Phone
+            if (mFullyOpenedPanel != null
+                    && (mBar.mSettingsButton.getVisibility() == View.VISIBLE &&
+                    !(mBar.mSettingsButton.getVisibility() == View.VISIBLE &&
+                    mBar.mNotificationButton.getVisibility() == View.VISIBLE))) {
+                mBar.updateNotificationShortcutsVisibility(true);
+            } else {
+                mBar.updateNotificationShortcutsVisibility(false);
+            }
+        }
+        mBar.updateCarrierAndWifiLabelVisibility(false);
+    }
+
 }

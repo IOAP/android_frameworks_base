@@ -391,10 +391,11 @@ public class Process {
                                   int debugFlags, int mountExternal,
                                   int targetSdkVersion,
                                   String seInfo,
+                                  boolean refreshTheme,
                                   String[] zygoteArgs) {
         try {
             return startViaZygote(processClass, niceName, uid, gid, gids,
-                    debugFlags, mountExternal, targetSdkVersion, seInfo, zygoteArgs);
+                    debugFlags, mountExternal, targetSdkVersion, seInfo, refreshTheme, zygoteArgs);
         } catch (ZygoteStartFailedEx ex) {
             Log.e(LOG_TAG,
                     "Starting VM process through Zygote failed");
@@ -569,6 +570,7 @@ public class Process {
                                   int debugFlags, int mountExternal,
                                   int targetSdkVersion,
                                   String seInfo,
+                                  boolean refreshTheme,
                                   String[] extraArgs)
                                   throws ZygoteStartFailedEx {
         synchronized(Process.class) {
@@ -598,6 +600,9 @@ public class Process {
                 argsForZygote.add("--mount-external-multiuser");
             } else if (mountExternal == Zygote.MOUNT_EXTERNAL_MULTIUSER_ALL) {
                 argsForZygote.add("--mount-external-multiuser-all");
+            }
+            if (refreshTheme) {
+                argsForZygote.add("--refresh_theme");
             }
             argsForZygote.add("--target-sdk-version=" + targetSdkVersion);
 
@@ -1044,5 +1049,30 @@ public class Process {
          * True if the process was started with a wrapper attached.
          */
         public boolean usingWrapper;
+    }
+
+    private static final int[] PROCESS_STATE_FORMAT = new int[] {
+        PROC_SPACE_TERM,
+        PROC_SPACE_TERM|PROC_PARENS, // 1: name
+        PROC_SPACE_TERM|PROC_OUT_STRING, // 2: state
+    };
+
+    /**
+     * Returns true if the process can be found and is not a zombie
+     * @param pid the process id
+     * @hide
+     */
+    public static final boolean isAlive(int pid) {
+        boolean ret = false;
+        String[] processStateString = new String[1];
+        if (Process.readProcFile("/proc/" + pid + "/stat",
+                PROCESS_STATE_FORMAT, processStateString, null, null)) {
+            ret = true;
+            // Log.i(LOG_TAG,"State of process " + pid + " is " + processStateString[0]);
+            if (processStateString[0].equals("Z")) {
+                ret = false;
+            }
+        }
+        return ret;
     }
 }

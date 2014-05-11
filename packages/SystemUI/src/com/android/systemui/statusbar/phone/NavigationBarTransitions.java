@@ -102,7 +102,6 @@ public final class NavigationBarTransitions extends BarTransitions {
         return isOpaque ? KeyButtonView.DEFAULT_QUIESCENT_ALPHA : 1f;
     }
 
-
     public void applyBackButtonQuiescentAlpha(int mode, boolean animate) {
         float backAlpha = 0;
         View[] views = mView.getAllButtons();

@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
- * Not a Contribution.
  * Copyright (C) 2011 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +16,11 @@
 
 package com.android.systemui.statusbar;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.database.ContentObserver;
+import android.os.Handler;
+import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -40,16 +42,13 @@ public class SignalClusterView
 
     NetworkController mNC;
 
-    public static final int STYLE_NORMAL = 0;
-    public static final int STYLE_TEXT = 1;
-    public static final int STYLE_HIDDEN = 2;
+    private static final int SIGNAL_CLUSTER_STYLE_NORMAL = 0;
 
-    private int mSignalClusterStyle = STYLE_NORMAL;
+    private int mSignalClusterStyle;
     private boolean mWifiVisible = false;
     private int mWifiStrengthId = 0, mWifiActivityId = 0;
     private boolean mMobileVisible = false;
-    private int mMobileStrengthId = 0, mMobileActivityId = 0;
-    private int mMobileTypeId = 0, mNoSimIconId = 0;
+    private int mMobileStrengthId = 0, mMobileActivityId = 0, mMobileTypeId = 0;
     private boolean mIsAirplaneMode = false;
     private int mAirplaneIconId = 0;
     private String mWifiDescription, mMobileDescription, mMobileTypeDescription,
@@ -58,9 +57,28 @@ public class SignalClusterView
     private int mEthernetIconId = 0;
 
     ViewGroup mWifiGroup, mMobileGroup;
-    ImageView mWifi, mMobile, mWifiActivity, mMobileActivity, mMobileType, mAirplane, mNoSimSlot,
+    ImageView mWifi, mMobile, mWifiActivity, mMobileActivity, mMobileType, mAirplane,
         mEthernet;
     View mSpacer;
+
+    Handler mHandler;
+
+    class SettingsObserver extends ContentObserver {
+        SettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_SIGNAL_TEXT), false, this);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            updateSettings();
+        }
+    }
 
     public SignalClusterView(Context context) {
         this(context, null);
@@ -72,6 +90,11 @@ public class SignalClusterView
 
     public SignalClusterView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+
+        mHandler = new Handler();
+
+        SettingsObserver settingsObserver = new SettingsObserver(mHandler);
+        settingsObserver.observe();
     }
 
     public void setNetworkController(NetworkController nc) {
@@ -90,7 +113,6 @@ public class SignalClusterView
         mMobile         = (ImageView) findViewById(R.id.mobile_signal);
         mMobileActivity = (ImageView) findViewById(R.id.mobile_inout);
         mMobileType     = (ImageView) findViewById(R.id.mobile_type);
-        mNoSimSlot      = (ImageView) findViewById(R.id.no_sim);
         mSpacer         =             findViewById(R.id.spacer);
         mAirplane       = (ImageView) findViewById(R.id.airplane);
         mEthernet       = (ImageView) findViewById(R.id.ethernet);
@@ -107,7 +129,6 @@ public class SignalClusterView
         mMobile         = null;
         mMobileActivity = null;
         mMobileType     = null;
-        mNoSimSlot      = null;
         mSpacer         = null;
         mAirplane       = null;
         mEthernet       = null;
@@ -128,15 +149,13 @@ public class SignalClusterView
 
     @Override
     public void setMobileDataIndicators(boolean visible, int strengthIcon, int activityIcon,
-            int typeIcon, String contentDescription, String typeContentDescription,
-            int noSimIcon) {
+            int typeIcon, String contentDescription, String typeContentDescription) {
         mMobileVisible = visible;
         mMobileStrengthId = strengthIcon;
         mMobileActivityId = activityIcon;
         mMobileTypeId = typeIcon;
         mMobileDescription = contentDescription;
         mMobileTypeDescription = typeContentDescription;
-        mNoSimIconId = noSimIcon;
 
         apply();
     }
@@ -228,7 +247,6 @@ public class SignalClusterView
 
             mMobileGroup.setContentDescription(mMobileTypeDescription + " " + mMobileDescription);
             mMobileGroup.setVisibility(View.VISIBLE);
-            mNoSimSlot.setImageResource(mNoSimIconId);
         } else {
             mMobileGroup.setVisibility(View.GONE);
         }
@@ -240,8 +258,7 @@ public class SignalClusterView
             mAirplane.setVisibility(View.GONE);
         }
 
-        if (mMobileVisible && mWifiVisible &&
-                ((mIsAirplaneMode) || (mNoSimIconId != 0))) {
+        if (mMobileVisible && mWifiVisible && mIsAirplaneMode) {
             mSpacer.setVisibility(View.INVISIBLE);
         } else {
             mSpacer.setVisibility(View.GONE);
@@ -263,19 +280,21 @@ public class SignalClusterView
         mMobileType.setVisibility(
                 !mWifiVisible ? View.VISIBLE : View.GONE);
 
-        updateVisibilityForStyle();
+        updateSettings();
     }
 
-    public void setStyle(int style) {
-        mSignalClusterStyle = style;
-        updateVisibilityForStyle();
-    }
-
-    private void updateVisibilityForStyle() {
-        if (!mIsAirplaneMode && mMobileGroup != null) {
-            mMobileGroup.setVisibility(mSignalClusterStyle != STYLE_NORMAL
-                    ? View.GONE : View.VISIBLE);
+    private void updateSignalClusterStyle() {
+        if (!mIsAirplaneMode) {
+            mMobileGroup.setVisibility(mSignalClusterStyle !=
+                    SIGNAL_CLUSTER_STYLE_NORMAL ? View.GONE : View.VISIBLE);
         }
+    }
+
+    private void updateSettings() {
+        ContentResolver resolver = mContext.getContentResolver();
+        mSignalClusterStyle = (Settings.System.getInt(resolver,
+                Settings.System.STATUS_BAR_SIGNAL_TEXT, SIGNAL_CLUSTER_STYLE_NORMAL));
+        updateSignalClusterStyle();
     }
 }
 

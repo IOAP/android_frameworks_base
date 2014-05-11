@@ -49,7 +49,6 @@ public class MediaActionSound {
 
     /**
      * Note: Omni Sound Themes
-     * Fixme: camera_click_realistic should be there too
      * Since we're a static class here, we have access to no Context, so
      * we cannot lookup the Setting. Instead, we symlink the files in
      * /data. Those symlinks are done by AudioService, so way before any
@@ -59,8 +58,7 @@ public class MediaActionSound {
         "/data/system/soundlinks/camera_click.ogg",
         "/data/system/soundlinks/camera_focus.ogg",
         "/data/system/soundlinks/VideoRecord_start.ogg",
-        "/data/system/soundlinks/VideoRecord_stop.ogg",
-        "/data/system/soundlinks/camera_click_realistic.ogg"
+        "/data/system/soundlinks/VideoRecord_stop.ogg"
     };
 
     private static final String TAG = "MediaActionSound";
@@ -95,12 +93,6 @@ public class MediaActionSound {
      * @see #play
      */
     public static final int STOP_VIDEO_RECORDING  = 3;
-
-    /*
-     * A "shutter click" that sounds like a shutter click.
-     * @hide
-     */
-    public static final int SHUTTER_CLICK_REALISTIC = 4;
 
     private static final int SOUND_NOT_LOADED = -1;
 
@@ -174,13 +166,7 @@ public class MediaActionSound {
      * @see #STOP_VIDEO_RECORDING
      */
     public synchronized void play(int soundName) {
-        final int propValue = SystemProperties.getInt(PROP_CAMERA_SOUND, 1);
-        if (propValue != 0) {
-            // handle additional 3rd option, and use the realistic click if we see it
-            if (propValue == 2 && soundName == SHUTTER_CLICK) {
-                soundName = SHUTTER_CLICK_REALISTIC;
-            }
-
+        if (SystemProperties.getBoolean(PROP_CAMERA_SOUND, true)) {
             if (soundName < 0 || soundName >= SOUND_FILES.length) {
                 throw new RuntimeException("Unknown sound requested: " + soundName);
             }

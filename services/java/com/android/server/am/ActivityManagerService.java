@@ -30,12 +30,12 @@ import static com.android.server.am.ActivityStackSupervisor.HOME_STACK_ID;
 
 import android.app.AppOpsManager;
 import android.appwidget.AppWidgetManager;
+import android.content.pm.ThemeUtils;
 import android.util.ArrayMap;
 import com.android.internal.R;
 import com.android.internal.annotations.GuardedBy;
 import com.android.internal.app.IAppOpsService;
 import com.android.internal.app.ProcessStats;
-import com.android.internal.app.ThemeUtils;
 import com.android.internal.os.BackgroundThread;
 import com.android.internal.os.BatteryStatsImpl;
 import com.android.internal.os.ProcessCpuTracker;
@@ -128,6 +128,7 @@ import android.content.res.CompatibilityInfo;
 import android.content.res.Configuration;
 import android.content.res.CustomTheme;
 import android.graphics.Bitmap;
+import android.graphics.Typeface;
 import android.net.Proxy;
 import android.net.ProxyProperties;
 import android.net.Uri;
@@ -329,6 +330,8 @@ public final class ActivityManagerService extends ActivityManagerNative
 
     // How many bytes to write into the dropbox log before truncating
     static final int DROPBOX_MAX_SIZE = 256 * 1024;
+
+    static final String PROP_REFRESH_THEME = "sys.refresh_theme";
 
     /** Run all ActivityStacks through this */
     ActivityStackSupervisor mStackSupervisor;
@@ -2845,11 +2848,18 @@ public final class ActivityManagerService extends ActivityManagerNative
                 debugFlags |= Zygote.DEBUG_ENABLE_ASSERT;
             }
 
+            //Check if zygote should refresh its fonts
+            boolean refreshTheme = false;
+            if (SystemProperties.getBoolean(PROP_REFRESH_THEME, false)) {
+                SystemProperties.set(PROP_REFRESH_THEME, "false");
+                refreshTheme = true;
+            }
+
             // Start the process.  It will either succeed and return a result containing
             // the PID of the new process, or else throw a RuntimeException.
             Process.ProcessStartResult startResult = Process.start("android.app.ActivityThread",
                     app.processName, uid, uid, gids, debugFlags, mountExternal,
-                    app.info.targetSdkVersion, app.info.seinfo, null);
+                    app.info.targetSdkVersion, app.info.seinfo, refreshTheme, null);
 
             BatteryStatsImpl bs = mBatteryStatsService.getActiveStatistics();
             synchronized (bs) {
@@ -5291,7 +5301,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                                 },
                                 0, null, null,
                                 android.Manifest.permission.RECEIVE_BOOT_COMPLETED,
-                                AppOpsManager.OP_BOOT_COMPLETED, true, false, MY_PID, Process.SYSTEM_UID,
+                                AppOpsManager.OP_NONE, true, false, MY_PID, Process.SYSTEM_UID,
                                 userId);
                     }
                 }
@@ -7373,22 +7383,6 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
     }
 
-    public IBinder getActivityForTask(int task, boolean onlyRoot) {
-        final ActivityStack mainStack = mStackSupervisor.getFocusedStack();
-        synchronized(this) {
-            ArrayList<ActivityStack> stacks = mStackSupervisor.getStacks();
-            for (ActivityStack stack : stacks) {
-                TaskRecord r = stack.taskForIdLocked(task);
-                if (r != null && r.getTopActivity() != null) {
-                    return r.getTopActivity().appToken;
-                } else {
-                    return null;
-                }
-            }
-        }
-        return null;
-    }
-
     // =========================================================
     // THUMBNAILS
     // =========================================================
@@ -7717,7 +7711,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     // pending on the process even though we managed to update its
                     // adj level.  Not sure what to do about this, but at least
                     // the race is now smaller.
-                    if (!success) {
+                    if (!success || !Process.isAlive(cpr.proc.pid)) {
                         // Uh oh...  it looks like the provider's process
                         // has been killed on us.  We need to wait for a new
                         // process to be started, and make sure its death
@@ -7726,7 +7720,9 @@ public final class ActivityManagerService extends ActivityManagerNative
                                 "Existing provider " + cpr.name.flattenToShortString()
                                 + " is crashing; detaching " + r);
                         boolean lastRef = decProviderCountLocked(conn, cpr, token, stable);
-                        appDiedLocked(cpr.proc, cpr.proc.pid, cpr.proc.thread);
+                        if (!success) {
+                            appDiedLocked(cpr.proc, cpr.proc.pid, cpr.proc.thread);
+                        }
                         if (!lastRef) {
                             // This wasn't the last ref our process had on
                             // the provider...  we have now been killed, bail.
@@ -14130,6 +14126,9 @@ public final class ActivityManagerService extends ActivityManagerNative
         Configuration ci;
         synchronized(this) {
             ci = new Configuration(mConfiguration);
+            if (ci.customTheme == null) {
+                ci.customTheme = CustomTheme.getBootTheme(mContext.getContentResolver());
+            }
         }
         return ci;
     }
@@ -14280,37 +14279,12 @@ public final class ActivityManagerService extends ActivityManagerNative
             starting = mainStack.topRunningActivityLocked(null);
         }
 
-	if (starting != null) {
-	    kept = mainStack.ensureActivityConfigurationLocked(starting, changes);
-	    // And we need to make sure at this point that all other activities
-	    // are made visible with the correct configuration.
-	    mStackSupervisor.ensureActivitiesVisibleLocked(starting, changes);
-	    
-	    /*
-	    int mHaloEnabled = (Settings.System.getInt(mContext.getContentResolver(), Settings.System.HALO_ENABLED, 0));
-
-	    if(mHaloEnabled != 1){
-		    if (mWindowManager.isTaskSplitView(starting.task.taskId)) {
-			Log.e("XPLOD", "Split view restoring task " + starting.task.taskId + " -- " + mIgnoreSplitViewUpdate.size());
-			ActivityRecord second = mainStack.topRunningActivityLocked(starting);
-			if (mWindowManager.isTaskSplitView(second.task.taskId)) {
-			    Log.e("XPLOD", "Split view restoring also task " + second.task.taskId);
-			    kept = kept && mainStack.ensureActivityConfigurationLocked(second, changes);
-			    mStackSupervisor.ensureActivitiesVisibleLocked(second, changes);
-			    if (mIgnoreSplitViewUpdate.contains(starting.task.taskId)) {
-				Log.e("XPLOD", "Task "+ starting.task.taskId + " resuming ignored");
-				mIgnoreSplitViewUpdate.removeAll(Collections.singleton((Integer) starting.task.taskId));
-			    } else {
-				moveTaskToFront(second.task.taskId, 0, null);
-				mIgnoreSplitViewUpdate.add(starting.task.taskId);
-				mIgnoreSplitViewUpdate.add(second.task.taskId);
-				mStackSupervisor.resumeTopActivitiesLocked();
-				moveTaskToFront(starting.task.taskId, 0, null);
-			    }
-			}
-		    }
-	    }*/
-	}
+        if (starting != null) {
+            kept = mainStack.ensureActivityConfigurationLocked(starting, changes);
+            // And we need to make sure at this point that all other activities
+            // are made visible with the correct configuration.
+            mStackSupervisor.ensureActivitiesVisibleLocked(starting, changes);
+        }
 
         if (values != null && mWindowManager != null) {
             mWindowManager.setNewConfiguration(mConfiguration);
@@ -14318,8 +14292,6 @@ public final class ActivityManagerService extends ActivityManagerNative
 
         return kept;
     }
-
-    private ArrayList<Integer> mIgnoreSplitViewUpdate = new ArrayList<Integer>();
 
     /**
      * Decide based on the configuration whether we should shouw the ANR,
@@ -14386,9 +14358,11 @@ public final class ActivityManagerService extends ActivityManagerNative
     }
 
     private void saveThemeResourceLocked(CustomTheme t, boolean isDiff){
-        if(isDiff){
-            SystemProperties.set(Configuration.THEME_ID_PERSISTENCE_PROPERTY, t.getThemeId());
-            SystemProperties.set(Configuration.THEME_PACKAGE_NAME_PERSISTENCE_PROPERTY, t.getThemePackageName());  
+        if(isDiff) {
+            Settings.Secure.putString(mContext.getContentResolver(), Configuration.THEME_PACKAGE_NAME_PERSISTENCE_PROPERTY, t.getThemePackageName());
+            Settings.Secure.putString(mContext.getContentResolver(), Configuration.THEME_SYSTEMUI_PACKAGE_NAME_PERSISTENCE_PROPERTY, t.getSystemUiPackageName());
+            Settings.Secure.putString(mContext.getContentResolver(), Configuration.THEME_ICONPACK_PACKAGE_NAME_PERSISTENCE_PROPERTY, t.getIconPackPkgName());
+            Settings.Secure.putString(mContext.getContentResolver(), Configuration.THEME_FONT_PACKAGE_NAME_PERSISTENCE_PROPERTY, t.getFontPackPkgName());
         }
     }
 
@@ -15543,31 +15517,9 @@ public final class ActivityManagerService extends ActivityManagerNative
                 reportingProcessState, now);
     }
 
-    private ArrayList<Integer> mIgnoreSplitViewUpdateResume = new ArrayList<Integer>();
-
     private final ActivityRecord resumedAppLocked() {
-        final ActivityRecord starting = mStackSupervisor.resumedAppLocked();
-
-        final long origId = Binder.clearCallingIdentity();
-
-        if (mSecondTaskToResume >= 0) {
-            moveTaskToFront(mSecondTaskToResume, 0, null);
-            mStackSupervisor.resumeTopActivitiesLocked();
-            mStackSupervisor.ensureActivitiesVisibleLocked(null, 0);
-            mIgnoreSplitViewUpdateResume.add(mSecondTaskToResume);
-
-            if (mIgnoreSplitViewUpdateResume.contains((Integer) starting.task.taskId)) {
-                mSecondTaskToResume = -1;
-            } else {
-                mSecondTaskToResume = starting.task.taskId;
-            }
-        }
-
-        Binder.restoreCallingIdentity(origId);
-
-        return starting;
+        return mStackSupervisor.resumedAppLocked();
     }
-
 
     final boolean updateOomAdjLocked(ProcessRecord app) {
         return updateOomAdjLocked(app, false);
@@ -16496,7 +16448,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 intent.addFlags(Intent.FLAG_RECEIVER_NO_ABORT);
                 broadcastIntentLocked(null, null, intent,
                         null, null, 0, null, null,
-                        android.Manifest.permission.RECEIVE_BOOT_COMPLETED, AppOpsManager.OP_BOOT_COMPLETED,
+                        android.Manifest.permission.RECEIVE_BOOT_COMPLETED, AppOpsManager.OP_NONE,
                         true, false, MY_PID, Process.SYSTEM_UID, userId);
             }
             int num = mUserLru.size();
@@ -16815,35 +16767,5 @@ public final class ActivityManagerService extends ActivityManagerNative
         ActivityInfo info = new ActivityInfo(aInfo);
         info.applicationInfo = getAppInfoForUser(info.applicationInfo, userId);
         return info;
-    }
-
-    private int mSecondTaskToResume = -1;
-
-    public void notifySplitViewLayoutChanged() {
-        final long origId = Binder.clearCallingIdentity();
-
-        ActivityRecord starting = getFocusedStack().topRunningActivityLocked(null);
-
-        if (mWindowManager != null && starting != null &&
-                mWindowManager.isTaskSplitView(starting.task.taskId)) {
-            Log.e("XPLOD", "[rAL] The current resumed task " + starting.task.taskId + " is split. Checking second");
-
-            // This task was split, we resume the second task if this task wasn't already a resumed task
-            if (mIgnoreSplitViewUpdateResume.contains(starting.task.taskId)) {
-                Log.e("XPLOD", "[rAL] This task (" + starting.task.taskId + ") was called from a split-initiated resume. Ignoring.");
-                mIgnoreSplitViewUpdateResume.remove((Integer) starting.task.taskId);
-            } else {
-                ActivityRecord second = getFocusedStack().topRunningActivityLocked(starting);
-
-                // Is that second task split as well?
-                if (second != null && mWindowManager.isTaskSplitView(second.task.taskId)) {
-                    // Don't restore me again
-                    Log.e("XPLOD", "[rAL] There is a second task that I should be ignoring next: " + second.task.taskId);
-                    mSecondTaskToResume = second.task.taskId;
-                }
-            }
-        }
-
-        Binder.restoreCallingIdentity(origId);
     }
 }

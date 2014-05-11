@@ -26,9 +26,9 @@ public class FlashLightConstants {
     /**
      * Package name of the flashlight app
      */
-    public static final String APP_PACKAGE_NAME = "org.namelessrom.flashlight";
+    public static final String APP_PACKAGE_NAME = "net.cactii.flash2";
 
-    /**
+     /**
      * Service name of the flashlight app
      */
     public static final String APP_SERVICE_NAME = APP_PACKAGE_NAME + ".TorchService";
@@ -37,6 +37,16 @@ public class FlashLightConstants {
      * Intent broadcast action for toggling the torch state
      */
     public static final String ACTION_TOGGLE_STATE = APP_PACKAGE_NAME + ".TOGGLE_FLASHLIGHT";
+
+    /**
+     * Intent broadcast action for turning the torch off
+     */
+    public static final String ACTION_OFF = APP_PACKAGE_NAME + ".FLASHLIGHT_OFF";
+
+    /**
+     * Intent broadcast action for turning the torch on
+     */
+    public static final String ACTION_ON = APP_PACKAGE_NAME + ".FLASHLIGHT_ON";
 
     /**
      * Intent action for 'flash state changed' broadcast

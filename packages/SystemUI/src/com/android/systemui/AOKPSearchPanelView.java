@@ -72,7 +72,7 @@ public class AOKPSearchPanelView extends FrameLayout implements
     private static final int SEARCH_PANEL_HOLD_DURATION = 0;
     static final String TAG = "SearchPanelView";
     static final boolean DEBUG = PhoneStatusBar.DEBUG || false;
-    public static final boolean DEBUG_GESTURES = false;
+    public static final boolean DEBUG_GESTURES = true;
 
     private final Context mContext;
     private BaseStatusBar mBar;
@@ -179,8 +179,8 @@ public class AOKPSearchPanelView extends FrameLayout implements
 
     class GlowPadTriggerListener implements GlowPadView.OnTriggerListener {
         boolean mWaitingForLaunch;
-
-       final Runnable SetLongPress = new Runnable () {
+        int mLastTargetChange;
+        final Runnable SetLongPress = new Runnable () {
             public void run() {
                 if (!mLongPress) {
                     vibrate();
@@ -209,6 +209,10 @@ public class AOKPSearchPanelView extends FrameLayout implements
                 mHandler.removeCallbacks(SetLongPress);
                 mLongPress = false;
             } else {
+                if(mLastTargetChange != target) {
+                    vibrate();
+                    mLastTargetChange = target;
+                }
                 if (!TextUtils.isEmpty(longList.get(target)) && !longList.get(target).equals(AwesomeConstant.ACTION_NULL.value())) {
                     mTarget = target;
                     mHandler.postDelayed(SetLongPress, ViewConfiguration.getLongPressTimeout());
@@ -227,6 +231,8 @@ public class AOKPSearchPanelView extends FrameLayout implements
         public void onTrigger(View v, final int target) {
             mTarget = target;
             if (!mLongPress) {
+                vibrate();
+
                 if (AwesomeConstant.ACTION_ASSIST.equals(intentList.get(target))) {
                     startAssistActivity();
                 } else {
@@ -562,18 +568,6 @@ public class AOKPSearchPanelView extends FrameLayout implements
             updateSettings();
             setDrawables();
         }
-    }
-
-    public static boolean getBoolean(ContentResolver cr, String name, boolean def) {
-	    String v = Settings.System.getString(cr, name);
-	    try {
-		if(v != null)
-		    return "1".equals(v);
-		else
-		    return def;
-	    } catch (NumberFormatException e) {
-		return def;
-	    }
     }
 
     public void updateSettings() {

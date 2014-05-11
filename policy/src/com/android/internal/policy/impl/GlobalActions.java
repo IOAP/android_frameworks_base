@@ -36,6 +36,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.pm.ThemeUtils;
 import android.content.pm.UserInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.ContentObserver;
@@ -77,12 +78,12 @@ import android.widget.ImageView.ScaleType;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.android.internal.app.ThemeUtils;
 import com.android.internal.util.nameless.NamelessActions;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
 
 /**
  * Needed for takeScreenshot
@@ -129,6 +130,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private boolean mHasVibrator;
     private Profile mChosenProfile;
     private final boolean mShowSilentToggle;
+    private boolean showOnTheGo;
 
     /**
      * @param context everything needs a context :(
@@ -453,8 +455,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         }
 
         // next: On-The-Go, if enabled
-        boolean showOnTheGo = Settings.System.getBoolean(mContext.getContentResolver(),
-                Settings.System.POWER_MENU_ONTHEGO_ENABLED, false);
+        boolean showOnTheGo = Settings.System.getIntForUser(cr,
+                Settings.System.POWER_MENU_ONTHEGO_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
         if (showOnTheGo) {
             mItems.add(
                 new SinglePressAction(com.android.internal.R.drawable.ic_lock_onthego,
@@ -1264,7 +1266,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
         @Override
         public void onServiceStateChanged(ServiceState serviceState) {
-            if (!mHasTelephony || mAirplaneModeOn == null || mAdapter == null) return;
+            if (!mHasTelephony) return;
             final boolean inAirplaneMode = serviceState.getState() == ServiceState.STATE_POWER_OFF;
             mAirplaneState = inAirplaneMode ? ToggleAction.State.On : ToggleAction.State.Off;
             mHandler.sendEmptyMessage(MESSAGE_REFRESH_AIRPLANEMODE);

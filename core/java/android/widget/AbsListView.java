@@ -31,6 +31,7 @@ import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.StrictMode;
+import android.os.SystemProperties;
 import android.os.Trace;
 import android.os.UserHandle;
 import android.provider.Settings;
@@ -82,12 +83,9 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.RemoteViews.OnClickHandler;
 
 import com.android.internal.R;
-import com.android.internal.util.aokp.AwesomeAnimationHelper;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Base class that can be used to implement virtualized lists of items. A list does
@@ -445,6 +443,15 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
     boolean mStackFromBottom;
 
     /**
+     * Indicates whether to system-wide-override to enable/disable or not.
+     * 0 = force to enable scrollingCacheEnabled regardless of app setting
+     * 1 = default is to enable scrollingCacheEnabled unless app specifies
+     * 2 = default is to disable scrollingCacheEnabled unless app specifies
+     * 3 = force to disable scrollingCacheEnabled regardless of app setting
+     */
+    int mScrollingCacheProperty = SystemProperties.getInt("persist.sys.scrollingcache",2);
+
+    /**
      * When set to true, the list automatically discards the children's
      * bitmap cache after scrolling.
      */
@@ -714,8 +721,6 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
     private int mWidth, mHeight = 0;
     private int mPositionV;
     private boolean mIsTap = false;
-    private Set<String> mExcludedApps = new HashSet<String>();
-    private int mListAnimationMode = 0;
 
     /**
      * Interface definition for a callback to be invoked when the list or grid
@@ -818,7 +823,21 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         boolean stackFromBottom = a.getBoolean(R.styleable.AbsListView_stackFromBottom, false);
         setStackFromBottom(stackFromBottom);
 
-        boolean scrollingCacheEnabled = a.getBoolean(R.styleable.AbsListView_scrollingCache, true);
+        boolean scrollingCacheEnabled = true;
+        switch(mScrollingCacheProperty) {
+        case 0:
+            scrollingCacheEnabled = true;
+            break;
+        default:
+            scrollingCacheEnabled = a.getBoolean(R.styleable.AbsListView_scrollingCache, true);
+            break;
+        case 2:
+            scrollingCacheEnabled = a.getBoolean(R.styleable.AbsListView_scrollingCache, false);
+            break;
+        case 3:
+            scrollingCacheEnabled = false;
+            break;
+        }
         setScrollingCacheEnabled(scrollingCacheEnabled);
 
         boolean useTextFilter = a.getBoolean(R.styleable.AbsListView_textFilterEnabled, false);
@@ -850,7 +869,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         setFocusableInTouchMode(true);
         setWillNotDraw(false);
         setAlwaysDrawnWithCacheEnabled(false);
-        setScrollingCacheEnabled(true);
+        boolean scrollingCacheEnabled = (mScrollingCacheProperty < 2);
+        setScrollingCacheEnabled(scrollingCacheEnabled);
 
         final ViewConfiguration configuration = ViewConfiguration.get(mContext);
         mTouchSlop = configuration.getScaledTouchSlop();
@@ -862,35 +882,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
         mDensityScale = getContext().getResources().getDisplayMetrics().density;
 
-        int listAnimationCache = Settings.System.getInt(
-                mContext.getContentResolver(),
-                Settings.System.LISTVIEW_ANIMATION_CACHE,
-                0);
-
-        if (listAnimationCache == 1) {
-            setPersistentDrawingCache(ViewGroup.PERSISTENT_ANIMATION_CACHE);
-        } else if (listAnimationCache == 2) {
-            setPersistentDrawingCache(ViewGroup.PERSISTENT_SCROLLING_CACHE);
-        } else if (listAnimationCache == 3) {
-            setPersistentDrawingCache(ViewGroup.PERSISTENT_ALL_CACHES);
-        } else {
-            setPersistentDrawingCache(ViewGroup.PERSISTENT_NO_CACHE
-                     | ViewGroup.PERSISTENT_SCROLLING_CACHE);
-        }
-
-        createExcludedAppsSet(Settings.System.getString(mContext.getContentResolver(),
-                    Settings.System.LISTVIEW_ANIMATION_EXCLUDED_APPS));
-    }
-
-    /**
-     * Create the set of excluded apps given a string of packages delimited with '|'.
-     * @param excludedApps
-     */
-    private void createExcludedAppsSet(String excludedApps) {
-        if (TextUtils.isEmpty(excludedApps))
-            return;
-        String[] appsToExclude = excludedApps.split("\\|");
-        mExcludedApps = new HashSet<String>(Arrays.asList(appsToExclude));
+        setPersistentDrawingCache(ViewGroup.PERSISTENT_ANIMATION_CACHE
+            | ViewGroup.PERSISTENT_SCROLLING_CACHE);
     }
 
     @Override
@@ -2362,34 +2355,22 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
     }
 
     private View setAnimation(View view) {
-        if (mExcludedApps.contains(mContext.getApplicationInfo().packageName)) {
-            mListAnimationMode = 0;
-        } else {
-            mListAnimationMode = Settings.System.getInt(
-                        mContext.getContentResolver(),
-                        Settings.System.LISTVIEW_ANIMATION,
-                        0);
-        }
-
-        int listAnimationInterpolatorMode = Settings.System.getInt(
+        int listAnimationMode = Settings.System.getIntForUser(
                 mContext.getContentResolver(),
-                Settings.System.LISTVIEW_INTERPOLATOR,
-                0);
+                Settings.System.LISTVIEW_ANIMATION,
+                0, UserHandle.USER_CURRENT_OR_SELF);
 
-        if (mListAnimationMode == 0
-            || view == null) {
+        if (listAnimationMode == 0 || view == null) {
             return view;
         }
 
         int scrollY = 0;
         boolean down = false;
         Animation anim = null;
-
-        int temp = Settings.System.getInt(
+        int listAnimationInterpolatorMode = Settings.System.getIntForUser(
                 mContext.getContentResolver(),
-                Settings.System.LISTVIEW_DURATION,
-                0);
-        int listAnimationDuration = temp * 15;
+                Settings.System.LISTVIEW_INTERPOLATOR,
+                0, UserHandle.USER_CURRENT_OR_SELF);
 
         try {
             scrollY = getChildAt(0).getTop();
@@ -2403,7 +2384,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
         mPositionV = scrollY;
 
-        switch (mListAnimationMode) {
+        switch (listAnimationMode) {
             case 1:
                 anim = new ScaleAnimation(0.5f, 1.0f, 0.5f, 1.0f);
                 break;
@@ -2450,13 +2431,47 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                 return view;
         }
 
-        Interpolator itplr = AwesomeAnimationHelper.getInterpolator(mContext, listAnimationInterpolatorMode);
-        if (itplr != null) {
-            anim.setInterpolator(itplr);
+        switch (listAnimationInterpolatorMode) {
+            case 1:
+                anim.setInterpolator(AnimationUtils.loadInterpolator(
+                    mContext, android.R.anim.accelerate_interpolator));
+                break;
+            case 2:
+                anim.setInterpolator(AnimationUtils.loadInterpolator(
+                    mContext, android.R.anim.decelerate_interpolator));
+                break;
+            case 3:
+                anim.setInterpolator(AnimationUtils.loadInterpolator(
+                    mContext, android.R.anim.accelerate_decelerate_interpolator));
+                break;
+            case 4:
+                anim.setInterpolator(AnimationUtils.loadInterpolator(
+                    mContext, android.R.anim.anticipate_interpolator));
+                break;
+            case 5:
+                anim.setInterpolator(AnimationUtils.loadInterpolator(
+                    mContext, android.R.anim.overshoot_interpolator));
+                break;
+            case 6:
+                anim.setInterpolator(AnimationUtils.loadInterpolator(
+                    mContext, android.R.anim.anticipate_overshoot_interpolator));
+                break;
+            case 7:
+                anim.setInterpolator(AnimationUtils.loadInterpolator(
+                    mContext, android.R.anim.bounce_interpolator));
+                break;
+            case 8:
+                anim.setInterpolator(AnimationUtils.loadInterpolator(
+                    mContext, android.R.anim.cycle_interpolator));
+                break;
+            case 9:
+                anim.setInterpolator(AnimationUtils.loadInterpolator(
+                    mContext, android.R.anim.linear_interpolator));
+                break;
+            default:
+                break;
         }
-        if (listAnimationDuration > 0) {
-            anim.setDuration(listAnimationDuration);
-        }
+        anim.setDuration(500);
         view.startAnimation(anim);
         return view;
     }

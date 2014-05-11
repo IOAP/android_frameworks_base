@@ -26,8 +26,8 @@
     <dimen name="status_bar_recents_app_icon_max_height">48dp</dimen>
 
     <!-- Size of application thumbnail -->
-    <dimen name="status_bar_recents_thumbnail_width">162.0dip</dimen>
-    <dimen name="status_bar_recents_thumbnail_height">385.0dip</dimen>
+    <dimen name="status_bar_recents_thumbnail_width">164dp</dimen>
+    <dimen name="status_bar_recents_thumbnail_height">145dp</dimen>
     <dimen name="status_bar_recents_thumbnail_bg_padding">4dp</dimen>
 
     <!-- Size of application label text -->
@@ -41,12 +41,11 @@
     <!-- Margin between recents container and glow on the right -->
     <dimen name="status_bar_recents_right_glow_margin">100dip</dimen>
     <!-- How far the thumbnail for a recent app appears from left edge -->
-    <dimen name="status_bar_recents_thumbnail_left_margin">10dp</dimen>
-    <dimen name="status_bar_recents_thumbnail_right_margin">10dp</dimen>
+    <dimen name="status_bar_recents_thumbnail_left_margin">20dp</dimen>
     <!-- Padding for text descriptions -->
     <dimen name="status_bar_recents_text_description_padding">8dp</dimen>
     <!-- Width of application label text -->
-    <dimen name="status_bar_recents_app_label_width">89dip</dimen>
+    <dimen name="status_bar_recents_app_label_width">88dip</dimen>
     <!-- Left margin of application label text -->
     <dimen name="status_bar_recents_app_label_left_margin">0dip</dimen>
     <!-- Padding between recents items -->
@@ -112,7 +111,7 @@
     <!-- Minimum final velocity of gestures interpreted as collapse requests -->
     <dimen name="fling_collapse_min_velocity">100dp</dimen>
     <!-- Cap on contribution of x dimension of gesture to overall velocity -->
-    <dimen name="fling_gesture_max_x_velocity">300dp</dimen>
+    <dimen name="fling_gesture_max_x_velocity">400dp</dimen>
     <!-- Cap on overall resulting fling speed (s^-1) -->
     <dimen name="fling_gesture_max_output_velocity">4000dp</dimen>
 
@@ -242,4 +241,5 @@
     <dimen name="qs_4_column_text_size">10sp</dimen>
     <!-- Quick Settings tile geometry: text size for 5 tile per row-->
     <dimen name="qs_5_column_text_size">9sp</dimen>
+
 </resources>

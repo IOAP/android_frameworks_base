@@ -673,12 +673,6 @@ public class Intent implements Parcelable, Cloneable {
     public static final String ACTION_PICK = "android.intent.action.PICK";
 
     /**
-     * Global Action: Battery services start/stop	683
-     * @hide
-     */
-    public static final String ACTION_BATTERY_SERVICES = "android.intent.action.BATTERY_SERVICES";
-
-    /**
      * Activity Action: Creates a shortcut.
      * <p>Input: Nothing.</p>
      * <p>Output: An Intent representing the shortcut. The intent must contain three
@@ -2632,6 +2626,19 @@ public class Intent implements Parcelable, Cloneable {
             "android.intent.action.QUICK_CLOCK";
 
     /**
+     * Broadcast Action: Indicate that unrecoverable error happened during app launch.
+     * Could indicate that curently applied theme is malicious.
+     * @hide
+     */
+    public static final String ACTION_APP_LAUNCH_FAILURE = "com.tmobile.intent.action.APP_LAUNCH_FAILURE";
+
+    /**
+     * Broadcast Action: Request to reset the unrecoverable errors count to 0.
+     * @hide
+     */
+    public static final String ACTION_APP_LAUNCH_FAILURE_RESET = "com.tmobile.intent.action.APP_LAUNCH_FAILURE_RESET";
+
+    /**
      * Broadcast Action: This is broadcast when a user action should request the
      * brightness setting dialog.
      * @hide
@@ -2721,19 +2728,6 @@ public class Intent implements Parcelable, Cloneable {
      */
     @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
     public static final String ACTION_CREATE_DOCUMENT = "android.intent.action.CREATE_DOCUMENT";
-
-    /**
-     * Broadcast Action: Indicate that unrecoverable error happened during app launch.
-     * Could indicate that curently applied theme is malicious.
-     * @hide
-     */
-    public static final String ACTION_APP_LAUNCH_FAILURE = "com.tmobile.intent.action.APP_LAUNCH_FAILURE";
-
-    /**
-     * Broadcast Action: Request to reset the unrecoverable errors count to 0.
-     * @hide
-     */
-    public static final String ACTION_APP_LAUNCH_FAILURE_RESET = "com.tmobile.intent.action.APP_LAUNCH_FAILURE_RESET";
 
     // ---------------------------------------------------------------------
     // ---------------------------------------------------------------------
@@ -3658,20 +3652,6 @@ public class Intent implements Parcelable, Cloneable {
      * saw.   This can only be used in conjunction with {@link #FLAG_ACTIVITY_NEW_TASK}.
      */
     public static final int FLAG_ACTIVITY_TASK_ON_HOME = 0X00004000;
-    /**
-     * If set, this intent will always match start up as a floating window
-     * in mutil window scenarios.
-     */
-    public static final int FLAG_FLOATING_WINDOW = 0x00002000;
-
-     /**
-     * set in an Intent passed to {@link Context#startActivity Context.startActivity()},
-     * this flag will cause a newly launching task to be resized according to the split
-     * view metrics, making it running alongside another app.
-     * @hide
-     */
-    public static final int FLAG_ACTIVITY_SPLIT_VIEW = 0x00002000;
-
     /**
      * If set, when sending a broadcast only registered receivers will be
      * called -- no BroadcastReceiver components will be launched.
@@ -6201,6 +6181,9 @@ public class Intent implements Parcelable, Cloneable {
      * @see #removeExtra
      */
     public Intent putExtras(Bundle extras) {
+        if (extras == null) {
+            return this;
+        }
         if (mExtras == null) {
             mExtras = new Bundle();
         }

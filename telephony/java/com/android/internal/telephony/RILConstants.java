@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
- * Not a Contribution.
  * Copyright (C) 2006 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,7 +64,6 @@ public interface RILConstants {
     int SS_MODIFIED_TO_DIAL = 23;             /* SS request modified to DIAL */
     int SS_MODIFIED_TO_USSD = 24;             /* SS request modified to USSD */
     int SS_MODIFIED_TO_SS = 25;               /* SS request modified to different SS request */
-    int SUBSCRIPTION_NOT_SUPPORTED = 26;      /* Subscription not supported */
 
     /* NETWORK_MODE_* See ril.h RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE */
     int NETWORK_MODE_WCDMA_PREF     = 0; /* GSM/WCDMA (WCDMA preferred) */
@@ -183,7 +180,7 @@ cat include/telephony/ril.h | \
     int RIL_REQUEST_ENTER_SIM_PUK2 = 5;
     int RIL_REQUEST_CHANGE_SIM_PIN = 6;
     int RIL_REQUEST_CHANGE_SIM_PIN2 = 7;
-    int RIL_REQUEST_ENTER_DEPERSONALIZATION_CODE = 8;
+    int RIL_REQUEST_ENTER_NETWORK_DEPERSONALIZATION = 8;
     int RIL_REQUEST_GET_CURRENT_CALLS = 9;
     int RIL_REQUEST_DIAL = 10;
     int RIL_REQUEST_GET_IMSI = 11;
@@ -289,10 +286,6 @@ cat include/telephony/ril.h | \
     int RIL_REQUEST_SET_INITIAL_ATTACH_APN = 111;
     int RIL_REQUEST_IMS_REGISTRATION_STATE = 112;
     int RIL_REQUEST_IMS_SEND_SMS = 113;
-    int RIL_REQUEST_GET_DATA_CALL_PROFILE = 114;
-    int RIL_REQUEST_SET_UICC_SUBSCRIPTION = 115;
-    int RIL_REQUEST_SET_DATA_SUBSCRIPTION = 116;
-
     int RIL_UNSOL_RESPONSE_BASE = 1000;
     int RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED = 1000;
     int RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED = 1001;
@@ -326,7 +319,7 @@ cat include/telephony/ril.h | \
     int RIL_UNSOL_RINGBACK_TONE = 1029;
     int RIL_UNSOL_RESEND_INCALL_MUTE = 1030;
     int RIL_UNSOL_CDMA_SUBSCRIPTION_SOURCE_CHANGED = 1031;
-    int RIL_UNSOl_CDMA_PRL_CHANGED = 1032;
+    int RIL_UNSOL_CDMA_PRL_CHANGED = 1032;
     int RIL_UNSOL_EXIT_EMERGENCY_CALLBACK_MODE = 1033;
     int RIL_UNSOL_RIL_CONNECTED = 1034;
     int RIL_UNSOL_VOICE_RADIO_TECH_CHANGED = 1035;
@@ -334,7 +327,6 @@ cat include/telephony/ril.h | \
     int RIL_UNSOL_RESPONSE_IMS_NETWORK_STATE_CHANGED = 1037;
     int RIL_UNSOL_ON_SS = 1039;
     int RIL_UNSOL_STK_CC_ALPHA_NOTIFY = 1040;
-    int RIL_UNSOL_UICC_SUBSCRIPTION_STATUS_CHANGED = 1041;
 
     int RIL_UNSOL_STK_SEND_SMS_RESULT = 11002; /* Samsung STK */
 }

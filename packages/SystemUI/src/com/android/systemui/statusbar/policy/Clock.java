@@ -16,8 +16,6 @@
 
 package com.android.systemui.statusbar.policy;
 
-import android.app.ActivityManagerNative;
-import android.app.StatusBarManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -27,7 +25,6 @@ import android.database.ContentObserver;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.UserHandle;
-import android.provider.AlarmClock;
 import android.provider.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -36,8 +33,7 @@ import android.text.style.CharacterStyle;
 import android.text.style.RelativeSizeSpan;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
+
 import android.widget.TextView;
 
 import com.android.systemui.R;
@@ -54,7 +50,7 @@ import libcore.icu.LocaleData;
 /**
  * Digital clock for the status bar.
  */
-public class Clock extends TextView implements DemoMode, OnClickListener, OnLongClickListener {
+public class Clock extends TextView implements DemoMode {
     protected boolean mAttached;
     protected Calendar mCalendar;
     protected String mClockFormatString;
@@ -84,7 +80,7 @@ public class Clock extends TextView implements DemoMode, OnClickListener, OnLong
     protected boolean mShowClock;
 
     private int mAmPmStyle;
-    
+
     private SettingsObserver mSettingsObserver;
 
     protected class SettingsObserver extends ContentObserver {
@@ -102,6 +98,9 @@ public class Clock extends TextView implements DemoMode, OnClickListener, OnLong
                     false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUSBAR_CLOCK_STYLE), false,
+                    this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System
+                    .getUriFor(Settings.System.STATUSBAR_CLOCK_COLOR), false,
                     this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUSBAR_CLOCK_DATE_DISPLAY), false,
@@ -131,11 +130,6 @@ public class Clock extends TextView implements DemoMode, OnClickListener, OnLong
 
     public Clock(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
-        if (isClickable()) {
-            setOnClickListener(this);
-            setOnLongClickListener(this);
-        }
     }
 
     @Override
@@ -222,7 +216,7 @@ public class Clock extends TextView implements DemoMode, OnClickListener, OnLong
              * add dummy characters around it to let us find it again after
              * formatting and change its size.
              */
-            if (AM_PM_STYLE != AM_PM_STYLE_NORMAL) {
+            if (mAmPmStyle != AM_PM_STYLE_NORMAL) {
                 int a = -1;
                 boolean quoted = false;
                 for (int i = 0; i < format.length(); i++) {
@@ -310,7 +304,7 @@ public class Clock extends TextView implements DemoMode, OnClickListener, OnLong
                                           Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
                     }
                 }
-            }
+         }
         }
         return formatted;
     }
@@ -325,7 +319,7 @@ public class Clock extends TextView implements DemoMode, OnClickListener, OnLong
         boolean is24hour = DateFormat.is24HourFormat(mContext);
         int amPmStyle = Settings.System.getIntForUser(resolver,
                 Settings.System.STATUSBAR_CLOCK_AM_PM_STYLE,
-                is24hour ? AM_PM_STYLE_GONE : AM_PM_STYLE_NORMAL,
+                AM_PM_STYLE_GONE,
                 UserHandle.USER_CURRENT);
         mAmPmStyle = is24hour ? AM_PM_STYLE_GONE : amPmStyle;
         mClockFormatString = "";
@@ -358,50 +352,10 @@ public class Clock extends TextView implements DemoMode, OnClickListener, OnLong
     }
 
     protected void updateClockVisibility() {
-        if (mClockStyle == STYLE_CLOCK_RIGHT && mShowClock) {
+        if (mClockStyle == STYLE_CLOCK_RIGHT && mShowClock)
             setVisibility(View.VISIBLE);
-        } else {
+        else
             setVisibility(View.GONE);
-        }
-    }
-
-    private void collapseStartActivity(Intent what) {
-        // don't do anything if the activity can't be resolved (e.g. app disabled)
-        if (getContext().getPackageManager().resolveActivity(what, 0) == null) {
-            return;
-        }
-
-        // collapse status bar
-        StatusBarManager statusBarManager = (StatusBarManager) getContext().getSystemService(
-                Context.STATUS_BAR_SERVICE);
-        statusBarManager.collapsePanels();
-
-        // dismiss keyguard in case it was active and no passcode set
-        try {
-            ActivityManagerNative.getDefault().dismissKeyguardOnNextActivity();
-        } catch (Exception ex) {
-            // no action needed here
-        }
-
-        // start activity
-        what.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        mContext.startActivity(what);
-    }
-
-    @Override
-    public void onClick(View v) {
-        Intent intent = new Intent(AlarmClock.ACTION_SHOW_ALARMS);
-        collapseStartActivity(intent);
-    }
-
-    @Override
-    public boolean onLongClick(View v) {
-        Intent intent = new Intent("android.settings.DATE_SETTINGS");
-        intent.addCategory(Intent.CATEGORY_DEFAULT);
-        collapseStartActivity(intent);
-
-        // consume event
-        return true;
     }
 
     private boolean mDemoMode;

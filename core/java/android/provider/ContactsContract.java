@@ -750,8 +750,6 @@ public final class ContactsContract {
         public static final String SYNC3 = "sync3";
         /** Generic column for use by sync adapters. */
         public static final String SYNC4 = "sync4";
-        /** Facebook Sync Hack */
-        public static final String IS_RESTRICTED = "is_restricted";
     }
 
     /**
@@ -5172,31 +5170,6 @@ public final class ContactsContract {
              * <P>Type: TEXT</P>
              */
             public static final String LABEL = DataColumns.DATA3;
-        }
-
-        /** @hide */
-        public static final class LocalGroup implements DataColumnsWithJoins {
-            /** @hide */
-            private LocalGroup() {
-            }
-
-            /** @hide */
-            public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/local-groups";
-
-            /** @hide */
-            public static final String GROUP = DATA1;
-
-            /** @hide */
-            public static final Uri CONTENT_URI = Uri.withAppendedPath(Data.CONTENT_URI,
-                    "local-groups");
-
-            /** @hide */
-            public static final Uri CONTENT_LOOKUP_URI = Uri
-                    .withAppendedPath(CONTENT_URI, "lookup");
-
-            /** @hide */
-            public static final Uri CONTENT_FILTER_URI = Uri
-                    .withAppendedPath(CONTENT_URI, "filter");
         }
 
         /**

@@ -25,8 +25,8 @@ import com.android.server.display.DisplayManagerService;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
-import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -44,8 +44,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.SystemClock;
-import android.os.UserHandle;
-import android.provider.Settings;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.text.format.DateUtils;
@@ -196,7 +194,6 @@ final class DisplayPowerController {
     private final DisplayBlanker mDisplayBlanker;
 
     // Our context
-    // Used also in lockscreen blur
     private final Context mContext;
 
     // Our handler.
@@ -414,7 +411,7 @@ final class DisplayPowerController {
         mDisplayBlanker = displayBlanker;
         mCallbacks = callbacks;
         mCallbackHandler = callbackHandler;
-	
+
         mLights = lights;
         mTwilight = twilight;
         mSensorManager = sensorManager;
@@ -483,7 +480,7 @@ final class DisplayPowerController {
             mTwilight.registerListener(mTwilightListener, mHandler);
         }
 
-	Intent intent = new Intent();
+        Intent intent = new Intent();
         intent.setClassName("com.android.keyguard", "com.android.keyguard.KeyguardService");
         context.bindServiceAsUser(intent, mKeyguardConnection,
                 Context.BIND_AUTO_CREATE, UserHandle.OWNER);
@@ -608,8 +605,7 @@ final class DisplayPowerController {
     public boolean requestPowerState(DisplayPowerRequest request,
             boolean waitForNegativeProximity) {
 
-	// Lockscreen blur
-	final int MAX_BLUR_WIDTH = 900;
+        final int MAX_BLUR_WIDTH = 900;
         final int MAX_BLUR_HEIGHT = 1600;
 
         if (DEBUG) {
@@ -638,14 +634,12 @@ final class DisplayPowerController {
                 mDisplayReadyLocked = false;
             }
 
-	    boolean seeThrough = Settings.System.getInt(mContext.getContentResolver(),
+            boolean seeThrough = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.LOCKSCREEN_SEE_THROUGH, 0) == 1;
-            int blurRadius = Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.LOCKSCREEN_BLUR_RADIUS, 12);
             if (changed && !mPendingRequestChangedLocked) {
-		if ((mKeyguardService == null || !mKeyguardService.isShowing()) &&
+                if ((mKeyguardService == null || !mKeyguardService.isShowing()) &&
                             request.screenState == DisplayPowerRequest.SCREEN_STATE_OFF &&
-                            seeThrough && blurRadius > 0) {
+                            seeThrough) {
                     DisplayInfo di = mDisplayManager
                             .getDisplayInfo(mDisplayManager.getDisplayIds() [0]);
                     /* Limit max screenshot capture layer to 22000.
@@ -657,14 +651,14 @@ final class DisplayPowerController {
 
                         // scale image if its too large
                         if (bmp.getWidth() > MAX_BLUR_WIDTH) {
-                            tmpBmp = bmp.createScaledBitmap(bmp, MAX_BLUR_WIDTH, MAX_BLUR_HEIGHT, true);
+                                tmpBmp = bmp.createScaledBitmap(bmp, MAX_BLUR_WIDTH, MAX_BLUR_HEIGHT, true);
                         }
 
                         mKeyguardService.setBackgroundBitmap(tmpBmp);
                         bmp.recycle();
                         tmpBmp.recycle();
                     }
-                } else if (mKeyguardService != null && (!seeThrough || blurRadius == 0)) mKeyguardService.setBackgroundBitmap(null);
+                }
                 mPendingRequestChangedLocked = true;
                 sendUpdatePowerStateLocked();
             }
@@ -706,6 +700,12 @@ final class DisplayPowerController {
 
         mScreenBrightnessRampAnimator = new RampAnimator<DisplayPowerState>(
                 mPowerState, DisplayPowerState.SCREEN_BRIGHTNESS);
+
+        if (mPowerState.isScreenOn()) {
+            // If the screen is on then let the notifier know to ensure that
+            // battery stats after a boot are correct.
+            mNotifier.onScreenOn();
+        }
     }
 
     private final Animator.AnimatorListener mAnimatorListener = new Animator.AnimatorListener() {

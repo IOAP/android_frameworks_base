@@ -22,6 +22,7 @@ import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -38,6 +39,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
+import com.android.internal.util.cm.TorchConstants;
 import com.android.internal.widget.LockPatternUtils;
 import com.android.internal.widget.LockPatternView;
 
@@ -125,8 +127,19 @@ public class KeyguardPatternView extends LinearLayout implements KeyguardSecurit
                 new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onDoubleTap(MotionEvent e) {
+                int doubletapoption = Settings.System.getInt(mContext.getContentResolver(), Settings.System.LOCKSCREEN_GLOWPAD_DOUBLETAP_OPTION, 0);
+                switch(doubletapoption) {
+                case 0:
                 PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
                 if (pm != null) pm.goToSleep(e.getEventTime());
+                break;
+                case 1:
+                Intent i = new Intent(TorchConstants.ACTION_TOGGLE_STATE);
+                i.putExtra("strobe", false);
+                i.putExtra("bright", false);
+                mContext.sendBroadcast(i);
+                break;
+                }
                 return true;
             }
         });
@@ -147,9 +160,16 @@ public class KeyguardPatternView extends LinearLayout implements KeyguardSecurit
         mLockPatternView.setTactileFeedbackEnabled(mLockPatternUtils.isTactileFeedbackEnabled());
 
         mLockPatternView.setLockPatternSize(mLockPatternUtils.getLockPatternSize());
+        mLockPatternView.setLockPatternColor(Settings.Secure.getIntForUser(
+                mContext.getContentResolver(),
+                Settings.Secure.LOCKSCREEN_TARGETS_COLOR, -2,
+                UserHandle.USER_CURRENT), Settings.Secure.getIntForUser(
+                mContext.getContentResolver(),
+                Settings.Secure.LOCKSCREEN_MISC_COLOR, -2,
+                UserHandle.USER_CURRENT));
 
         if (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.DOUBLE_TAP_SLEEP_GESTURE, 0) == 1) {
+                    Settings.System.DOUBLE_TAP_GLOWPAD_GESTURE, 0) == 1) {
             mLockPatternView.setOnTouchListener(new OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
@@ -176,7 +196,9 @@ public class KeyguardPatternView extends LinearLayout implements KeyguardSecurit
         mEcaView = findViewById(R.id.keyguard_selector_fade_container);
         View bouncerFrameView = findViewById(R.id.keyguard_bouncer_frame);
         if (bouncerFrameView != null) {
-            mBouncerFrame = bouncerFrameView.getBackground();
+            mBouncerFrame =
+                    KeyguardSecurityViewHelper.colorizeFrame(mContext,
+                    bouncerFrameView.getBackground());
         }
     }
 

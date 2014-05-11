@@ -19,6 +19,7 @@ package android.view;
 import com.android.internal.view.IInputContext;
 import com.android.internal.view.IInputMethodClient;
 
+import android.content.Intent;
 import android.content.res.CompatibilityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -120,6 +121,13 @@ interface IWindowManager
     boolean isKeyguardSecure();
     boolean inKeyguardRestrictedInputMode();
     void dismissKeyguard();
+
+    /**
+     * Tell keyguard to show a custom intent after asking for the user's
+     * credentials.
+     * @hide
+     */
+    void showCustomIntentOnKeyguard(inout Intent intent);
 
     void closeSystemDialogs(String reason);
 
@@ -292,16 +300,6 @@ interface IWindowManager
      * @param enabled Whether touch exploration is enabled.
      */
     void setTouchExplorationEnabled(boolean enabled);
-
-    /** SPLIT VIEW **/
-    boolean isTaskSplitView(int taskId);
-    void setTaskSplitView(int taskId, boolean split);
-    void setTaskChildSplit(IBinder token, boolean split);
-    Rect getSplitViewRect(int taskId, boolean resetLocation);
-    void notifyActivityTouched(IBinder token, boolean force);
-    void setSplitViewRect(int l, int t, int r, int b);
-
-    /** SPLIT VIEW END **/
 
     /**
      * Get current system ui visibility mode.

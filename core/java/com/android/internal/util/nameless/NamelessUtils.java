@@ -104,3 +104,4 @@ public class NamelessUtils {
         return pm != null && pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
     }
 }
+

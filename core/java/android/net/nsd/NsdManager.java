@@ -301,36 +301,27 @@ public final class NsdManager {
 
         @Override
         public void handleMessage(Message message) {
+            Object listener = getListener(message.arg2);
+            boolean listenerRemove = true;
             switch (message.what) {
                 case AsyncChannel.CMD_CHANNEL_HALF_CONNECTED:
                     mAsyncChannel.sendMessage(AsyncChannel.CMD_CHANNEL_FULL_CONNECTION);
-                    return;
+                    break;
                 case AsyncChannel.CMD_CHANNEL_FULLY_CONNECTED:
                     mConnected.countDown();
-                    return;
+                    break;
                 case AsyncChannel.CMD_CHANNEL_DISCONNECTED:
                     Log.e(TAG, "Channel lost");
-                    return;
-                default:
                     break;
-            }
-            Object listener = getListener(message.arg2);
-            if (listener == null) {
-                Log.d(TAG, "Stale key " + message.arg2);
-                return;
-            }
-            boolean listenerRemove = true;
-            NsdServiceInfo ns = getNsdService(message.arg2);
-            switch (message.what) {
                 case DISCOVER_SERVICES_STARTED:
-                    String s = getNsdServiceInfoType((NsdServiceInfo) message.obj);
+                    String s = ((NsdServiceInfo) message.obj).getServiceType();
                     ((DiscoveryListener) listener).onDiscoveryStarted(s);
                     // Keep listener until stop discovery
                     listenerRemove = false;
                     break;
                 case DISCOVER_SERVICES_FAILED:
-                    ((DiscoveryListener) listener).onStartDiscoveryFailed(getNsdServiceInfoType(ns),
-                            message.arg1);
+                    ((DiscoveryListener) listener).onStartDiscoveryFailed(
+                            getNsdService(message.arg2).getServiceType(), message.arg1);
                     break;
                 case SERVICE_FOUND:
                     ((DiscoveryListener) listener).onServiceFound((NsdServiceInfo) message.obj);
@@ -343,14 +334,16 @@ public final class NsdManager {
                     listenerRemove = false;
                     break;
                 case STOP_DISCOVERY_FAILED:
-                    ((DiscoveryListener) listener).onStopDiscoveryFailed(getNsdServiceInfoType(ns),
-                            message.arg1);
+                    ((DiscoveryListener) listener).onStopDiscoveryFailed(
+                            getNsdService(message.arg2).getServiceType(), message.arg1);
                     break;
                 case STOP_DISCOVERY_SUCCEEDED:
-                    ((DiscoveryListener) listener).onDiscoveryStopped(getNsdServiceInfoType(ns));
+                    ((DiscoveryListener) listener).onDiscoveryStopped(
+                            getNsdService(message.arg2).getServiceType());
                     break;
                 case REGISTER_SERVICE_FAILED:
-                    ((RegistrationListener) listener).onRegistrationFailed(ns, message.arg1);
+                    ((RegistrationListener) listener).onRegistrationFailed(
+                            getNsdService(message.arg2), message.arg1);
                     break;
                 case REGISTER_SERVICE_SUCCEEDED:
                     ((RegistrationListener) listener).onServiceRegistered(
@@ -359,13 +352,16 @@ public final class NsdManager {
                     listenerRemove = false;
                     break;
                 case UNREGISTER_SERVICE_FAILED:
-                    ((RegistrationListener) listener).onUnregistrationFailed(ns, message.arg1);
+                    ((RegistrationListener) listener).onUnregistrationFailed(
+                            getNsdService(message.arg2), message.arg1);
                     break;
                 case UNREGISTER_SERVICE_SUCCEEDED:
-                    ((RegistrationListener) listener).onServiceUnregistered(ns);
+                    ((RegistrationListener) listener).onServiceUnregistered(
+                            getNsdService(message.arg2));
                     break;
                 case RESOLVE_SERVICE_FAILED:
-                    ((ResolveListener) listener).onResolveFailed(ns, message.arg1);
+                    ((ResolveListener) listener).onResolveFailed(
+                            getNsdService(message.arg2), message.arg1);
                     break;
                 case RESOLVE_SERVICE_SUCCEEDED:
                     ((ResolveListener) listener).onServiceResolved((NsdServiceInfo) message.obj);
@@ -424,11 +420,6 @@ public final class NsdManager {
         return INVALID_LISTENER_KEY;
     }
 
-
-    private String getNsdServiceInfoType(NsdServiceInfo s) {
-        if (s == null) return "?";
-        return s.getServiceType();
-    }
 
     /**
      * Initialize AsyncChannel

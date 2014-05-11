@@ -20,7 +20,6 @@ import static com.android.internal.util.Preconditions.checkNotNull;
 
 import android.annotation.SdkConstant;
 import android.annotation.SdkConstant.SdkConstantType;
-import android.app.ActivityThread;
 import android.content.Context;
 import android.os.Binder;
 import android.os.Build.VERSION_CODES;
@@ -395,6 +394,8 @@ public class ConnectivityManager {
     public static final int CONNECTIVITY_CHANGE_DELAY_DEFAULT = 3000;
 
     private final IConnectivityManager mService;
+
+    private final String mPackageName;
 
     /**
      * Tests if a given integer represents a valid network type.
@@ -803,7 +804,7 @@ public class ConnectivityManager {
     public boolean requestRouteToHostAddress(int networkType, InetAddress hostAddress) {
         byte[] address = hostAddress.getAddress();
         try {
-            return mService.requestRouteToHostAddress(networkType, address);
+            return mService.requestRouteToHostAddress(networkType, address, mPackageName);
         } catch (RemoteException e) {
             return false;
         }
@@ -891,7 +892,7 @@ public class ConnectivityManager {
      */
     public void setMobileDataEnabled(boolean enabled) {
         try {
-            mService.setMobileDataEnabled(ActivityThread.currentPackageName(), enabled);
+            mService.setMobileDataEnabled(enabled);
         } catch (RemoteException e) {
         }
     }
@@ -899,8 +900,9 @@ public class ConnectivityManager {
     /**
      * {@hide}
      */
-    public ConnectivityManager(IConnectivityManager service) {
+    public ConnectivityManager(IConnectivityManager service, String packageName) {
         mService = checkNotNull(service, "missing IConnectivityManager");
+        mPackageName = checkNotNull(packageName, "missing package name");
     }
 
     /** {@hide} */
